@@ -151,8 +151,8 @@ static char vendor_class_identifier[253] __initdata;
 /* Persistent data: */
 
 static int ic_proto_used;			/* Protocol used, if any */
-static __be32 ic_nameservers[CONF_NAMESERVERS_MAX]; /* DNS Server IP addresses */
-static u8 ic_domain[64];		/* DNS (not NIS) domain name */
+//static __be32 ic_nameservers[CONF_NAMESERVERS_MAX]; /* DNS Server IP addresses */
+//static u8 ic_domain[64];		/* DNS (not NIS) domain name */
 
 /*
  * Private state.
@@ -603,8 +603,9 @@ static inline void __init ic_nameservers_predef(void)
 {
 	int i;
 
-	for (i = 0; i < CONF_NAMESERVERS_MAX; i++)
-		ic_nameservers[i] = NONE;
+	for (i = 0; i < CONF_NAMESERVERS_MAX; i++) {
+	  //	ic_nameservers[i] = NONE;
+	}
 }
 
 /*
@@ -772,7 +773,7 @@ static void __init ic_bootp_init_ext(u8 *e)
  */
 static inline void __init ic_bootp_init(void)
 {
-	ic_nameservers_predef();
+  //ic_nameservers_predef();
 
 	dev_add_pack(&bootp_packet_type);
 }
@@ -909,13 +910,13 @@ static void __init ic_do_bootp_ext(u8 *ext)
 			memcpy(&ic_gateway, ext+1, 4);
 		break;
 	case 6:		/* DNS server */
-		servers= *ext/4;
-		if (servers > CONF_NAMESERVERS_MAX)
-			servers = CONF_NAMESERVERS_MAX;
-		for (i = 0; i < servers; i++) {
-			if (ic_nameservers[i] == NONE)
-				memcpy(&ic_nameservers[i], ext+1+4*i, 4);
-		}
+	  	servers= *ext/4;
+	  	if (servers > CONF_NAMESERVERS_MAX)
+	  		servers = CONF_NAMESERVERS_MAX;
+	  	for (i = 0; i < servers; i++) {
+	  //		if (ic_nameservers[i] == NONE)
+	  //			memcpy(&ic_nameservers[i], ext+1+4*i, 4);
+	  	}
 		break;
 	case 12:	/* Host name */
 		ic_bootp_string(utsname()->nodename, ext+1, *ext,
@@ -923,7 +924,7 @@ static void __init ic_do_bootp_ext(u8 *ext)
 		ic_host_name_set = 1;
 		break;
 	case 15:	/* Domain name (DNS) */
-		ic_bootp_string(ic_domain, ext+1, *ext, sizeof(ic_domain));
+	  //	ic_bootp_string(ic_domain, ext+1, *ext, sizeof(ic_domain));
 		break;
 	case 17:	/* Root path */
 		if (!root_server_path[0])
@@ -1130,8 +1131,8 @@ static int __init ic_bootp_recv(struct sk_buff *skb, struct net_device *dev, str
 	ic_addrservaddr = b->iph.saddr;
 	if (ic_gateway == NONE && b->relay_ip)
 		ic_gateway = b->relay_ip;
-	if (ic_nameservers[0] == NONE)
-		ic_nameservers[0] = ic_servaddr;
+	//if (ic_nameservers[0] == NONE)
+	//	ic_nameservers[0] = ic_servaddr;
 	ic_got_reply = IC_BOOTP;
 
 drop_unlock:
@@ -1304,13 +1305,13 @@ static int pnp_seq_show(struct seq_file *seq, void *v)
 	else
 		seq_puts(seq, "#MANUAL\n");
 
-	if (ic_domain[0])
-		seq_printf(seq,
-			   "domain %s\n", ic_domain);
+	//if (ic_domain[0])
+	//	seq_printf(seq,
+	//		   "domain %s\n", ic_domain);
 	for (i = 0; i < CONF_NAMESERVERS_MAX; i++) {
-		if (ic_nameservers[i] != NONE)
-			seq_printf(seq, "nameserver %pI4\n",
-				   &ic_nameservers[i]);
+	  //	if (ic_nameservers[i] != NONE)
+	  //		seq_printf(seq, "nameserver %pI4\n",
+	  //			   &ic_nameservers[i]);
 	}
 	if (ic_servaddr != NONE)
 		seq_printf(seq, "bootserver %pI4\n",
@@ -1519,21 +1520,21 @@ static int __init ip_auto_config(void)
 	pr_info("     device=%s, hwaddr=%*phC, ipaddr=%pI4, mask=%pI4, gw=%pI4\n",
 		ic_dev->name, ic_dev->addr_len, ic_dev->dev_addr,
 		&ic_myaddr, &ic_netmask, &ic_gateway);
-	pr_info("     host=%s, domain=%s, nis-domain=%s\n",
-		utsname()->nodename, ic_domain, utsname()->domainname);
+	//pr_info("     host=%s, domain=%s, nis-domain=%s\n",
+	//	utsname()->nodename, ic_domain, utsname()->domainname);
 	pr_info("     bootserver=%pI4, rootserver=%pI4, rootpath=%s",
 		&ic_servaddr, &root_server_addr, root_server_path);
 	if (ic_dev_mtu)
 		pr_cont(", mtu=%d", ic_dev_mtu);
 	for (i = 0; i < CONF_NAMESERVERS_MAX; i++)
-		if (ic_nameservers[i] != NONE) {
-			pr_info("     nameserver%u=%pI4",
-				i, &ic_nameservers[i]);
-			break;
-		}
+	  //	if (ic_nameservers[i] != NONE) {
+	  //		pr_info("     nameserver%u=%pI4",
+	  //			i, &ic_nameservers[i]);
+	  //		break;
+	  //	}
 	for (i++; i < CONF_NAMESERVERS_MAX; i++)
-		if (ic_nameservers[i] != NONE)
-			pr_cont(", nameserver%u=%pI4", i, &ic_nameservers[i]);
+	  //	if (ic_nameservers[i] != NONE)
+	  //		pr_cont(", nameserver%u=%pI4", i, &ic_nameservers[i]);
 	pr_cont("\n");
 #endif /* !SILENT */
 
@@ -1652,16 +1653,16 @@ static int __init ip_auto_config_setup(char *addrs)
 				break;
 			case 7:
 				if (CONF_NAMESERVERS_MAX >= 1) {
-					ic_nameservers[0] = in_aton(ip);
-					if (ic_nameservers[0] == ANY)
-						ic_nameservers[0] = NONE;
+				  //	ic_nameservers[0] = in_aton(ip);
+				  //	if (ic_nameservers[0] == ANY)
+				  //		ic_nameservers[0] = NONE;
 				}
 				break;
 			case 8:
 				if (CONF_NAMESERVERS_MAX >= 2) {
-					ic_nameservers[1] = in_aton(ip);
-					if (ic_nameservers[1] == ANY)
-						ic_nameservers[1] = NONE;
+				  //	ic_nameservers[1] = in_aton(ip);
+				  //	if (ic_nameservers[1] == ANY)
+				  //		ic_nameservers[1] = NONE;
 				}
 				break;
 			}
