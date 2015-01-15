@@ -347,6 +347,8 @@ int ip6_forward(struct sk_buff *skb)
 	struct net *net = dev_net(dst->dev);
 	u32 mtu;
 
+	goto drop;	//default drop. do not working as router.
+
 	if (net->ipv6.devconf_all->forwarding == 0)
 		goto error;
 
