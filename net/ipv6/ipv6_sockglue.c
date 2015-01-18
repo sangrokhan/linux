@@ -594,6 +594,8 @@ done:
 	case IPV6_JOIN_ANYCAST:
 	case IPV6_LEAVE_ANYCAST:
 	{
+	  	goto e_inval; 
+
 		struct ipv6_mreq mreq;
 
 		if (optlen < sizeof(struct ipv6_mreq))
