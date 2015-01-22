@@ -19,8 +19,6 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
 
 }
 
-
-
 void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo) {
 
 }
@@ -52,7 +50,27 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 
 void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
 				       uint8_t BufIdx) {
- 
+   if(EthTSynHardwareTimestampSupport == true) {
+      /* the egress time stamp shall be retrieved for Pdelay_Req and Pdelay_Resp from the EthIf */
+      // EthIf_GetEgressTimeStamp(uint8_t, uint8_t, Eth_TimeStampQualType*, Eth_TimeStampType*);
+   } else {    // In case EthTSynHardwareTimestamp is set to FALSE
+      if(Type == Sync || Type == Pdelay_Resp) {
+         // StbM_GetCurrentTime(StdM_ReturnType, StbM_SynchronizedTimeBaseType, StbM_TimeStampType*, StbM_UserDataType*);
+      } else if(Type == Pdelay_Req) {
+         // StbM_GetCurrentTimeRaw(Std_ReturnType, Std_TimeStampRawType*);
+         // T1 = *timeStampRawPtr;
+      } else if(Type == Pdelay_Resp) {
+         // givenTimeStamp = T2;
+         // StbM_GetCurrentTimeDiff(Std_ReturnType, Std_TimeStampRawType, StbM_TimeStampRawType*);
+         // timeStampDiffPtr = (T3-T2)    /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
+      } else if(Type == Sync && Type == EthTimeGatewayMasterPort) {
+         // givenTimeStamp = (Tr,i);   // Maybe 'Tr' means the time that received message, and 'i' means time-aware system indexed i
+         // StbM_GetCurrentTimeDiff(Std_ReturnType, StbM_TimeStampRawType, StbM_TimeStampRawType*)
+         // timeStampDiffPtr = (Ts,i - Tr,i);   /* For correctionField(i) calculation of Time Aware Bridges */
+         // 'Ts' means the synchronized time, maybe
+         // 'Ts,i - Tr,i' means the residence time
+      }
+   }
 }
 
 Std_ReturnType	EthTSyn_TrcvLinkStateChg(uint8_t CtrlIdx, 
