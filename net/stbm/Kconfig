@@ -1,0 +1,8 @@
+config STBM
+       bool "AUTOSAR Synchronized Time-Base Manager"
+       help
+       	Following AUTOSAR Standard but modified to working on linux platform
+
+#if STBM
+
+#endif #if STBM
