@@ -3,6 +3,8 @@
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
 
+bool EthTSynHardwareTimestampSupport;
+
 /* Initialize all internal variables and set the EthTSync module to init state */
 void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   //When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
@@ -13,6 +15,8 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   //rate correction -> 0
   //latency for ingress and egress to 0
   
+  EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
+
 }
 
 void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo) {

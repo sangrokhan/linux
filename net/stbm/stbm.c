@@ -2,6 +2,7 @@
 #include <linux/types.h>
 #include <linux/posix-clock.h>
 #include <net/stbm.h>
+#include <net/ethtsyn.h>
 
 /* StbMSynchronizedTimeBase */
 bool StbMIsSystemWideGlobalTimeMaster;
@@ -19,11 +20,19 @@ void StbM_Init(void) {
   StbMSyncLossThreshold = 0;
   StbMSyncLossTimeout = 0;
   StbMSynchronizedTimeBaseIdentifier = 0;
+
+
 }
 
 Std_ReturnType StbM_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
 				   StbM_TimeStampType*	timeStampPtr,
 				   StbM_UserDataType* userDataPtr) {
+  if(EthTSynHardwareTimestampSupport) {
+    
+  } else {
+
+  }
+ 
   return E_OK;
 }
 
@@ -62,11 +71,9 @@ Std_ReturnType	StbM_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId,
 
   getrawmonotonic(&current_time);
 
-  timeStampPtr->nanoseconds = current_time.tv_nsecs;
+  timeStampPtr->nanoseconds = current_time.tv_nsec;
   timeStampPtr->seconds = current_time.tv_sec;
   timeStampPtr->secondsHi = 0;
-
-  
 
   //if UserDataType is not null -> setting to where?
   
