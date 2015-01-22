@@ -22,7 +22,7 @@ typedef struct {
 	uint8_t		sw_major_version;
 	uint8_t		sw_minor_version;
 	uint8_t		sw_patch_version;
-} Std_versionInfoType;
+} Std_VersionInfoType;
 
 #define STD_HIGH	0x01u	/* Physical state 5V or 3.3V */
 #define STD_LOW		0x00u 	/* Physical state 0V */
