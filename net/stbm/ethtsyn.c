@@ -15,6 +15,8 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   
 }
 
+
+
 void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo) {
 
 }
