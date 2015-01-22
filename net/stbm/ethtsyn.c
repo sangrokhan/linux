@@ -2,6 +2,8 @@
 #include <linux/types.h>
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
+#include <net/ethif.h>
+
 
 bool EthTSynHardwareTimestampSupport;
 

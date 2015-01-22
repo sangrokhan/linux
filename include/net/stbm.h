@@ -17,7 +17,7 @@ extern bool StbMVersionInfo;
 
 /* StbMSynchronizedTimeBase */
 extern bool StbMIsSystemWideGlobalTimeMaster;
-enum {
+typedef enum {
   	NO_STORAGE=0,
 	STORAGE_AT_SHUTDOWN
 } StbMStoreTimebaseNonVolatile;
