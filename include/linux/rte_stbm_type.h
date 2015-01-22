@@ -1,7 +1,6 @@
 #ifndef RTE_STBM_TYPE_H
 #define RTE_STBM_TYPE_H
 
-
 #include <linux/types.h>
 #include <linux/std_types.h>
 
