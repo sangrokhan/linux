@@ -3,6 +3,24 @@
 
 #include <linux/types.h>
 #include <linux/stddef.h>
+#include <net/eth.h>
+#include <net/ethtrcv.h>
+
+typedef struct {
+  
+} EthTSyn_ConfigType;
+
+typedef enum {
+  	ETHTSYN_TX_OFF = 0,
+	ETHTSYN_TX_ON
+} EthTSyn_TransmissionModeType;
+
+typedef enum {
+	ETHTSYN_SYNC = 0,
+	ETHTSYN_UNSYNC,
+	ETHTSYN_UNCERTAIN,
+	ETHTSYN_NEVERSYNC
+} EthTSyn_SyncStateType;
 
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
@@ -20,18 +38,6 @@ extern uint32_t EthTSynGlobalTimeTxFollowUpOffset; /* Standard using floating po
 extern uint32_t EthTSynGlobalTimeTxPdelayReqPeriod; /* Standard using floating point to present INF */
 extern uint32_t EthTSynGlobalTimeTxPeriod; /* Standard using floating point to present INF */
 //extern Unknown EthTSynGlobalTimeEthIfRef; /* Reference to EthIfController */
-
-enum EthTSyn_TransmissionModeType {
-  	ETHTSYN_TX_OFF = 0,
-	ETHTSYN_TX_ON
-};
-
-enum EthTSyn_SyncStateType {
-	ETHTSYN_SYNC = 0,
-	ETHTSYN_UNSYNC,
-	ETHTSYN_UNCERTAIN,
-	ETHTSYN_NEVERSYNC
-};
 
 extern void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr);
 extern void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo);
