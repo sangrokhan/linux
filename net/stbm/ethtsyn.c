@@ -7,6 +7,11 @@
 
 bool EthTSynHardwareTimestampSupport;
 
+Std_ReturnType hardwareRegisterTime;
+
+Eth_TimeStampQualType* timeQualPtr;
+
+
 Std_ReturnType currentTime;
 Std_ReturnType currentTimeRaw;
 Std_ReturnType timeDifferenceOfCurrentTimeRaw;
@@ -41,8 +46,14 @@ void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo) {
 Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
 				       StbM_TimeStampType* timeStampPtr,
 				       EthTSyn_SyncStateType* syncState) {
-  // EthIf_GetCurrentTime(
-  return E_OK;
+   // hardwareRegisterTime = EthIf_GetCurrentTime(CtrlIdx, timeQualPtr, timeStampPtr);
+   //if(timeQualPtr == ) {
+   //} else {
+   //}
+   //if(hardwareRegisterTime == E_NOT_OK) {
+   //}
+  
+   return E_OK;
 }
 
 Std_ReturnType 	EthTSyn_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId, 
