@@ -50,6 +50,7 @@ Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
    //if(timeQualPtr == ) {
    //} else {
    //}
+
    //if(hardwareRegisterTime == E_NOT_OK) {
    //}
   
