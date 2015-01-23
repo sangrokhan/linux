@@ -23,6 +23,9 @@ StbM_TimeStampRawType* timeStampRawPtr;
 StbM_TimeStampRawType givenTimeStamp;
 StbM_TimeStampRawType* timeStampDiffPtr;
 
+EthTSyn_MessageType Type;
+
+
 
 
 /* Initialize all internal variables and set the EthTSync module to init state */
@@ -84,27 +87,25 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 				     uint8_t* PhyAddrPtr,
 				     uint8_t* DataPtr,
 				     uint16_t LenByte) {
-  EthTSyn_MessageType Type;
-  
-   if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
+   if(Type == 0x08 || Type == 0x01 || Type == 0x02) {   // if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
       if(EthTSynHardwareTimestampSupport == true) {
 	     /* the time stamp shall be retrieved for Pdelay_Req and Pdelay_Resp from the EthIf */
 		 // EthIf_GetEgressTimeStamp(CtrlIdx, BufIdx, timeQualPtr, timeStampPtr);
       } else {
-         if(Type == Pdelay_Req) {
+         if(Type = 0x01) {   // if(Type == Pdelay_Req) {
 		 	currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr);
-		 } else if(Type == Sync || Type == Pdelay_Req) {
+		 } else if(Type == 0x08 || Type == 0x01) {   // else if(Type == Sync || Type == Pdelay_Req) {
 		    currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr); // why??
 
-			if(Type == Pdelay_Req) {
-		       T2 = *timeStampRawPtr;
-		    } else if(Type == Sync || Type == EthTimeGatewayslavePort) {
+            if(Type == 0x01) {   // if(Type == Pdelay_Req) {
+		       t2 = *timeStampRawPtr;
+		    } else if(Type == 0x08 || Type == EthTimeGatewaySlavePort) {   // else if(Type == Sync || Type == EthTimeGatewaySlavePort) {
 			   /* Start time stamp for correctionField(i) calculation of Time Aware Bridges */
 			   // Tr,i = *timeStampRawPtr
-		    } else if(Type == Pdelay_Resp) {
-		       givenTimeStamp = T1;
+		    } else if(Type == 0x02) {   // else if(Type == Pdelay_Resp) {
+		       givenTimeStamp = t1;
 			   timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr);
-			   timeStampDiffPtr = (T4-T1); /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
+			   timeStampDiffPtr = &(t4-t1); /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
 			}
 		 }
 	  }
@@ -115,23 +116,22 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 /* Confirms the transmission of an Ethernet frame */
 void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
 				       uint8_t BufIdx) {
-   if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
-   	
+   if(Type == 0x08 || Type == 0x01 || Type == 0x02) {   // if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
       if(EthTSynHardwareTimestampSupport == true) {
          /* the egress time stamp shall be retrieved for Pdelay_Req and Pdelay_Resp from the EthIf */
 		 /* the egress time stamp shall be retrieved for Sync from the EthIf */ // ??
          // EthIf_GetEgressTimeStamp(CtrlIdx, BufIdx, timeQualPtr, timeStampPtr);
       } else {    // In case EthTSynHardwareTimestamp is set to FALSE
-         if(Type == Sync || Type == Pdelay_Resp) {
+         if(Type == 0x08 || Type ==0x02) {   // if(Type == Sync || Type == Pdelay_Resp) {
             currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr);
-         } else if(Type == Pdelay_Req) {
+         } else if(Type == 0x01) {   // else if(Type == Pdelay_Req) {
             currentTimeRaw = StbM_GetCurrentTimeRaw(timeStampRawPtr);
-             T1 = *timeStampRawPtr;
-         } else if(Type == Pdelay_Resp) {
-            givenTimeStamp = T2;
+             t1 = *timeStampRawPtr;
+         } else if(Type == 0x02) {   // else if(Type == Pdelay_Resp) {
+            givenTimeStamp = t2;
             timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr);
-            timeStampDiffPtr = (T3-T2);    /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
-         } else if(Type == Sync && Type == EthTimeGatewayMasterPort) {
+            timeStampDiffPtr = &(t3-t2);    /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
+         } else if(Type == 0x08 || Type == EthTimeGatewayMasterPort) {   // } else if(Type == Sync && Type == EthTimeGatewayMasterPort) {
             // givenTimeStamp = (Tr,i);   // Maybe 'Tr' means the time that received message, and 'i' means time-aware system indexed i
             timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr);
             // timeStampDiffPtr = (Ts,i - Tr,i);   /* For correctionField(i) calculation of Time Aware Bridges */
