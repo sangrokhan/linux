@@ -2,6 +2,7 @@
 #define _ETHTSYN_H
 
 #include <linux/types.h>
+#include <linux/time.h>
 #include <linux/stddef.h>
 #include <net/eth.h>
 #include <net/ethtrcv.h>
@@ -36,6 +37,7 @@ extern bool EthTSynDevErrorDetect;
 extern bool EthTSynHardwareTimestampSupport;
 extern uint32_t EthTSynMainFunctionPeriod;	/* Standard using floating point to present INF */
 extern bool EthTSynVersionInfo;
+extern time_t t1, t2, t3, t4;
 
 /* EthTSynGlobalTimeDomain */
 extern uint32_t EthTSynGlobalTimeDomainId;
