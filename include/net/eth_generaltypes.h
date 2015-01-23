@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/std_types.h>
+#include <net/comstack_types.h>
 
 typedef uint32_t Eth_BufIdxType;
 typedef uint16_t Eth_FrameType;
