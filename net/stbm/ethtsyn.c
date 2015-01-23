@@ -84,6 +84,8 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 				     uint8_t* PhyAddrPtr,
 				     uint8_t* DataPtr,
 				     uint16_t LenByte) {
+  EthTSyn_MessageType Type;
+  
    if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
       if(EthTSynHardwareTimestampSupport == true) {
 	     /* the time stamp shall be retrieved for Pdelay_Req and Pdelay_Resp from the EthIf */

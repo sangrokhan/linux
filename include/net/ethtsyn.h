@@ -22,6 +22,15 @@ typedef enum {
 	ETHTSYN_NEVERSYNC
 } EthTSyn_SyncStateType;
 
+typedef struct {
+	unsigned Pdelay_Req		:	1;
+	unsigned Pdelay_Resp		:	1;
+  	unsigned Pdelay_Resp_Follow_Up	:	1;
+  	unsigned Sync			:	1;
+  	unsigned Follow_up		:	1;
+  	unsigned rsv			:	3;
+} EthTSyn_MessageType;
+
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
 extern bool EthTSynHardwareTimestampSupport;
