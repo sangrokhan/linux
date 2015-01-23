@@ -39,10 +39,12 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
 
 }
 
+/* Returns the version information of this module */
 void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo) {
 
 }
 
+/* Returns a time value according its definition out of the HW registers */
 Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
 				       StbM_TimeStampType* timeStampPtr,
 				       EthTSyn_SyncStateType* syncState) {
@@ -54,12 +56,15 @@ Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
    return E_OK;
 }
 
+/* Allows the Time Master to adjust the global ETH Reference clock in HW */
+/* This method is used to set a Global Time Base on ETH in general or to synchronize the Global ETH Time Base with another time base, e.g. Ethernet */
 Std_ReturnType 	EthTSyn_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId, 
 				      StbM_TimeStampType* timeStampPtr) {
    // globalTime = EthIf_SetGlobalTime(CtrlIdx, timeStampPtr);
    return globalTime;
 }
 
+/* This API is used to turn on and off the TX capabilities of the EthTSyn */
 Std_ReturnType	EthTSyn_SetTransmissionMode(uint8_t CtrlIdx, 
 					    EthTSyn_TransmissionModeType Mode) {
    if(Mode == ETHTSYN_TX_OFF) {
@@ -72,6 +77,7 @@ Std_ReturnType	EthTSyn_SetTransmissionMode(uint8_t CtrlIdx,
    return E_OK;
 }
 
+/* By this API service the EthTSyn gets an indication and the data of a received frame */
 void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 				     Eth_FrameType FrameType,
 				     bool IsBroadcast,
@@ -104,6 +110,7 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 
 }
 
+/* Confirms the transmission of an Ethernet frame */
 void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
 				       uint8_t BufIdx) {
    if(Type == Sync || Type == Pdelay_Req || Type == Pdelay_Resp) {
@@ -133,11 +140,13 @@ void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
    	}
 }
 
+/* Allow resetting state machine in case of unexpected Link loss to avoid inconsistent Sync and Follw_Up sequences */
 Std_ReturnType	EthTSyn_TrcvLinkStateChg(uint8_t CtrlIdx, 
 					 EthTrcv_LinkStateType TrcvLinkState) {
   return E_OK;
 }
 
+/* Main function for cyclic call / resp. Sync, Follow_Up and Pdelay_Req transmissions */
 void 		EthTSyn_MainFunction(void) {
 
 }
