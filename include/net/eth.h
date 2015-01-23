@@ -101,7 +101,7 @@ extern Std_ReturnType	Eth_GetControllerMode(uint8_t CtrlIdx,
 extern void		Eth_GetPhysAddr(uint8_t CtrlIdx, 
 					uint8_t* PhysAddrPtr);
 extern void 		Eth_SetPhysAddr(uint8_t CtrlIdx, 
-					const uint8* PhysAddrPtr);
+					const uint8_t* PhysAddrPtr);
 extern Std_ReturnType	Eth_UpdatePhyAddrFilter(uint8_t CtrlIdx, 
 						uint8_t* PhysAddrPtr, 
 						Eth_FilterActionType Action);

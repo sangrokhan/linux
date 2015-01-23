@@ -24,42 +24,128 @@ extern bool	EthIfGetCounterState;
 extern bool	EthIfTransceiverWakeupModeApi;
 extern bool	EthIfGlobalTimeSupoort;
 extern uint32_t EthIfMainFunctionPeriod; /* Standard using float to present from 0 to INF */
+extern uint32_t EthIfMainFunctionRxTimeout;
+extern uint8_t	EthIfMaxTrcvsTotal;
+extern uint8_t* EthIfPublicCddHeaderFile;
+#define ETHIF_PUBLIC_HEADER_MIN 1
+#define ETHIF_PUBLIC_HEADER_MAX 32
+extern uint16_t EthIfRxIndicationIterations;
+extern bool	EthIfStartAutoNegotiation;
+extern uint8_t	EthIfTrcvLinkStateChgMainReload;
+extern bool	EthIfVersionInfoApi;
+extern bool	EthIfVersionInfoApiMacro;
+extern bool	EthIfWakeUpSupport;
+
+//EthIfController
+extern uint8_t	EthIfCtrlIdx;
+extern uint16_t EthIfCtrlMtu;
+#define ETHIF_MTU_MIN 64
+#define ETHIF_MTU_MAX 9000
+extern uint8_t	EthIfMaxTxBufsTotal;
+extern uint16_t EthIfVlanId;
+//extern Unknown EthIfEthCtrlRef /* Symbolic name reference to EthCtrlConfig */
+//extern Unknown EthIfEtherTrcvRef /* Symbolic name reference to EthTrcvConfig */
+
+//EthIfFrameOwnerConfig
+extern uint32_t EthIfFrameType;
+extern uint8_t	EthIfOwner;
+
+//EthIfRxIndicationConfig
+//name definition about EthIfRxIndicationFunction
+
+//EthIfSwitch
+extern uint8_t	EthIfSwitchIdx
+//extern Unknown EthIfSwitchRef /* Symbolic name reference to EthSwtConfig */
+
+//EthIfTrcvLinkStateChgConfig
+//name definition about EthIfTrcvLinkStateChgFunction
+
+//EthFiTxConfirmationConfig
+//name definition aobut EthIfTxCOnfirmationFunction
+
 
 extern void 		EthIf_Init(const EthIf_ConfigType* CfgPtr);
-extern Std_ReturnType	EthIf_ControllerInit(uint8_t CtrlIdx, uint8_t CfgIdx);
-extern Std_ReturnType	EthIf_SetControllerMode(uint8_t CtrlIdx, Eth_ModeType CtrlMode);
-extern Std_ReturnType	EthIf_GetControllerMode(uint8_t CtrlIdx, Eth_ModeType* CtrlModePtr);
-extern Std_ReturnType	EthIf_TransceiverInit(uint8_t CtrlIdx, uint8_t CfgIdx);
-extern Std_ReturnType	EthIf_SetTransceiverMode(uint8_t CtrlIdx, EthTrcv_ModeType TrcvMode);
-extern Std_ReturnType	EthIf_GetTransceiverMode(uint8_t CtrlIdx, EthTrcv_ModeType* TrcvModePtr);
-extern Std_ReturnType	EthIf_SetTransceiverWakeupMode(uint8_t TrcvIdx, EthTrcv_WakeupModeType TrcvWakeupMode);
-extern Std_ReturnType	EthIf_GetTransceiverWakeupMode(uint8_t TrcvIdx, EthTrcv_WakeupModeType* TrcvWakeupModePtr);
+extern Std_ReturnType	EthIf_ControllerInit(uint8_t CtrlIdx, 
+					     uint8_t CfgIdx);
+extern Std_ReturnType	EthIf_SetControllerMode(uint8_t CtrlIdx, 
+						Eth_ModeType CtrlMode);
+extern Std_ReturnType	EthIf_GetControllerMode(uint8_t CtrlIdx, 
+						Eth_ModeType* CtrlModePtr);
+extern Std_ReturnType	EthIf_TransceiverInit(uint8_t CtrlIdx, 
+					      uint8_t CfgIdx);
+extern Std_ReturnType	EthIf_SetTransceiverMode(uint8_t CtrlIdx, 
+						 EthTrcv_ModeType TrcvMode);
+extern Std_ReturnType	EthIf_GetTransceiverMode(uint8_t CtrlIdx, 
+						 EthTrcv_ModeType* TrcvModePtr);
+extern Std_ReturnType	EthIf_SetTransceiverWakeupMode(uint8_t TrcvIdx, 
+						       EthTrcv_WakeupModeType TrcvWakeupMode);
+extern Std_ReturnType	EthIf_GetTransceiverWakeupMode(uint8_t TrcvIdx, 
+						       EthTrcv_WakeupModeType* TrcvWakeupModePtr);
 extern Std_ReturnType	EthIf_CheckWakeup(uint8_t TrcvIdx);
-extern void		EthIf_GetPhysAddr(uint8_t CtrlIdx, uint8_t* PhysAddrPtr);
-extern void		EthIf_SetPhysAddr(uint8_t CtrlIdx, const uint8_t* PhysAddrPtr);
-extern Std_ReturnType	EthIf_UpdatePhysAddrFilter(uint8_t CtrlIdx, uint8_t* PhysAddrPtr, Eth_FilterActionType Action);
-extern Std_ReturnType	EthIf_GetPortMacAddr(uint8_t* MacAddrPtr, uint8_t* SwitchIdxPtr, uint8_t* PortIdxPtr);
-extern Std_ReturnType	EthIf_GetArlTable(uint8_t SwitchIdx, EthSwt_MacVlanType[]* ArlTable);
-extern Std_ReturnType	EthIf_GetBufferLevel(uint8_t SwitchIdx, uint32_t* SwitchBufferLevelPtr);
-extern Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx, uint32_t[]* DropCount);
+extern void		EthIf_GetPhysAddr(uint8_t CtrlIdx, 
+					  uint8_t* PhysAddrPtr);
+extern void		EthIf_SetPhysAddr(uint8_t CtrlIdx, 
+					  const uint8_t* PhysAddrPtr);
+extern Std_ReturnType	EthIf_UpdatePhysAddrFilter(uint8_t CtrlIdx, 
+						   uint8_t* PhysAddrPtr, 
+						   Eth_FilterActionType Action);
+extern Std_ReturnType	EthIf_GetPortMacAddr(uint8_t* MacAddrPtr, 
+					     uint8_t* SwitchIdxPtr, 
+					     uint8_t* PortIdxPtr);
+extern Std_ReturnType	EthIf_GetArlTable(uint8_t SwitchIdx, 
+					  EthSwt_MacVlanType[]* ArlTable);
+extern Std_ReturnType	EthIf_GetBufferLevel(uint8_t SwitchIdx, 
+					     uint32_t* SwitchBufferLevelPtr);
+extern Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx, 
+					   uint32_t[]* DropCount);
 extern std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_ResetConfiguration(uint8_t SwitchIdx);
-extern Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx, Eth_TimeStampQualType* timeQualPtr, Eth_TimeStampType* timeStampPtr);
-extern void		EthIf_EnableEgressTimeStamp(uint8_t CtrlIdx, uint8_t BufIdx);
-extern void		EthIf_GetEgressTimeStamp(uint8_t CtrlIdx, uint8_t BufIdx, Eth_TimeStampQualType* timeQualPtr, Eth_TimeStampType* timeStampPtr);
-extern void		EthIf_GetIngressTimeStamp(uint8_t CtrlIdx, Eth_DataType* DataPtr, Eth_TimeStampQualType* timeQualPtr, Eth_TimeStampType* timeStampPtr);
-extern void		EthIf_SetCorrectionTime(uint8_t CtrlIdx, Eth_TimeIntDiffType* timeOffsetPtr, Eth_RateRatioType* rateRatioPtr);
-extern Std_ReturnType	EthIf_SetGlobalTime(uint8_t CtrlIdx, Eth_TimeStampType* timeStmapPtr);
-extern BufReq_ReturnType EthIf_ProvideTxBuffer(uint8_t CtrlIdx, Eth_FrameType FrameType, uint8_t Priority, Eth_BufIdxType* BufIdxPtr, uint8_t** BufPtr, uint16_t* LenBytePtr);
-extern Std_ReturnType	EthIf_Transmit(uint8_t CtrlIdx, Eth_BufIdxType BufIdx, Eth_FrameType FrameType, bool TxConfirmation, uint16_t LenByte, uint8_t* PhysAddrPtr);
+extern Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx, 
+					     Eth_TimeStampQualType* timeQualPtr, 
+					     Eth_TimeStampType* timeStampPtr);
+extern void		EthIf_EnableEgressTimeStamp(uint8_t CtrlIdx, 
+						    uint8_t BufIdx);
+extern void		EthIf_GetEgressTimeStamp(uint8_t CtrlIdx, 
+						 uint8_t BufIdx, 
+						 Eth_TimeStampQualType* timeQualPtr, 
+						 Eth_TimeStampType* timeStampPtr);
+extern void		EthIf_GetIngressTimeStamp(uint8_t CtrlIdx, 
+						  Eth_DataType* DataPtr, 
+						  Eth_TimeStampQualType* timeQualPtr, 
+						  Eth_TimeStampType* timeStampPtr);
+extern void		EthIf_SetCorrectionTime(uint8_t CtrlIdx, 
+						Eth_TimeIntDiffType* timeOffsetPtr, 
+						Eth_RateRatioType* rateRatioPtr);
+extern Std_ReturnType	EthIf_SetGlobalTime(uint8_t CtrlIdx, 
+					    Eth_TimeStampType* timeStmapPtr);
+extern BufReq_ReturnType EthIf_ProvideTxBuffer(uint8_t CtrlIdx, 
+					       Eth_FrameType FrameType, 
+					       uint8_t Priority, 
+					       Eth_BufIdxType* BufIdxPtr, 
+					       uint8_t** BufPtr, 
+					       uint16_t* LenBytePtr);
+extern Std_ReturnType	EthIf_Transmit(uint8_t CtrlIdx, 
+				       Eth_BufIdxType BufIdx, 
+				       Eth_FrameType FrameType, 
+				       bool TxConfirmation, 
+				       uint16_t LenByte, 
+				       uint8_t* PhysAddrPtr);
 extern void 		EthIf_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr);
 
 //callback functions
 //move to ethif_cbk.h
-extern void		EthIf_RxIndication(uint8_t CtrlIdx, Eth_FrameType FrameType, bool IsBroadcast, uint8_t* PhysAddrPtr, Eth_DataType* DataPtr, uint16_t LenByte);
-extern void		EthIf_TxConfirmation(uint8_t CtrlIdx, Eth_BufIdxType BufIdx);
-extern void		EthIf_CtrlModeIndication(uint8_t CtrlIdx, Eth_ModeType CtrlMode);
-extern void		EthIf_TrcvModeIndication(uint8_t CtrlIdx, EthTrcv_ModeType TrcvMode);
+extern void		EthIf_RxIndication(uint8_t CtrlIdx, 
+					   Eth_FrameType FrameType, 
+					   bool IsBroadcast, 
+					   uint8_t* PhysAddrPtr, 
+					   Eth_DataType* DataPtr, 
+					   uint16_t LenByte);
+extern void		EthIf_TxConfirmation(uint8_t CtrlIdx, 
+					     Eth_BufIdxType BufIdx);
+extern void		EthIf_CtrlModeIndication(uint8_t CtrlIdx, 
+						 Eth_ModeType CtrlMode);
+extern void		EthIf_TrcvModeIndication(uint8_t CtrlIdx, 
+						 EthTrcv_ModeType TrcvMode);
 
 //Scheduled functions
 extern void		EthIf_MainFunctionRx(void);
