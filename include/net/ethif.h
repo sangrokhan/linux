@@ -54,7 +54,7 @@ extern uint8_t	EthIfOwner;
 //name definition about EthIfRxIndicationFunction
 
 //EthIfSwitch
-extern uint8_t	EthIfSwitchIdx
+extern uint8_t	EthIfSwitchIdx;
 //extern Unknown EthIfSwitchRef /* Symbolic name reference to EthSwtConfig */
 
 //EthIfTrcvLinkStateChgConfig
@@ -92,12 +92,15 @@ extern Std_ReturnType	EthIf_UpdatePhysAddrFilter(uint8_t CtrlIdx,
 extern Std_ReturnType	EthIf_GetPortMacAddr(uint8_t* MacAddrPtr, 
 					     uint8_t* SwitchIdxPtr, 
 					     uint8_t* PortIdxPtr);
-extern Std_ReturnType	EthIf_GetArlTable(uint8_t SwitchIdx, 
-					  EthSwt_MacVlanType[]* ArlTable);
+//Currently Can't Support EthIf_GetArlTable function
+/*
+ *extern Std_ReturnType	EthIf_GetArlTable(uint8_t SwitchIdx, 
+ *					  EthSwt_MacVlanType** ArlTable);
+*/
 extern Std_ReturnType	EthIf_GetBufferLevel(uint8_t SwitchIdx, 
 					     uint32_t* SwitchBufferLevelPtr);
 extern Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx, 
-					   uint32_t[]* DropCount);
+					   uint32_t** DropCount);
 extern Std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_ResetConfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx, 
