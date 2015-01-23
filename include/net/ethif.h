@@ -3,7 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/std_types.h>
-#include <net/eth.h>
+#include <net/eth_generaltypes.h>
 
 typedef struct {
 
@@ -98,7 +98,7 @@ extern Std_ReturnType	EthIf_GetBufferLevel(uint8_t SwitchIdx,
 					     uint32_t* SwitchBufferLevelPtr);
 extern Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx, 
 					   uint32_t[]* DropCount);
-extern std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx);
+extern Std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_ResetConfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx, 
 					     Eth_TimeStampQualType* timeQualPtr, 
