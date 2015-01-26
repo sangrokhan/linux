@@ -7,8 +7,16 @@
 #include <net/eth.h>
 #include <net/ethtrcv.h>
 
-typedef struct {
-  
+typedef enum {
+   INITIALIZING = 1,
+   FAULTY = 2,
+   DISABLED = 3,
+   LISTENING = 4,
+   PRE_MASTER = 5,
+   MASTER = 6,
+   PASSIVE = 7,
+   UNCALIBRATED = 8,
+   SLAVE = 9
 } EthTSyn_ConfigType;
 
 typedef enum {
@@ -37,7 +45,7 @@ extern bool EthTSynDevErrorDetect;
 extern bool EthTSynHardwareTimestampSupport;
 extern uint32_t EthTSynMainFunctionPeriod;	/* Standard using floating point to present INF */
 extern bool EthTSynVersionInfo;
-extern time_t t1, t2, t3, t4;
+extern time_t EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 /* EthTSynGlobalTimeDomain */
 extern uint32_t EthTSynGlobalTimeDomainId;
