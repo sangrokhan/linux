@@ -39,7 +39,7 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   //rate correction -> 0
   //latency for ingress and egress to 0
   
-   switch(configPtr) {
+   switch(*configPtr) {
       case 6 : // If configured as Time Master,
          // the StbM shall allow configuration of the initialization value of the Global Time Base.
          // The initialization value can be either a value from static configuration or a value from non-volatile memory.
@@ -80,7 +80,9 @@ Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
 /* This method is used to set a Global Time Base on ETH in general or to synchronize the Global ETH Time Base with another time base, e.g. Ethernet */
 Std_ReturnType 	EthTSyn_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId, 
 				      StbM_TimeStampType* timeStampPtr) {
-   globalTime = EthIf_SetGlobalTime(CtrlIdx, timeStampPtr);
+   uint8_t CtrlIdx;
+   Eth_TimeStampType* ethTimeStampPtr = timeStampPtr;
+   globalTime = EthIf_SetGlobalTime(CtrlIdx, ethTimeStampPtr);
    return globalTime;
 }
 
@@ -115,7 +117,7 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 		      currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr); // why??
 
             if(Type.Pdelay_Req == 1) {   // if(Type == Pdelay_Req) {
-		         EthTSyncTime2 = *timeStampRawPtr;
+		         EthTSynTime2 = *timeStampRawPtr;
 		      } else if(Type.Sync == 1 && Type == EthTimeGatewaySlavePort) {   // else if(Type == Sync || Type == EthTimeGatewaySlavePort) {
 			      /* Start time stamp for correctionField(i) calculation of Time Aware Bridges */
 			      // Tr,i = *timeStampRawPtr
@@ -145,7 +147,7 @@ void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
             currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr);
          } else if(Type.Pdelay_Req == 1) {   // else if(Type == Pdelay_Req) {
             if((currentTimeRaw = StbM_GetCurrentTimeRaw(timeStampRawPtr)) == "E_OK") {
-               EthTSyncTime1 = *timeStampRawPtr;
+               EthTSynTime1 = *timeStampRawPtr;
             }
          } else if(Type.Pdelay_Resp == 1) {   // else if(Type == Pdelay_Resp) {
             givenTimeStamp = EthTSynTime2;
