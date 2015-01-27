@@ -2,7 +2,43 @@
 #include <linux/std_types.h>
 #include <net/eth.h>
 
+//EthCtrlConfig
+bool	EthCtrlEnableMii;
+bool	EthCtrlEnableRxInterrupt;
+bool	EthCtrlEnableTxInterrupt;
+uint8_t	EthCtrlIdx;
+uint8_t*	EthCtrlPhyAddress;
+#define MAX_ETH_PHY_ADDR_LENTH 17
+uint16_t	EthCtrlRxBufLenByte;
+uint16_t EthCtrlTxBufLenByte;
+uint8_t	EthRxBufTotal;
+uint8_t	EthTxBufTotal;
+
+//EthGeneral
+bool	EthDevErrorDetect;
+bool	EthGetDropCountApi;
+bool	EthGetEhterStatsApi;
+bool	EthGlobalTimeSupport;
+uint8_t	EthIndex;
+uint32_t EthMainFunctionPeriod; /* Standard using floating point to present from 0 to INF */
+uint8_t	EthMaxCtrlsSupported;
+bool	EthUpdatePhysAddrFilter;
+bool	EthVersionInfoApi;
+
+
 void 			Eth_Init(const Eth_ConfigType* CfgPtr) {
+  EthCtrlEnableMii = false;
+  EthCtrlEnableRxInterrupt = false;
+  EthCtrlEnableTxInterrupt = false;
+  EthCtrlIdx = 0;
+  EthCtrlPhyAddress = NULL;
+  EthCtrlRxBufLenByte = 0;
+  EthCtrlTxBufLenByte = 0;
+  EthRxBufTotal = 0;
+  EthTxBufTotal = 0;
+
+  EthDevErrorDetect = false;
+  
 
 }
 
