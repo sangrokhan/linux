@@ -9,10 +9,10 @@
 
 #ifdef PDU_ID_MAX_255
 #define PDU_ID_MAX 255
-uint8_t 	PduIdType;
+typedef uint8_t 	PduIdType;
 #else
 #define PDU_ID_MAX 65535
-uint16_t 	PduIdType;
+typedef uint16_t 	PduIdType;
 #endif
 
 #define PDU_LENGTH_TYPE_8

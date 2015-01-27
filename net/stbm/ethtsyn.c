@@ -25,7 +25,7 @@ StbM_TimeStampRawType* timeStampDiffPtr;
 
 EthTSyn_MessageType Type;
 
-time_t temp;
+time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 
 
@@ -112,21 +112,21 @@ void		EthTSyn_RxIndication(uint8_t CtrlIdx,
 		 // EthIf_GetEgressTimeStamp(CtrlIdx, BufIdx, timeQualPtr, timeStampPtr);
       } else {
          if(Type.Pdelay_Req == 1) {   // if(Type == Pdelay_Req) {
-		    	currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr);
-	  	   } else if(Type.Sync == 1 || Type.Pdelay_Req == 1) {   // else if(Type == Sync || Type == Pdelay_Req) {
-		      currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr); // why??
-
-            if(Type.Pdelay_Req == 1) {   // if(Type == Pdelay_Req) {
-		         EthTSynTime2 = *timeStampRawPtr;
-		      } else if(Type.Sync == 1 && Type == EthTimeGatewaySlavePort) {   // else if(Type == Sync || Type == EthTimeGatewaySlavePort) {
-			      /* Start time stamp for correctionField(i) calculation of Time Aware Bridges */
-			      // Tr,i = *timeStampRawPtr
-		      } else if(Type.Pdelay_Resp == 1) {   // else if(Type == Pdelay_Resp) {
-		         givenTimeStamp = EthTSynTime1;
-
-			      if((timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr)) == "E_OK") {
-                  temp = EthTSynTime4 - EthTSynTime1;
-			         timeStampDiffPtr = (StbM_TimeStampRawType*)&temp; /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
+	   currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr);
+	 } else if(Type.Sync == 1 || Type.Pdelay_Req == 1) {   // else if(Type == Sync || Type == Pdelay_Req) {
+	   currentTime = StbM_GetCurrentTime(timeBaseId, timeStampPtr, userDataPtr); // why??
+	   
+	   if(Type.Pdelay_Req == 1) {   // if(Type == Pdelay_Req) {
+	     EthTSynTime2 = *timeStampRawPtr;
+	   } else if(Type.Sync == 1) {// && Type == EthTimeGatewaySlavePort) {   // else if(Type == Sync || Type == EthTimeGatewaySlavePort) {
+	     /* Start time stamp for correctionField(i) calculation of Time Aware Bridges */
+	     // Tr,i = *timeStampRawPtr
+	   } else if(Type.Pdelay_Resp == 1) {   // else if(Type == Pdelay_Resp) {
+	     givenTimeStamp = EthTSynTime1;
+	     
+	     if((timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr)) == "E_OK") {
+	       temp = EthTSynTime4 - EthTSynTime1;
+	       timeStampDiffPtr = (StbM_TimeStampRawType*)&temp; /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
                }
 		  	   }
 		   }
@@ -156,7 +156,7 @@ void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
                temp = EthTSynTime3 - EthTSynTime2;
                timeStampDiffPtr = (StbM_TimeStampRawType*)&temp;    /* One part of D = ((T4-T1) - (T3-T2)) / 2 */
             }
-         } else if(Type.Sync == 1 && Type == EthTimeGatewayMasterPort) {   // } else if(Type == Sync && Type == EthTimeGatewayMasterPort) {
+         } else if(Type.Sync == 1 ){ //&& Type == EthTimeGatewayMasterPort) {   // } else if(Type == Sync && Type == EthTimeGatewayMasterPort) {
             // givenTimeStamp = (Tr,i);   // Maybe 'Tr' means the time that received message, and 'i' means time-aware system indexed i
             if((timeDifferenceOfCurrentTimeRaw = StbM_GetCurrentTimeDiff(givenTimeStamp, timeStampDiffPtr)) == "E_OK") {
                // timeStampDiffPtr = (Ts,i - Tr,i);   /* For correctionField(i) calculation of Time Aware Bridges */

@@ -1,30 +1,35 @@
 #include <linux/types.h>
+#include <linux/kernel.h>
+//#include <linux/posix-clock.h>
 #include <linux/std_types.h>
 #include <net/eth.h>
 
 //EthCtrlConfig
-bool	EthCtrlEnableMii;
-bool	EthCtrlEnableRxInterrupt;
-bool	EthCtrlEnableTxInterrupt;
-uint8_t	EthCtrlIdx;
+bool		EthCtrlEnableMii;
+bool		EthCtrlEnableRxInterrupt;
+bool		EthCtrlEnableTxInterrupt;
+uint8_t		EthCtrlIdx;
 uint8_t*	EthCtrlPhyAddress;
 #define MAX_ETH_PHY_ADDR_LENTH 17
 uint16_t	EthCtrlRxBufLenByte;
-uint16_t EthCtrlTxBufLenByte;
-uint8_t	EthRxBufTotal;
-uint8_t	EthTxBufTotal;
+uint16_t 	EthCtrlTxBufLenByte;
+uint8_t		EthRxBufTotal;
+uint8_t		EthTxBufTotal;
 
 //EthGeneral
-bool	EthDevErrorDetect;
-bool	EthGetDropCountApi;
-bool	EthGetEhterStatsApi;
-bool	EthGlobalTimeSupport;
-uint8_t	EthIndex;
-uint32_t EthMainFunctionPeriod; /* Standard using floating point to present from 0 to INF */
-uint8_t	EthMaxCtrlsSupported;
-bool	EthUpdatePhysAddrFilter;
-bool	EthVersionInfoApi;
+bool		EthDevErrorDetect;
+bool		EthGetDropCountApi;
+bool		EthGetEtherStatsApi;
+bool		EthGlobalTimeSupport;
+uint8_t		EthIndex;
+uint32_t 	EthMainFunctionPeriod; /* Standard using floating point to present from 0 to INF */
+uint8_t		EthMaxCtrlsSupported;
+bool		EthUpdatePhysAddrFilter;
+bool		EthVersionInfoApi;
 
+struct timespec EthCurrTime;
+struct timespec	EthRxTime;
+struct timespec	EthTxTime;
 
 void 			Eth_Init(const Eth_ConfigType* CfgPtr) {
   EthCtrlEnableMii = false;
@@ -38,22 +43,31 @@ void 			Eth_Init(const Eth_ConfigType* CfgPtr) {
   EthTxBufTotal = 0;
 
   EthDevErrorDetect = false;
-  
-
+  EthGetDropCountApi = false;
+  EthGetEtherStatsApi = false;
+  EthGlobalTimeSupport = false;
+  EthIndex = 0;
+  EthMainFunctionPeriod = 0;
+  EthMaxCtrlsSupported = 0;
+  EthUpdatePhysAddrFilter = false;
+  EthVersionInfoApi = false;
 }
 
 Std_ReturnType		Eth_ControllerInit(uint8_t CtrlIdx, 
 					   uint8_t CfgIdx) {
+  
   return E_OK;
 }
 
 Std_ReturnType		Eth_SetControllerMode(uint8_t CtrlIdx, 
 					      Eth_ModeType CtrlMode) {
+
   return E_OK;
 }
 
 Std_ReturnType		Eth_GetControllerMode(uint8_t CtrlIdx, 
 					      Eth_ModeType* CtrlModePtr) {
+
   return E_OK;
 }
 
@@ -98,10 +112,18 @@ Std_ReturnType		Eth_GetEtherStats(uint8_t CtrlIdx,
   return E_OK;
 }
 
+/* Service ID 0x16 */
 Std_ReturnType		Eth_GetCurrentTime(uint8_t CtrlIdx,
 					   Eth_TimeStampQualType* timeQualPtr,
 					   Eth_TimeStampType* timeStampPtr) {
-  return E_OK;
+  	//Linux Kernel Time Return
+  	//Currently Eth Device Not Support time
+  	getrawmonotonic(&EthCurrTime);
+  	timeStampPtr->secondsHi = (uint16_t)((EthCurrTime.tv_sec & 0x0000FFFF00000000) >> 32);
+	timeStampPtr->seconds = (uint32_t)(EthCurrTime.tv_sec & 0xFFFFFFFF);
+	timeStampPtr->nanoseconds = EthCurrTime.tv_nsec;
+	timeQualPtr = ETH_VALID;
+  	return E_OK;
 }
 
 void			Eth_EnableEgressTimeStamp(uint8_t CtrlIdx,
@@ -126,12 +148,27 @@ void			Eth_GetIngressTimeStamp(uint8_t CtrlIdx,
 void			Eth_SetCorrectionTime(uint8_t CtrlIdx, 
 					      Eth_TimeIntDiffType* timeOffsetPtr, 
 					      Eth_RateRatioType* rateRatioPtr) {
-
+  	//linux kernel time sync
+  	//update
+  	//slave 
 }
 
 Std_ReturnType		Eth_SetGlobalTime(uint8_t CtrlIdx, 
 					  Eth_TimeStampType* timeStampPtr) {
-  return E_OK;
+	//linux kernel time setting
+	//Os time only accessable
+  	//grandmaster only 
+	int ret;
+
+	EthCurrTime.tv_sec = (long long)(timeStampPtr->secondsHi) << 32;
+    	EthCurrTime.tv_sec += (timeStampPtr->seconds);
+	EthCurrTime.tv_nsec = timeStampPtr->nanoseconds;
+	ret = do_settimeofday(&EthCurrTime);
+	if(ret) {
+		return E_NOT_OK;
+	} else {
+		return E_OK;
+	}
 }
 
 BufReq_ReturnType 	Eth_ProvideTxBuffer(uint8_t CtrlIdx, 

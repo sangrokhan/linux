@@ -1,7 +1,10 @@
 #ifndef _ETH_H
 #define _ETH_H
 
+#include <linux/time.h>
 #include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/posix-clock.h>
 #include <linux/std_types.h>
 #include <net/eth_generaltypes.h>
 
@@ -32,15 +35,13 @@ extern uint8_t	EthTxBufTotal;
 //EthGeneral
 extern bool	EthDevErrorDetect;
 extern bool	EthGetDropCountApi;
-extern bool	EthGetEhterStatsApi;
+extern bool	EthGetEtherStatsApi;
 extern bool	EthGlobalTimeSupport;
 extern uint8_t	EthIndex;
 extern uint32_t EthMainFunctionPeriod; /* Standard using floating point to present from 0 to INF */
 extern uint8_t	EthMaxCtrlsSupported;
 extern bool	EthUpdatePhysAddrFilter;
 extern bool	EthVersionInfoApi;
-
-
 
 extern void 			Eth_Init(const Eth_ConfigType* CfgPtr);
 extern Std_ReturnType		Eth_ControllerInit(uint8_t CtrlIdx, 
