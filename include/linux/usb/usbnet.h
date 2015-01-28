@@ -22,6 +22,8 @@
 #ifndef	__LINUX_USB_USBNET_H
 #define	__LINUX_USB_USBNET_H
 
+#include <linux/time.h>
+
 /* interface from usbnet core to each USB networking link we handle */
 struct usbnet {
 	/* housekeeping */
@@ -257,5 +259,8 @@ extern int usbnet_status_start(struct usbnet *dev, gfp_t mem_flags);
 extern void usbnet_status_stop(struct usbnet *dev);
 
 extern void usbnet_update_max_qlen(struct usbnet *dev);
+
+extern void usbnet_get_tx_timestamp(struct timespec *timeStamp);
+extern void usbnet_get_rx_timestamp(struct timespec *timeStamp);
 
 #endif /* __LINUX_USB_USBNET_H */
