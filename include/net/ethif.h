@@ -101,7 +101,7 @@ extern Std_ReturnType	EthIf_GetBufferLevel(uint8_t SwitchIdx,
 					     uint32_t* SwitchBufferLevelPtr);
 extern Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx, 
 					   uint32_t** DropCount);
-extern Std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx);
+extern Std_ReturnType	EthIf_StoreConfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_ResetConfiguration(uint8_t SwitchIdx);
 extern Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx, 
 					     Eth_TimeStampQualType* timeQualPtr, 

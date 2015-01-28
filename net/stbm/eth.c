@@ -1,8 +1,19 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
-//#include <linux/posix-clock.h>
+#include <linux/posix-clock.h>
 #include <linux/std_types.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/ptp.h>
+#include <net/eth_generaltypes.h>
 #include <net/eth.h>
+#include <net/ethif.h>
+
+
+static struct packet_type stbm_packet_type __read_mostly = {
+	.type = cpu_to_be16(ETH_P_1588),
+	.func = Eth_Receive_linux,
+};
 
 //EthCtrlConfig
 bool		EthCtrlEnableMii;
@@ -32,25 +43,27 @@ struct timespec	EthRxTime;
 struct timespec	EthTxTime;
 
 void 			Eth_Init(const Eth_ConfigType* CfgPtr) {
-  EthCtrlEnableMii = false;
-  EthCtrlEnableRxInterrupt = false;
-  EthCtrlEnableTxInterrupt = false;
-  EthCtrlIdx = 0;
-  EthCtrlPhyAddress = NULL;
-  EthCtrlRxBufLenByte = 0;
-  EthCtrlTxBufLenByte = 0;
-  EthRxBufTotal = 0;
-  EthTxBufTotal = 0;
+  	EthCtrlEnableMii = false;
+	EthCtrlEnableRxInterrupt = false;
+	EthCtrlEnableTxInterrupt = false;
+	EthCtrlIdx = 0;
+	EthCtrlPhyAddress = NULL;
+	EthCtrlRxBufLenByte = 0;
+	EthCtrlTxBufLenByte = 0;
+	EthRxBufTotal = 0;
+	EthTxBufTotal = 0;
 
-  EthDevErrorDetect = false;
-  EthGetDropCountApi = false;
-  EthGetEtherStatsApi = false;
-  EthGlobalTimeSupport = false;
-  EthIndex = 0;
-  EthMainFunctionPeriod = 0;
-  EthMaxCtrlsSupported = 0;
-  EthUpdatePhysAddrFilter = false;
-  EthVersionInfoApi = false;
+	EthDevErrorDetect = false;
+	EthGetDropCountApi = false;
+	EthGetEtherStatsApi = false;
+	EthGlobalTimeSupport = false;
+	EthIndex = 0;
+	EthMainFunctionPeriod = 0;
+	EthMaxCtrlsSupported = 0;
+	EthUpdatePhysAddrFilter = false;
+	EthVersionInfoApi = false;
+
+	dev_add_pack(&stbm_packet_type);
 }
 
 Std_ReturnType		Eth_ControllerInit(uint8_t CtrlIdx, 
@@ -189,7 +202,24 @@ Std_ReturnType		Eth_Transmit(uint8_t CtrlIdx,
 
 void			Eth_Receive(uint8_t CtrlIdx, 
 				    Eth_RxStatusType* RxStatusPtr) {
+  
+}
 
+int			Eth_Receive_linux(struct sk_buff* skb, 
+					  struct net_device* dev, 
+					  struct packet_type* pt, 
+					  struct net_device* orig_dev) {
+	const struct ptphdr *ptp;
+	
+	skb = skb_share_check(skb, GFP_ATOMIC);
+	if(!skb)
+	  goto out_of_mem;
+	
+	
+freeskb:
+  	kfree_skb(skb);
+out_of_mem:
+  	return 0;
 }
 
 void			Eth_TxConfirmation(uint8_t CtrlIdx) {

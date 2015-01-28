@@ -2,6 +2,7 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/posix-clock.h>
+#include <linux/std_types.h>
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
 

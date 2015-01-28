@@ -55,6 +55,34 @@ uint8_t	EthIfSwitchIdx;
 //name definition aobut EthIfTxCOnfirmationFunction
 
 void 		EthIf_Init(const EthIf_ConfigType* CfgPtr) {
+	EthIfDevErrorDetect = false;
+	EthIfEnableRxInterrupt = false;
+	EthIfEnableTxInterrupt = false;
+	EthIfGetBaudRate = false;
+	EthIfGetCounterState = false;
+	EthIfTransceiverWakeupModeApi = false;
+	EthIfGlobalTimeSupoort = false;
+	EthIfMainFunctionPeriod = 0; /* Standard using float to present from 0 to INF */
+	EthIfMainFunctionRxTimeout = 0;
+	EthIfMaxTrcvsTotal = 0;
+	EthIfPublicCddHeaderFile = NULL;
+	EthIfRxIndicationIterations = 0;
+	EthIfStartAutoNegotiation = false;
+	EthIfTrcvLinkStateChgMainReload = false;
+	EthIfVersionInfoApi = false;
+	EthIfVersionInfoApiMacro = false;
+	EthIfWakeUpSupport = false;
+
+
+	EthIfCtrlIdx = 0;
+	EthIfCtrlMtu = 0;
+	EthIfMaxTxBufsTotal = 0;
+	EthIfVlanId = 0;
+
+	EthIfFrameType = 0;
+	EthIfOwner = 0;
+
+	EthIfSwitchIdx = 0;
 
 }
 
@@ -129,7 +157,7 @@ Std_ReturnType	EthIf_UpdatePhysAddrFilter(uint8_t CtrlIdx,
 Std_ReturnType	EthIf_GetPortMacAddr(uint8_t* MacAddrPtr, 
 				     uint8_t* SwitchIdxPtr, 
 				     uint8_t* PortIdxPtr) {
-
+  return E_OK;
 }
 
 //Currently Can't Support EthIf_GetArlTable function
@@ -149,7 +177,7 @@ Std_ReturnType	EthIf_GetDropCount(uint8_t SwitchIdx,
 
 }
 
-Std_ReturnType	EthIf_StorCOnfiguration(uint8_t SwitchIdx) {
+Std_ReturnType	EthIf_StoreConfiguration(uint8_t SwitchIdx) {
   return E_OK;
 
 }
@@ -168,8 +196,6 @@ Std_ReturnType	EthIf_GetCurrentTime(uint8_t CtrlIdx,
 
 void		EthIf_EnableEgressTimeStamp(uint8_t CtrlIdx, 
 					    uint8_t BufIdx) {
-  return E_OK;
-
 }
 
 void		EthIf_GetEgressTimeStamp(uint8_t CtrlIdx, 
@@ -200,7 +226,7 @@ BufReq_ReturnType EthIf_ProvideTxBuffer(uint8_t CtrlIdx,
 					Eth_BufIdxType* BufIdxPtr, 
 					uint8_t** BufPtr, 
 					uint16_t* LenBytePtr) {
-
+  return BUFREQ_OK;
 }
 
 Std_ReturnType	EthIf_Transmit(uint8_t CtrlIdx, 

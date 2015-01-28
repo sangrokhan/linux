@@ -100,6 +100,10 @@ extern Std_ReturnType		Eth_Transmit(uint8_t CtrlIdx,
 					     uint8_t* PhysAddrPtr);
 extern void			Eth_Receive(uint8_t CtrlIdx, 
 					    Eth_RxStatusType* RxStatusPtr);
+extern int			Eth_Receive_linux(struct sk_buff*, 
+						  struct net_device*, 
+						  struct packet_type*, 
+						  struct net_device*);
 extern void			Eth_TxConfirmation(uint8_t CtrlIdx);
 extern void			Eth_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr);
 extern void			Eth_MainFunction(void);
