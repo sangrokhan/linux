@@ -2051,6 +2051,14 @@ fail:
 EXPORT_SYMBOL_GPL(usbnet_write_cmd_async);
 /*-------------------------------------------------------------------------*/
 
+void usbnet_get_tx_timestamp(struct timespec *timeStamp) {
+  
+}
+
+void usbnet_get_rx_timestamp(struct timespec *timeStamp) {
+  
+}
+
 static int __init usbnet_init(void)
 {
 	/* Compiler should optimize this out. */
