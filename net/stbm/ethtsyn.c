@@ -33,7 +33,7 @@ EthTSyn_MessageType Type;
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 static int ethtsyn_netdev_event(struct notifier_block *this, 
-				unsgined long event, 
+				unsigned long event, 
 				void* ptr) {
   	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct netdev_notifier_change_info *change_info;
@@ -46,12 +46,12 @@ static int ethtsyn_netdev_event(struct notifier_block *this,
 }
 
 static struct notifier_block ethtsyn_netdev_notifier = {
-  	.notifier_call = ethtsyn_netdev_notifier,
+  	.notifier_call = ethtsyn_netdev_event,
 };
 
 static struct packet_type ethtsyn_packet_type __read_mostly = {
 	.type = cpu_to_be16(ETH_P_1588),
-	.func = ,
+	//	.func = 
 };
 
 static const struct file_operations ethtsyn_seq_fops = {
