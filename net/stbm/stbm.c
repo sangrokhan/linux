@@ -32,6 +32,7 @@ void StbM_Init(void) {
   StbMSyncLossThreshold = 0;
   StbMSyncLossTimeout = 0;
   StbMSynchronizedTimeBaseIdentifier = 0;
+<<<<<<< HEAD
 >>>>>>> 8c569632595a020b12f31c2665bbee92a8ef3a68
 
 	//[SWS_StbM_00171]
@@ -39,6 +40,14 @@ void StbM_Init(void) {
 	// what is NvM ???
 	// In case the restore is not successful, the Time Base shall start with zero
 
+=======
+
+	//[SWS_StbM_00171]
+	// For each Time Base configured to be stored non-volatile (StbMStoreTimebaseNonVolatile == STORAGE_AT_SHUTDOWN), the value shall be loaded from NvM. 
+	// what is NvM ???
+	// In case the restore is not successful, the Time Base shall start with zero
+
+>>>>>>> 8c569632595a020b12f31c2665bbee92a8ef3a68
 }
 /*test*/
 Std_ReturnType StbM_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
