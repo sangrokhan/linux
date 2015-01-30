@@ -2076,9 +2076,12 @@ static inline void sk_wake_async(struct sock *sk, int how, int band)
  */
 #define TCP_SKB_MIN_TRUESIZE	(2048 + SKB_DATA_ALIGN(sizeof(struct sk_buff)))
 
+#define SOCK_MIN_SNDBUF		1460
+#define SOCK_MIN_RCVBUF		1460
+/* SR Change
 #define SOCK_MIN_SNDBUF		(TCP_SKB_MIN_TRUESIZE * 2)
 #define SOCK_MIN_RCVBUF		 TCP_SKB_MIN_TRUESIZE
-
+*/
 static inline void sk_stream_moderate_sndbuf(struct sock *sk)
 {
 	if (!(sk->sk_userlocks & SOCK_SNDBUF_LOCK)) {

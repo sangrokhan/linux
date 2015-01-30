@@ -1,9 +1,14 @@
 
 #include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/export.h>
+#include <linux/std_types.h>
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
 #include <net/ethif.h>
-
+#include <net/ptp.h>
 
 bool EthTSynHardwareTimestampSupport;
 
@@ -27,7 +32,67 @@ EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
+static int ethtsyn_netdev_event(struct notifier_block *this, 
+				unsgined long event, 
+				void* ptr) {
+  	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_change_info *change_info;
 
+	switch(event) {
+	default: 
+	  break;
+	}
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block ethtsyn_netdev_notifier = {
+  	.notifier_call = ethtsyn_netdev_notifier,
+};
+
+static struct packet_type ethtsyn_packet_type __read_mostly = {
+	.type = cpu_to_be16(ETH_P_1588),
+	.func = ,
+};
+
+static const struct file_operations ethtsyn_seq_fops = {
+  	.owner = THIS_MODULE,
+};
+
+static int __net_init ethtsyn_net_init(struct net *net) {
+  	if(!proc_create("ethtsyn", S_IRUGO, net->proc_net, &ethtsyn_seq_fops))
+    		return -ENOMEM;
+  	return 0;
+}
+
+static void __net_init ethtsyn_net_exit(struct net *net) {
+  	remove_proc_entry("ethtsyn",net->proc_net);
+}
+
+static struct pernet_operations ethtsyn_net_ops = {
+  	.init = ethtsyn_net_init,
+  	.exit = ethtsyn_net_exit,
+};
+
+static int __init ethtsyn_proc_init(void) {
+  	return register_pernet_subsys(&ethtsyn_net_ops);
+}
+
+static int ethtsyn_rcv(struct sk_buff* skb, 
+		       struct net_device* dev, 
+		       struct packet_type* pt, 
+		       struct net_device* orig_dev) {
+  	const struct ptphdr *ptp;
+	
+	skb = skb_share_check(skb, GFP_ATOMIC);
+	if(!skb)
+	  goto out_of_mem;
+	
+	//ptp = 
+freeskb:
+  	kfree_skb(skb);
+out_of_mem:
+  	return 0;
+}
 
 /* Initialize all internal variables and set the EthTSync module to init state */
 void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
@@ -39,22 +104,26 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   //rate correction -> 0
   //latency for ingress and egress to 0
   
-   switch(*configPtr) {
-      case 6 : // If configured as Time Master,
+   	switch(*configPtr) {
+      		case 6 : // If configured as Time Master,
          // the StbM shall allow configuration of the initialization value of the Global Time Base.
          // The initialization value can be either a value from static configuration or a value from non-volatile memory.
          // StbM_SetGlobalTime();
-         break;
-      case 9 : // If configured as Time slave,
+         	break;
+      		case 9 : // If configured as Time slave,
          // the StbM shall use the Local Time Base while no valid Global Time Base is available (e.g. at startup)
          //    - Startup with a defined Time Base.
          // the StbM shall initialize the Local Time Base with 0 at startup.
          //    - Startup with a network wide common Time Base value.
          // StbM_SetGlobalTime();
-         break;
-   }
+         	break;
+	}
 
-   EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
+   	EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
+
+   	dev_add_pack(&ethtsyn_packet_type);
+   	ethtsyn_proc_init();
+	register_netdevice_notifier(ethtsyn_netdev_notifier);	   
 }
 
 /* Returns the version information of this module */

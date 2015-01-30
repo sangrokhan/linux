@@ -9,12 +9,6 @@
 #include <net/eth.h>
 #include <net/ethif.h>
 
-
-static struct packet_type stbm_packet_type __read_mostly = {
-	.type = cpu_to_be16(ETH_P_1588),
-	.func = Eth_Receive_linux,
-};
-
 //EthCtrlConfig
 bool		EthCtrlEnableMii;
 bool		EthCtrlEnableRxInterrupt;
@@ -62,8 +56,6 @@ void 			Eth_Init(const Eth_ConfigType* CfgPtr) {
 	EthMaxCtrlsSupported = 0;
 	EthUpdatePhysAddrFilter = false;
 	EthVersionInfoApi = false;
-
-	dev_add_pack(&stbm_packet_type);
 }
 
 Std_ReturnType		Eth_ControllerInit(uint8_t CtrlIdx, 
@@ -209,17 +201,6 @@ int			Eth_Receive_linux(struct sk_buff* skb,
 					  struct net_device* dev, 
 					  struct packet_type* pt, 
 					  struct net_device* orig_dev) {
-	const struct ptphdr *ptp;
-	
-	skb = skb_share_check(skb, GFP_ATOMIC);
-	if(!skb)
-	  goto out_of_mem;
-	
-	
-freeskb:
-  	kfree_skb(skb);
-out_of_mem:
-  	return 0;
 }
 
 void			Eth_TxConfirmation(uint8_t CtrlIdx) {

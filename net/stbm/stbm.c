@@ -1,10 +1,13 @@
-
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/export.h>
 #include <linux/posix-clock.h>
 #include <linux/std_types.h>
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
+#include <net/ptp.h>
 
 /* StbMSynchronizedTimeBase */
 bool StbMIsSystemWideGlobalTimeMaster;
@@ -18,12 +21,10 @@ void StbM_GetVersionInfo(void) {
 }
 
 void StbM_Init(void) {
-  StbMIsSystemWideGlobalTimeMaster = 0;
-  StbMSyncLossThreshold = 0;
-  StbMSyncLossTimeout = 0;
-  StbMSynchronizedTimeBaseIdentifier = 0;
-  
-  
+  	StbMIsSystemWideGlobalTimeMaster = 0;
+  	StbMSyncLossThreshold = 0;
+  	StbMSyncLossTimeout = 0;
+  	StbMSynchronizedTimeBaseIdentifier = 0;
 }
 
 Std_ReturnType StbM_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
