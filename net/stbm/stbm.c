@@ -35,10 +35,12 @@ void StbM_Init(void) {
 Std_ReturnType StbM_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
 				   StbM_TimeStampType* timeStampPtr,
 				   StbM_UserDataType* userDataPtr) {
-  struct timespec local_current_time;
+ 	struct timespec local_current_time;
+
+	EthTSyn_SyncStateType SyncState;
 
 	// dongwon0  [SWS_StbM_00176]
-	switch(EthTSyn_SyncStateType){
+	switch(SyncState){
 
 		case ETHTSYN_SYNC:
 			timeStampPtr->timeBaseStatus.GLOBAL_TIME_BASE = 1;
@@ -68,8 +70,8 @@ Std_ReturnType StbM_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId,
 	
 	// the return value of StbM_GetCurrentTime() shall be E_NOT_OK if syncState is set to ETHTSYN_UNCERTAIN,
 	// otherwise the return value shall be E_OK
-	if(EthTSyn_SyncStateType == ETHTSYN_UNCERTAIN){
-		return E_NOT_OK
+	if(SyncState == ETHTSYN_UNCERTAIN){
+		return E_NOT_OK;
 	}
 	else {
 		return E_OK;
@@ -140,9 +142,9 @@ Std_ReturnType	StbM_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId,
 
   //if UserDataType is not null -> setting to where?
   
-  return E_OK;
-error:
-  return E_NOT_OK;
+	  return E_OK;
+	//error:
+	//  return E_NOT_OK;
 }
 
 Std_ReturnType	StbM_SetUserData(StbM_SynchronizedTimeBaseType timeBaseId, 
