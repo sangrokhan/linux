@@ -32,26 +32,94 @@ EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
-static int ethtsyn_netdev_event(struct notifier_block *this, 
+
+
+//Parameters need to check
+//code copied from arp_create
+//parameters may not be need
+//need to compare arp & ptp 
+struct sk_buff* ethtsyn_create(int type, 
+			       int ptype, 
+			       __be32 dest_ip, 
+			       struct net_device* dev, 
+			       __be32 src_ip, 
+			       const unsigned char* dest_hw, 
+			       const unsigned char* src_hw, 
+			       const unsigned char* target_hw) {
+	struct sk_buff* skb;
+	struct ptphdr* ptp;
+	unsigned char* ptp_ptr;
+	int hlen = LL_RESERVED_SPACE(dev);
+	int tlen = dev->needed_tailroom;
+  
+	/*
+	 *	Allocate a buffer
+	 */
+	
+	skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
+	if(skb == NULL) 
+	  	return NULL;
+	
+	skb_reserve(skb, hlen);
+	skb_reset_network_header(skb);
+	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
+	skb->dev = dev;
+	skb->protocol = htons(ETH_P_1588);
+	if(src_hw == NULL) 
+	  src_hw = dev->dev_addr;
+	if(dest_hw == NULL)
+	  dest_hw = dev->broadcast;	
+	//should not be broadcast. routine needs copied from tcp or udp source code 
+	//how tcp or udp is using arp protocol to get device address
+	//or need to check how address is decided in AUTOSAR standard
+	
+	/*
+	 * Fill the device header for the ptp frame
+	 */
+
+	if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
+	  goto out;
+	
+	/*
+	 * Fill out the ptp protocol part
+	 * See the Standard paper then fill the logic of PTP
+	 * Need to seperate part as Pdelay_request / Pdelay_response / Pdelay_response_follow / Sync
+	 * based on packet type as i mentioned above
+	 */
+	/* use this kind of approach
+	switch(packetType) {
+		case Pdelay_request :
+			break;
+		case Pdelay_response :
+			break;
+		case Pdelay_response follow :
+			break;
+		case Sync :
+			break;
+	}
+	*/
+
+	return skb;
+out :
+	kfree_skb(skb);
+	return NULL;
+} EXPORT_SYMBOL(ethtsyn_create);
+
+static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
 				void* ptr) {
-  	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct netdev_notifier_change_info *change_info;
+  	struct net_device* dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_change_info* change_info;
 
 	switch(event) {
 	default: 
-	  break;
+		break;
 	}
 	return NOTIFY_DONE;
 }
 
 static struct notifier_block ethtsyn_netdev_notifier = {
   	.notifier_call = ethtsyn_netdev_event,
-};
-
-static struct packet_type ethtsyn_packet_type __read_mostly = {
-	.type = cpu_to_be16(ETH_P_1588),
-	//	.func = 
 };
 
 static const struct file_operations ethtsyn_seq_fops = {
@@ -94,6 +162,11 @@ out_of_mem:
   	return 0;
 }
 
+static struct packet_type ethtsyn_packet_type __read_mostly = {
+	.type = cpu_to_be16(ETH_P_1588),
+	.func = ethtsyn_rcv
+};
+
 /* Initialize all internal variables and set the EthTSync module to init state */
 void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   //When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
@@ -121,9 +194,10 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
 
    	EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
 
+	//copied from arp style
    	dev_add_pack(&ethtsyn_packet_type);
    	ethtsyn_proc_init();
-	register_netdevice_notifier(ethtsyn_netdev_notifier);	   
+	register_netdevice_notifier(&ethtsyn_netdev_notifier);	   
 }
 
 /* Returns the version information of this module */

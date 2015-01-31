@@ -21,4 +21,19 @@ struct ptphdr{
   uint8_t	logMessageInterval;
 };
 
+static inline struct ptphdr *ptp_hdr(const struct sk_buff *skb) {
+  return (struct ptphdr *)skb_network_header(skb); 
+}
+
+/*
+ * need to check hdr size
+ * why dev->addr_len and sizeof(u32) need to be multiplied 2 times
+ */
+static inline int ptp_hdr_len(struct net_device *dev) {
+  switch(dev->type) {
+  default:
+    return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
+  }
+}
+
 #endif
