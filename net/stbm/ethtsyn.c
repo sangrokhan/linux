@@ -1,6 +1,8 @@
 
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timer.h>
 #include <linux/errno.h>
 #include <linux/netdevice.h>
 #include <linux/export.h>
@@ -9,6 +11,8 @@
 #include <net/ethtsyn.h>
 #include <net/ethif.h>
 #include <net/ptp.h>
+
+MODULE_LICENSE("GPL");
 
 bool EthTSynHardwareTimestampSupport;
 
@@ -32,6 +36,7 @@ EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
+static struct timer_list ethTSynTimer;
 
 
 //Parameters need to check
@@ -161,6 +166,46 @@ freeskb:
 out_of_mem:
   	return 0;
 }
+
+/* Start of Timer */
+static void ethtsyn_timer_callback(unsigned long arg) {
+   unsigned long now = jiffies;
+
+   printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
+
+}
+
+int init_module(void) {
+   int ret;
+
+   printk(KERN_INFO "Timer module installing\n");
+
+   setup_timer(&ethTSynTimer, ethtsyn_timer_callback, 0);
+
+   ret = mod_timer(&ethTSynTimer, jiffies + msecs_to_jiffies(200));
+
+   if(ret) {
+      printk(KERN_INFO "Error in mod_timer\n");
+   }
+
+   return 0;
+}
+
+void cleanup_module(void) {
+   int ret;
+
+   ret = del_timer(&ethTSynTimer);
+
+   if(ret) {
+      printk(KERN_INFO "The timer is still in use...\n");
+   }
+
+   printk(KERN_INFO "Timer module uninstalling\n");
+
+   return;
+}
+
+/* End of Timer */
 
 static struct packet_type ethtsyn_packet_type __read_mostly = {
 	.type = cpu_to_be16(ETH_P_1588),
