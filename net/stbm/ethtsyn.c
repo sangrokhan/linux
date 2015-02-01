@@ -38,6 +38,7 @@ time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 static struct timer_list ethTSynTimer;
 
+void ethtsyn_timer_callback(unsigned long arg);
 
 //Parameters need to check
 //code copied from arp_create
@@ -168,7 +169,8 @@ out_of_mem:
 }
 
 /* Start of Timer */
-static void ethtsyn_timer_callback(unsigned long arg) {
+//static void ethtsyn_timer_callback(unsigned long arg) {
+void ethtsyn_timer_callback(unsigned long arg) {
    unsigned long now = jiffies;
 
    printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
