@@ -6,6 +6,7 @@
 #include <linux/stddef.h>
 #include <net/eth.h>
 #include <net/ethtrcv.h>
+#include <net/stbm.h>
 
 typedef enum {
    INITIALIZING = 1,

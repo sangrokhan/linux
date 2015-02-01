@@ -172,12 +172,18 @@ out_of_mem:
 //static void ethtsyn_timer_callback(unsigned long arg) {
 void ethtsyn_timer_callback(unsigned long arg) {
    unsigned long now = jiffies;
+   int ret;
 
    printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 
+   ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
+
+   if(ret) {
+      printk(KERN_INFO "Error in mod_timer\n");
+   }
 }
 
-int init_module(void) {
+int ethtsyn_timer_init_module(void) {
    int ret;
 
    printk(KERN_INFO "Timer module installing\n");
@@ -193,7 +199,7 @@ int init_module(void) {
    return 0;
 }
 
-void cleanup_module(void) {
+void ethtsyn_timer_cleanup_module(void) {
    int ret;
 
    ret = del_timer(&ethTSynTimer);
@@ -216,13 +222,13 @@ static struct packet_type ethtsyn_packet_type __read_mostly = {
 
 /* Initialize all internal variables and set the EthTSync module to init state */
 void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
-  //When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
-  //ETHTSYN_E_NOT_INITIALIZED when any API is called in uninitialized state
+  	//When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
+  	//ETHTSYN_E_NOT_INITIALIZED when any API is called in uninitialized state
+	
+ 	 //After first initialized, when init function is called, reinitialize
 
-  //After first initialized, when init function is called, reinitialize
-
-  //rate correction -> 0
-  //latency for ingress and egress to 0
+  	//rate correction -> 0
+  	//latency for ingress and egress to 0
   
    	switch(*configPtr) {
       		case 6 : // If configured as Time Master,
@@ -241,10 +247,13 @@ void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
 
    	EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
 
+	printk(KERN_INFO "EthTsyn init function called\n");
+
 	//copied from arp style
    	dev_add_pack(&ethtsyn_packet_type);
    	ethtsyn_proc_init();
 	register_netdevice_notifier(&ethtsyn_netdev_notifier);	   
+	ethtsyn_timer_init_module();
 }
 
 /* Returns the version information of this module */

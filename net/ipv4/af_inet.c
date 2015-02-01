@@ -115,6 +115,9 @@
 #include <net/xfrm.h>
 #include <net/net_namespace.h>
 #include <net/secure_seq.h>
+
+#include <net/ethtsyn.h>
+
 #ifdef CONFIG_IP_MROUTE
 #include <linux/mroute.h>
 #endif
@@ -1672,6 +1675,11 @@ static int __init inet_init(void)
 	struct inet_protosw *q;
 	struct list_head *r;
 	int rc = -EINVAL;
+#ifdef CONFIG_ETHTSYN_MASTER
+	EthTSyn_ConfigType config = MASTER;
+#else
+	EthTSyn_ConfigType config = SLAVE;
+#endif
 
 	BUILD_BUG_ON(sizeof(struct inet_skb_parm) > FIELD_SIZEOF(struct sk_buff, cb));
 
@@ -1778,6 +1786,9 @@ static int __init inet_init(void)
 	ipv4_proc_init();
 
 	ipfrag_init();
+
+	EthTSyn_Init(&config);
+	printk(KERN_INFO "EthTSyn init\n");
 
 	dev_add_pack(&ip_packet_type);
 
