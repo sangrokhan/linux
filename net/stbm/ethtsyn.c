@@ -216,6 +216,7 @@ struct sk_buff* ethtsyn_create(int type,
 	  	ptp->messageType = type;
       
 <<<<<<< HEAD
+<<<<<<< HEAD
       /* Sync */
       case 0 :
          printk(KERN_INFO "This is type of Syn.\n");
@@ -279,6 +280,11 @@ struct sk_buff* ethtsyn_create(int type,
 	  printk(KERN_INFO "This is type of Syn.\n");
 >>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
          
+=======
+		/* Sync */
+	case 0 :
+	  printk(KERN_INFO "This is type of Syn.\n");
+>>>>>>> b387883... conflict solve
 	  // SynMsg syn_msg;
 	  // syn_msg->header = ptp;
 	  
@@ -499,6 +505,9 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b387883... conflict solve
 			// originally, might get RxTimeT2, RxTimeT3 in packet and save it
 
 			ktime_t temp1, temp2;
@@ -510,6 +519,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 				
 		 break;
 	}	
+<<<<<<< HEAD
 =======
 			// originally need to get RxTimeT2, RxTimeT3 in packet
 
@@ -518,6 +528,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		 break;
 	}
 >>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
+=======
+>>>>>>> b387883... conflict solve
 
 freeskb:
   	kfree_skb(skb);
