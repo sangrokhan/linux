@@ -105,11 +105,81 @@ struct sk_buff* ethtsyn_create(int type,
 	}
 	*/
 
+   switch(type) {
+      ptp->messageType = type;
+      
+      /* Sync */
+      case 0 :
+         printk(KERN_INFO "This is type of Syn.\n");
+         
+         // SynMsg syn_msg;
+         // syn_msg->header = ptp;
+         
+         break;
+
+      /* Pdelay_Req */
+      case 2 :
+         printk(KERN_INFO "This is type of Pdelay_Req.\n");
+         
+         // PdelayReqMsg pdelay_req_msg;
+
+         //ptp->correctionField = 0;
+         // ptp->domainNumber = 0;
+         // pdelay_req_msg->header = ptp;
+         // clock_gettime(CLOCK_REALTIME, &pdelay_req_msg->originTimestamp);
+         
+         break;
+
+      /* Pdelay_Resp */
+      case 3 :
+         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+         
+         // PdelayRespMsg pdelay_resp_msg;
+         //ptp->correctionField = 0; 
+         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+         // pdelay_resp_msg->header = ptp;
+         
+         break;
+
+      /* Follow_Up */
+      case 8 :
+         printk(KERN_INFO "This is type of Follow_Up.\n");
+         
+         // FollowUpMsg follow_up_msg;
+
+         // follow_up_msg->header = ptp;
+         
+         break;
+
+      /* Pdelay_Resp_Follow_Up */
+      case 10 :
+         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+
+         // PdelayRespFollowUpMsg pdelay_resp_follow_up_msg;
+
+         // ptp->correctionField = ;   // Copy the correctionField from the Pdelay_Req message to the correctionField of the Pdelay_Resp_Follow_Up message
+         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+
+         // pdelay_resp_follow_up_msg->header = ptp;
+         
+         break;
+   }
+
 	return skb;
 out :
 	kfree_skb(skb);
 	return NULL;
 } EXPORT_SYMBOL(ethtsyn_create);
+
+/*
+* Send an arp packet.
+*/
+void ethtsyn_xmit(struct sk_buff *skb)
+{
+      /* Send it off, maybe filter it using firewalling first.  */
+      // NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+}
+EXPORT_SYMBOL(ethtsyn_xmit);
 
 static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
@@ -155,6 +225,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct net_device* dev, 
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
+   printk(KERN_INFO "Receive Packet!!\n");
   	const struct ptphdr *ptp;
 	
 	skb = skb_share_check(skb, GFP_ATOMIC);
@@ -169,8 +240,9 @@ out_of_mem:
 }
 
 /* Start of Timer */
-//static void ethtsyn_timer_callback(unsigned long arg) {
 void ethtsyn_timer_callback(unsigned long arg) {
+   struct sk_buff *skb;
+
    unsigned long now = jiffies;
    int ret;
 
@@ -181,6 +253,9 @@ void ethtsyn_timer_callback(unsigned long arg) {
    if(ret) {
       printk(KERN_INFO "Error in mod_timer\n");
    }
+
+   skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
+   ethtsyn_xmit(skb);
 }
 
 int ethtsyn_timer_init_module(void) {
