@@ -1,4 +1,3 @@
-
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -7,11 +6,18 @@
 #include <linux/netdevice.h>
 #include <linux/export.h>
 #include <linux/std_types.h>
+#include <linux/audit.h>
+#include <linux/socket.h>
+#include <linux/byteorder/generic.h>
+#include <uapi/linux/in.h>
+#include <uapi/linux/snmp.h>
+#include <net/ip.h>
 #include <net/stbm.h>
 #include <net/ethtsyn.h>
 #include <net/ethif.h>
 #include <net/ptp.h>
 #include <net/sock.h>
+#include <net/route.h>
 
 MODULE_LICENSE("GPL");
 
@@ -40,9 +46,125 @@ time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
 ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
 
+struct sockaddr_in sockaddr;
+
+const char* addr_char = "192.168.0.100";
+
 static struct timer_list ethTSynTimer;
 
 void ethtsyn_timer_callback(unsigned long arg);
+
+//char type ip address change to sockaddr_storage type
+static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_storage *address) {
+  	uint32_t tempAddr;
+	uint8_t arr[4];
+	int a, b, c ,d;
+	sscanf(ch_addr, "%d.%d.%d.%d", &a, &b, &c, &d);
+	arr[0] = a; arr[1] = b; arr[2] = c; arr[3] = d;
+	tempAddr = *(uint32_t *)arr;
+	memcpy(address, &tempAddr, 4);
+	audit_sockaddr(4, address);
+}
+
+//copied from udp source code 
+static void ethtsyn_route_check(struct msghdr *msg,
+				struct sock *sk) {
+  	struct inet_sock *inet = inet_sk(sk);
+	struct sk_buff* skb;
+	struct rtable *rt = NULL;
+	struct flowi4 fl4_stack;
+	struct flowi4 *fl4;
+	struct ipcm_cookie ipc;
+	struct sk_buff *skb;
+	
+	int connected = 0;
+	u8 tos;
+	int err, len;
+	__be32 daddr, faddr, saddr;
+	__be16 dport;	//port value is need? this is not user application
+
+	if(msg->msg_name) {
+		struct sockaddr_in *usin = (struct sockaddr_in *) msg->msg_name;
+		if(msg->msg_namelen < sizeof(*usin))
+			return -EINVAL;
+		if(usin->sin_family != AF_INET) {
+		  	if(usin->sin_family != AF_UNSPEC) {
+			  	return -EAFNOSUPPORT;
+		  	}
+		}
+		daddr = usin->sin_addr.s_addr;
+		//dport = ?	//if need fill the port value
+	}
+	
+	tos = RT_TOS(inet->tos);	//need to check what value need to be initialized to inet
+	if(sock_flag(sk, SOCK_LOCALROUTE) ||
+	   (msg->msg_flags & MSG_DONTROUTE) ||
+	   (ipc.opt && ipc.opt->opt.is_strictroute)) {
+	  	tos |= RTO_ONLINK;
+	  	connected = 0;
+	}
+	
+	/*
+	 * TCP always connected, so using sk_dst_check for routing 
+	 * UDP is not connected always, so flow check is need;
+	 */
+	if(connected)
+	  	rt = (struct rtable *) sk_dst_check(sk, 0);
+
+	if(rt == NULL) {
+		struct net *net = sock_net(sk);  
+		
+		fl4 = &fl4_stack;
+		flowi4_init_output(fl4, ipc.oif, sk->sk_mark, tos,
+				   RT_SCOPE_UNIVERSE, sk->sk_protocol,
+				   inet_sk_flowi_flags(sk) | FLOWI_FLAG_CAN_SLEEP,
+				   faddr, saddr, dport, inet->inet_sport);
+		//security_sk_classify_flow(sk, flowi4_to_flow(fl4));	//maybe nothing happend
+		rt = ip_route_output_flow(net, fl4, sk);		//flow check function
+		if(IS_ERR(rt)) {
+		  err = PTR_ERR(rt);
+		  rt = NULL;
+		  if(err = -ENETUNREACH)
+		    	IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
+		  goto out;
+		}
+
+		err = -EACCES;
+		if((rt->rt_flags & RTCF_BROADCAST) && 
+		   !sock_flag(sk, SOCK_BROADCAST))
+		  	goto out;
+		if(connected)
+		  	sk_dst_set(sk, dst_clone(&rt->dst));
+	}
+
+	if(msg->msg_flags & MSG_CONFIRM)
+	  goto do_confirm;
+back_from_confirm:
+	
+	saddr = fl4->saddr;
+	if(!ipc.addr)
+	  daddr = ipc.addr = fl4->daddr;
+
+	if(!corkreq) {
+	  skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
+			    sizeof(sutrct udphdr), &ipc, &rt, 
+			    msg->msg_flags);
+	  err = PTR_ERR(skb);
+	  if(!IS_ERROR_OR_NULL(skb))
+	    err = udp_send_skb(skb, fl4);
+	}
+out:
+	
+
+
+do_confirm:
+	dst_confirm(&rt->dst);
+	//if(!(msg->msg_flags & MSG_PROBE) || len)	//CHECK ABOUT MSG_FLAGS 
+	  	goto back_from_confirm;
+	err = 0;
+	goto out;
+
+}
 
 //Parameters need to check
 //code copied from arp_create
@@ -52,24 +174,24 @@ struct sk_buff* ethtsyn_create(int type,
 			       int ptype, 
 			       __be32 dest_ip, 
 			       struct net_device* dev, 
-			       __be32 src_ip, 
+			       __be32 src_ip,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
 			       const unsigned char* target_hw) {
-	struct sk_buff* skb;
 	struct ptphdr* ptp;
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
-  
+
+
 	/*
 	 *	Allocate a buffer
 	 */
-	
+
 	skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
 	if(skb == NULL) 
 	  	return NULL;
-	
+
 	skb_reserve(skb, hlen);
 	skb_reset_network_header(skb);
 	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
@@ -88,30 +210,12 @@ struct sk_buff* ethtsyn_create(int type,
 	 */
 
 	if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
-	  goto out;
-	
-	/*
-	 * Fill out the ptp protocol part
-	 * See the Standard paper then fill the logic of PTP
-	 * Need to seperate part as Pdelay_request / Pdelay_response / Pdelay_response_follow / Sync
-	 * based on packet type as i mentioned above
-	 */
-	/* use this kind of approach
-	switch(packetType) {
-		case Pdelay_request :
-			break;
-		case Pdelay_response :
-			break;
-		case Pdelay_response follow :
-			break;
-		case Sync :
-			break;
-	}
-	*/
+	  	goto out;
 
-   switch(type) {
-      ptp->messageType = type;
+	switch(type) {
+	  	ptp->messageType = type;
       
+<<<<<<< HEAD
       /* Sync */
       case 0 :
          printk(KERN_INFO "This is type of Syn.\n");
@@ -169,15 +273,71 @@ struct sk_buff* ethtsyn_create(int type,
          // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
 
          // pdelay_resp_follow_up_msg->header = ptp;
+=======
+		/* Sync */
+	case 0 :
+	  printk(KERN_INFO "This is type of Syn.\n");
+>>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
          
-         break;
-   }
-
+	  // SynMsg syn_msg;
+	  // syn_msg->header = ptp;
+	  
+	  break;
+	  
+	  /* Pdelay_Req */
+	case 2 :
+	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+	  
+	  // PdelayReqMsg pdelay_req_msg;
+	  
+	  //ptp->correctionField = 0;
+	  // ptp->domainNumber = 0;
+	  // pdelay_req_msg->header = ptp;
+	  // clock_gettime(CLOCK_REALTIME, &pdelay_req_msg->originTimestamp);
+	  
+	  break;
+	  
+	  /* Pdelay_Resp */
+	case 3 :
+	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+	  
+	  // PdelayRespMsg pdelay_resp_msg;
+	  //ptp->correctionField = 0; 
+	  // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+	  // pdelay_resp_msg->header = ptp;
+	  
+	  break;
+	  
+	  /* Follow_Up */
+	case 8 :
+	  printk(KERN_INFO "This is type of Follow_Up.\n");
+	  
+	  // FollowUpMsg follow_up_msg;
+	  
+	  // follow_up_msg->header = ptp;
+	  
+	  break;
+	  
+	  /* Pdelay_Resp_Follow_Up */
+	case 10 :
+	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+	  
+	  // PdelayRespFollowUpMsg pdelay_resp_follow_up_msg;
+	  
+	  // ptp->correctionField = ;   // Copy the correctionField from the Pdelay_Req message to the correctionField of the Pdelay_Resp_Follow_Up message
+	  // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+	  
+	  // pdelay_resp_follow_up_msg->header = ptp;
+	  
+	  break;
+	}
+	
 	return skb;
 out :
 	kfree_skb(skb);
 	return NULL;
-} EXPORT_SYMBOL(ethtsyn_create);
+} 
+EXPORT_SYMBOL(ethtsyn_create);
 
 /*
 * Send an arp packet.
@@ -193,6 +353,8 @@ EXPORT_SYMBOL(ethtsyn_xmit);
 * skb might have a dst pointer attached, refcounted or not.
 * _skb_refdst low order bit is set if refcount was _not_ taken
 */
+
+/*
 #define SKB_DST_NOREF   1UL
 #define SKB_DST_PTRMASK ~(SKB_DST_NOREF)
 
@@ -212,8 +374,7 @@ void set_device_test(struct sk_buff *skb) {
       printk(KERN_INFO "dev is set\n");
    }
 }
-
-
+*/
 
 static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
@@ -337,6 +498,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	      case 10 :
 	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 
+<<<<<<< HEAD
 			// originally, might get RxTimeT2, RxTimeT3 in packet and save it
 
 			ktime_t temp1, temp2;
@@ -348,6 +510,14 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 				
 		 break;
 	}	
+=======
+			// originally need to get RxTimeT2, RxTimeT3 in packet
+
+			// Need to calculate ((T4-T3)-(T2-T1))/2 and  Set Responder's Time
+			
+		 break;
+	}
+>>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
 
 freeskb:
   	kfree_skb(skb);
@@ -355,6 +525,46 @@ out_of_mem:
   	return 0;
 }
 
+<<<<<<< HEAD
+=======
+/*
+static int64_t calculate_offset(struct timespec *ts1,
+				      struct timespec *rt,
+				      struct timespec *ts2)
+{
+	int64_t interval;
+	int64_t offset;
+
+#define NSEC_PER_SEC 1000000000ULL
+	// calculate interval between clock realtime 
+	interval = (ts2->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	interval += ts2->tv_nsec - ts1->tv_nsec;
+
+	// assume PHC read occured half way between CLOCK_REALTIME reads 
+
+	offset = (rt->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
+
+	return offset;
+}
+*/
+
+ //type parameter need to add
+void ethtsyn_send(const char* addr, uint32_t addr_len) {
+	struct sockaddr_storage address;
+	struct msghdr msg;
+
+	ethtsyn_ip_to_sockaddr_storage(addr, &address);
+
+	msg.msg_name = (struct sockaddr *) &address;
+	msg.msg_namelen = addr_len;
+
+	//ethtsyn_route_check();
+	//ethtsyn_create();
+	//ethtsyn_xmit();
+}
+
+>>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
 /* Start of Timer */
 void ethtsyn_timer_callback(unsigned long arg) {
    struct sk_buff *skb;
@@ -379,9 +589,11 @@ void ethtsyn_timer_callback(unsigned long arg) {
       printk(KERN_INFO "Error in mod_timer\n");
    }
 
+   //ethtsyn_send(type);
+
    // skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
    // ethtsyn_xmit(skb);
-   set_device_test(skb);
+   //set_device_test(skb);
 }
 
 int ethtsyn_timer_init_module(void) {
