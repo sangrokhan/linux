@@ -11,6 +11,7 @@
 #include <net/ethtsyn.h>
 #include <net/ethif.h>
 #include <net/ptp.h>
+#include <net/sock.h>
 
 MODULE_LICENSE("GPL");
 
@@ -182,6 +183,32 @@ void ethtsyn_xmit(struct sk_buff *skb)
       // NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
 }
 EXPORT_SYMBOL(ethtsyn_xmit);
+
+/*
+* skb might have a dst pointer attached, refcounted or not.
+* _skb_refdst low order bit is set if refcount was _not_ taken
+*/
+#define SKB_DST_NOREF   1UL
+#define SKB_DST_PTRMASK ~(SKB_DST_NOREF)
+
+void set_device_test(struct sk_buff *skb) {
+   struct sock *sk = skb->sk;
+   struct rtable *rt;
+   struct net_device *dev;
+
+   rt = (struct rtable *) (skb->_skb_refdst & SKB_DST_PTRMASK);
+   rt = (struct rtable *) __sk_dst_get(sk);
+
+   dev = &rt->dst.dev;
+
+   if(!dev) {
+      printk(KERN_INFO "dev is null\n");
+   } else {
+      printk(KERN_INFO "dev is set\n");
+   }
+}
+
+
 
 static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
@@ -395,8 +422,9 @@ void ethtsyn_timer_callback(unsigned long arg) {
       printk(KERN_INFO "Error in mod_timer\n");
    }
 
-   skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
-   ethtsyn_xmit(skb);
+   // skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
+   // ethtsyn_xmit(skb);
+   set_device_test(skb);
 }
 
 int ethtsyn_timer_init_module(void) {
