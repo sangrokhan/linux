@@ -44,6 +44,7 @@ EthTSyn_MessageType Type;
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
+ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
 
 struct sockaddr_in sockaddr;
 
@@ -214,9 +215,69 @@ struct sk_buff* ethtsyn_create(int type,
 	switch(type) {
 	  	ptp->messageType = type;
       
+<<<<<<< HEAD
 		/* Sync */
 	case 0 :
 	  printk(KERN_INFO "This is type of Syn.\n");
+=======
+      /* Sync */
+      case 0 :
+         printk(KERN_INFO "This is type of Syn.\n");
+
+	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
+		 
+         // SynMsg syn_msg;
+         // syn_msg->header = ptp;
+         
+         break;
+
+      /* Pdelay_Req */
+      case 2 :
+         printk(KERN_INFO "This is type of Pdelay_Req.\n");
+
+  	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
+		     
+         // PdelayReqMsg pdelay_req_msg;
+
+         //ptp->correctionField = 0;
+         // ptp->domainNumber = 0;
+         // pdelay_req_msg->header = ptp;
+         // clock_gettime(CLOCK_REALTIME, &pdelay_req_msg->originTimestamp);
+         
+         break;
+
+      /* Pdelay_Resp */
+      case 3 :
+         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+         
+         // PdelayRespMsg pdelay_resp_msg;
+         //ptp->correctionField = 0; 
+         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+         // pdelay_resp_msg->header = ptp;
+         
+         break;
+
+      /* Follow_Up */
+      case 8 :
+         printk(KERN_INFO "This is type of Follow_Up.\n");
+         
+         // FollowUpMsg follow_up_msg;
+
+         // follow_up_msg->header = ptp;
+         
+         break;
+
+      /* Pdelay_Resp_Follow_Up */
+      case 10 :
+         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+
+         // PdelayRespFollowUpMsg pdelay_resp_follow_up_msg;
+
+         // ptp->correctionField = ;   // Copy the correctionField from the Pdelay_Req message to the correctionField of the Pdelay_Resp_Follow_Up message
+         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
+
+         // pdelay_resp_follow_up_msg->header = ptp;
+>>>>>>> 80fce9a92c44b4b6da4c41355b2b36eda4309582
          
 	  // SynMsg syn_msg;
 	  // syn_msg->header = ptp;
@@ -355,13 +416,25 @@ static int __init ethtsyn_proc_init(void) {
   	return register_pernet_subsys(&ethtsyn_net_ops);
 }
 
+//dongwon0
 static int ethtsyn_rcv(struct sk_buff* skb, 
 		       struct net_device* dev, 
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
 
+/*
+	int rcv_type;
+	int rcv_ptype;
+	__be32 rcv_dest_ip = skb->;
+	__be32 rcv_src_ip;
+	const unsigned char* rcv_dest_hw;
+	const unsigned char* rcv_src_hw;
+	const unsigned char* rcv_target_hw;
+*/	
+
    	printk(KERN_INFO "Receive Packet!!\n");
-  	const struct ptphdr *ptp;
+
+	const struct ptphdr *ptp;
 
 	ptp = ptp_hdr(skb);
 	
@@ -370,15 +443,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  goto out_of_mem;
 
 	int m_type = ptp->messageType;
-
-/*
-	skb->dev = dev;
-	skb->protocol = htons(ETH_P_1588);
-	if(src_hw == NULL) 
-	  src_hw = dev->dev_addr;
-	if(dest_hw == NULL)
-	  dest_hw = dev->broadcast;
-*/
 
 	switch(m_type){
 
@@ -398,16 +462,15 @@ static int ethtsyn_rcv(struct sk_buff* skb,
  
 			RxTimeT3 = ktime_get_real();
 		
-
-			/* for test
+			/* test print
 			s64 rx_time_t3;
 			rx_time_t3= ktime_to_ns(RxTimeT3);
 			printk(KERN_INFO " RxTimeT3 ktime : %lld  (NOW) \n ", (long long)rx_time_t3);
 			*/
 			
-			// call create (Pdelay_Resp with RxTimeT2)
+			// call create (Pdelay_Resp)
 		
-			// call create (Pdelay_Resp_Follow_Up with RxTimeT3 )
+			// call create (Pdelay_Resp_Follow_Up which might be contained RxTimeT2, RxTimeT3 )
 	         
 	         break;
 
@@ -416,8 +479,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
 
 			 TxTimeT4 = skb_get_ktime(skb);
-
-			// need to add code for getting TxTimeT1 at head of requst in create()
 	         
 	         break;
 
@@ -425,9 +486,11 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	      case 8 :
 	         printk(KERN_INFO "This is type of Follow_Up.\n");
 
-			// originally Need to get SynTimeT1 in packet and save
+			// originally, might get SynTimeT1 in packet and save it
 
-			// Need to calculate SynTimeT2 - SynTimeT1 and  Set Responder's Time
+			ClockSlaveOffset = ktime_sub(SynTimeT2, SynTimeT1);
+
+			//Need to Set Responder's Time
 	         
 	         break;
 
@@ -435,12 +498,26 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	      case 10 :
 	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 
+<<<<<<< HEAD
 			// originally need to get RxTimeT2, RxTimeT3 in packet
 
 			// Need to calculate ((T4-T3)-(T2-T1))/2 and  Set Responder's Time
 			
 		 break;
 	}
+=======
+			// originally, might get RxTimeT2, RxTimeT3 in packet and save it
+
+			ktime_t temp1, temp2;
+			temp1 = ktime_sub(TxTimeT4, RxTimeT3);
+			temp2 = ktime_sub(RxTimeT2, TxTimeT1);
+			LinkDelay = ktime_add(temp1, temp2) / 2;
+
+			// Need to Set Responder's Time
+				
+		 break;
+	}	
+>>>>>>> 80fce9a92c44b4b6da4c41355b2b36eda4309582
 
 freeskb:
   	kfree_skb(skb);
@@ -448,6 +525,7 @@ out_of_mem:
   	return 0;
 }
 
+<<<<<<< HEAD
 /*
 static int64_t calculate_offset(struct timespec *ts1,
 				      struct timespec *rt,
@@ -485,6 +563,8 @@ void ethtsyn_send(const char* addr, uint32_t addr_len) {
 	//ethtsyn_xmit();
 }
 
+=======
+>>>>>>> 80fce9a92c44b4b6da4c41355b2b36eda4309582
 /* Start of Timer */
 void ethtsyn_timer_callback(unsigned long arg) {
    struct sk_buff *skb;

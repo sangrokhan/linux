@@ -43,6 +43,7 @@ typedef struct {
 
 /* for saving time in _rcv() (dongwon0) */
 extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2;
+ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
 
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
