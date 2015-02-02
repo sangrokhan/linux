@@ -342,7 +342,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 			ktime_t temp1, temp2;
 			temp1 = ktime_sub(TxTimeT4, RxTimeT3);
 			temp2 = ktime_sub(RxTimeT2, TxTimeT1);
-			LinkDelay = ktime_add(temp1, temp2) / 2;
+			//LinkDelay = ktime_add(temp1, temp2) / 2;
 
 			// Need to Set Responder's Time
 				
