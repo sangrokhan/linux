@@ -215,70 +215,9 @@ struct sk_buff* ethtsyn_create(int type,
 	switch(type) {
 	  	ptp->messageType = type;
       
-<<<<<<< HEAD
 		/* Sync */
 	case 0 :
 	  printk(KERN_INFO "This is type of Syn.\n");
-=======
-      /* Sync */
-      case 0 :
-         printk(KERN_INFO "This is type of Syn.\n");
-
-	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
-		 
-         // SynMsg syn_msg;
-         // syn_msg->header = ptp;
-         
-         break;
-
-      /* Pdelay_Req */
-      case 2 :
-         printk(KERN_INFO "This is type of Pdelay_Req.\n");
-
-  	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
-		     
-         // PdelayReqMsg pdelay_req_msg;
-
-         //ptp->correctionField = 0;
-         // ptp->domainNumber = 0;
-         // pdelay_req_msg->header = ptp;
-         // clock_gettime(CLOCK_REALTIME, &pdelay_req_msg->originTimestamp);
-         
-         break;
-
-      /* Pdelay_Resp */
-      case 3 :
-         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-         
-         // PdelayRespMsg pdelay_resp_msg;
-         //ptp->correctionField = 0; 
-         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
-         // pdelay_resp_msg->header = ptp;
-         
-         break;
-
-      /* Follow_Up */
-      case 8 :
-         printk(KERN_INFO "This is type of Follow_Up.\n");
-         
-         // FollowUpMsg follow_up_msg;
-
-         // follow_up_msg->header = ptp;
-         
-         break;
-
-      /* Pdelay_Resp_Follow_Up */
-      case 10 :
-         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-
-         // PdelayRespFollowUpMsg pdelay_resp_follow_up_msg;
-
-         // ptp->correctionField = ;   // Copy the correctionField from the Pdelay_Req message to the correctionField of the Pdelay_Resp_Follow_Up message
-         // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
-
-         // pdelay_resp_follow_up_msg->header = ptp;
->>>>>>> 80fce9a92c44b4b6da4c41355b2b36eda4309582
-         
 	  // SynMsg syn_msg;
 	  // syn_msg->header = ptp;
 	  
@@ -498,14 +437,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	      case 10 :
 	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 
-<<<<<<< HEAD
-			// originally need to get RxTimeT2, RxTimeT3 in packet
-
-			// Need to calculate ((T4-T3)-(T2-T1))/2 and  Set Responder's Time
-			
-		 break;
-	}
-=======
 			// originally, might get RxTimeT2, RxTimeT3 in packet and save it
 
 			ktime_t temp1, temp2;
@@ -517,7 +448,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 				
 		 break;
 	}	
->>>>>>> 80fce9a92c44b4b6da4c41355b2b36eda4309582
 
 freeskb:
   	kfree_skb(skb);
