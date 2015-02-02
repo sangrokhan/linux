@@ -36,6 +36,8 @@ EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
+ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
+
 static struct timer_list ethTSynTimer;
 
 void ethtsyn_timer_callback(unsigned long arg);
@@ -120,7 +122,7 @@ struct sk_buff* ethtsyn_create(int type,
       /* Pdelay_Req */
       case 2 :
          printk(KERN_INFO "This is type of Pdelay_Req.\n");
-         
+		     
          // PdelayReqMsg pdelay_req_msg;
 
          //ptp->correctionField = 0;
@@ -225,7 +227,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct net_device* dev, 
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
-   printk(KERN_INFO "Receive Packet!!\n");
+
+   	printk(KERN_INFO "Receive Packet!!\n");
   	const struct ptphdr *ptp;
 
 	ptp = ptp_hdr(skb);
@@ -234,39 +237,79 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	if(!skb)
 	  goto out_of_mem;
 
-	ktime_t rx_arv_time;
-	rx_arv_time = skb_get_ktime(skb);
-	s64 rx_arv_time_delta;
-	rx_arv_time_delta = ktime_to_ns(rx_arv_time);
+	int m_type = ptp->messageType;
 
-	printk(KERN_INFO "ktime : %f (RX) \n " ,rx_arv_time);
+/*
+	skb->dev = dev;
+	skb->protocol = htons(ETH_P_1588);
+	if(src_hw == NULL) 
+	  src_hw = dev->dev_addr;
+	if(dest_hw == NULL)
+	  dest_hw = dev->broadcast;
+*/
 
+	switch(m_type){
 
-	ktime_t tx_time;
-	tx_time = ktime_get_real();
-	s64 tx_time_delta;
-	delta = ktime_to_ns(tx_time);
+		/* Sync */
+	      case 0 :
+	         printk(KERN_INFO "This is type of Syn.\n");
 
-	printk(KERN_INFO "In ethtsyn_rcv ktime : %lld  (NOW) \n ", (long long)tx_time_delta);
+			SynTimeT2 = skb_get_ktime(skb);	//save Syn Arrive Time, wait Follow_Up
+		  
+	         break;
 
+	      /* Pdelay_Req */
+	      case 2 :
+	         printk(KERN_INFO "This is type of Pdelay_Req.\n");
 
-	if(ptp->messageType == 0){	// Sync
+			RxTimeT2 = skb_get_ktime(skb);
+ 
+			RxTimeT3 = ktime_get_real();
 		
-	}
-	else if(ptp->messageType == 2){	// Pdelay_Req
-		// send Pdelay_Resp, Follow_Up
-	}
-	else if(ptp->messageType == 3){	// Pdelay_Resp
+
+			/* for test
+			s64 rx_time_t3;
+			rx_time_t3= ktime_to_ns(RxTimeT3);
+			printk(KERN_INFO " RxTimeT3 ktime : %lld  (NOW) \n ", (long long)rx_time_t3);
+			*/
+			
+			// call create (Pdelay_Resp with RxTimeT2)
 		
-	}
-	else if(ptp->messageType == 8){	// Follow_Up
-		// calculate d=((t2-t1)+t4-t3))/2
+			// call create (Pdelay_Resp_Follow_Up with RxTimeT3 )
+	         
+	         break;
 
-		// set 
-	}
-	else if(ptp->messageType == 'A'){	// Pdelay_Resp_Follow_Up
+	      /* Pdelay_Resp */
+	      case 3 :
+	         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
 
+			 TxTimeT4 = skb_get_ktime(skb);
+
+			// need to add code for getting TxTimeT1 at head of requst in create()
+	         
+	         break;
+
+	      /* Follow_Up */
+	      case 8 :
+	         printk(KERN_INFO "This is type of Follow_Up.\n");
+
+			// originally Need to get SynTimeT1 in packet and save
+
+			// Need to calculate SynTimeT2 - SynTimeT1 and  Set Responder's Time
+	         
+	         break;
+
+	      /* Pdelay_Resp_Follow_Up */
+	      case 10 :
+	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+
+			// originally need to get RxTimeT2, RxTimeT3 in packet
+
+			// Need to calculate ((T4-T3)-(T2-T1))/2 and  Set Responder's Time
+			
+		 break;
 	}
+
 
 /*
 struct sk_buff* ethtsyn_create(int type, 
@@ -276,7 +319,26 @@ struct sk_buff* ethtsyn_create(int type,
 			       __be32 src_ip, 
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
-			       const unsigned char* target_hw)
+			       const unsigned char* target_hw) {
+	struct sk_buff* skb;
+	struct ptphdr* ptp;
+	unsigned char* ptp_ptr;
+	int hlen = LL_RESERVED_SPACE(dev);
+	int tlen = dev->needed_tailroom;
+	
+	skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
+	if(skb == NULL) 
+	  	return NULL;
+	
+	skb_reserve(skb, hlen);
+	skb_reset_network_header(skb);
+	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
+	skb->dev = dev;
+	skb->protocol = htons(ETH_P_1588);
+	if(src_hw == NULL) 
+	  src_hw = dev->dev_addr;
+	if(dest_hw == NULL)
+	  dest_hw = dev->broadcast;
 */
 
 	

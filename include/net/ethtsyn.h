@@ -41,6 +41,9 @@ typedef struct {
   	unsigned rsv			:	3;
 } EthTSyn_MessageType;
 
+/* for saving time in _rcv() (dongwon0) */
+extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2;
+
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
 extern bool EthTSynHardwareTimestampSupport;
