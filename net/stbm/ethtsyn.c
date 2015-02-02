@@ -156,17 +156,87 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
   	const struct ptphdr *ptp;
+
+	ptp = ptp_hdr(skb);
 	
-	skb = skb_share_check(skb, GFP_ATOMIC);
+	skb = skb_share_check(skb, GFP_ATOMIC); // ???????
 	if(!skb)
 	  goto out_of_mem;
+
+	ktime_t rx_arv_time;
+	rx_arv_time = skb_get_ktime(skb);
+	s64 rx_arv_time_delta;
+	rx_arv_time_delta = ktime_to_ns(rx_arv_time);
+
+	printk(KERN_INFO "ktime : %f (RX) \n " ,rx_arv_time);
+
+
+	ktime_t tx_time;
+	tx_time = ktime_get_real();
+	s64 tx_time_delta;
+	delta = ktime_to_ns(tx_time);
+
+	printk(KERN_INFO "In ethtsyn_rcv ktime : %lld  (NOW) \n ", (long long)tx_time_delta);
+
+
+	if(ptp->messageType == 0){	// Sync
+		
+	}
+	else if(ptp->messageType == 2){	// Pdelay_Req
+		// send Pdelay_Resp, Follow_Up
+	}
+	else if(ptp->messageType == 3){	// Pdelay_Resp
+		
+	}
+	else if(ptp->messageType == 8){	// Follow_Up
+		// calculate d=((t2-t1)+t4-t3))/2
+
+		// set 
+	}
+	else if(ptp->messageType == 'A'){	// Pdelay_Resp_Follow_Up
+
+	}
+
+/*
+struct sk_buff* ethtsyn_create(int type, 
+			       int ptype, 
+			       __be32 dest_ip, 
+			       struct net_device* dev, 
+			       __be32 src_ip, 
+			       const unsigned char* dest_hw, 
+			       const unsigned char* src_hw, 
+			       const unsigned char* target_hw)
+*/
+
 	
-	//ptp = 
+
 freeskb:
   	kfree_skb(skb);
 out_of_mem:
   	return 0;
 }
+
+/*
+static int64_t calculate_offset(struct timespec *ts1,
+				      struct timespec *rt,
+				      struct timespec *ts2)
+{
+	int64_t interval;
+	int64_t offset;
+
+#define NSEC_PER_SEC 1000000000ULL
+	// calculate interval between clock realtime 
+	interval = (ts2->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	interval += ts2->tv_nsec - ts1->tv_nsec;
+
+	// assume PHC read occured half way between CLOCK_REALTIME reads 
+
+	offset = (rt->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
+
+	return offset;
+}
+*/
 
 /* Start of Timer */
 //static void ethtsyn_timer_callback(unsigned long arg) {
@@ -176,7 +246,16 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
    printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 
-   ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
+/*
+	//dong
+	ktime_t tx_time;
+	tx_time = ktime_get_real();
+	s64 delta;
+	delta = ktime_to_ns(tx_time);
+	printk(KERN_INFO "ktime : %lld  (NOW) \n ", (long long)delta);
+*/	
+
+   	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 
    if(ret) {
       printk(KERN_INFO "Error in mod_timer\n");
