@@ -5,6 +5,7 @@
 #include <linux/kernel.h>
 #include <linux/time.h>
 #include <linux/ktime.h>
+#include <net/route.h>
 
 #define SYN 0 /* Sync message */
 #define PDELAY_REQ 2 /* Pdelay_Req message */
@@ -44,7 +45,29 @@ static inline int ptp_hdr_len(struct net_device *dev) {
     return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
   }
 }
+/*
+struct dst_entry {
+   struct net_device *dev;
+   int         (*input)(struct sk_buff *);
+   int         (*output)(struct sk_buff *);
 
+   unsigned short    flags;
+#define DST_HOST     0x0001
+#define DST_NOXFRM      0x0002
+#define DST_NOPOLICY    0x0004
+#define DST_NOHASH      0x0008
+#define DST_NOCACHE     0x0010
+#define DST_NOCOUNT     0x0020
+#define DST_NOPEER      0x0040
+#define DST_FAKE_RTABLE    0x0080
+#define DST_XFRM_TUNNEL    0x0100
+#define DST_XFRM_QUEUE     0x0200
+};
+
+struct rtable {
+   struct dst_entry  dst;
+};
+*/
 struct portIdentity {
    uint8_t clockIdentity[8];
    uint8_t portNumber[4];
