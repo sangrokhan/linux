@@ -75,7 +75,6 @@ static void ethtsyn_route_check(struct msghdr *msg,
 	struct flowi4 fl4_stack;
 	struct flowi4 *fl4;
 	struct ipcm_cookie ipc;
-	struct sk_buff *skb;
 	
 	int connected = 0;
 	u8 tos;
@@ -451,20 +450,26 @@ static int __init ethtsyn_proc_init(void) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, struct timespec Link_Delay){
+=======
+static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
+					 const ktime_t TimeT2, 
+					 struct timespec Link_Delay) {
+>>>>>>> 0e9d1c4... before rollback
 
-		struct timespec T1, T2, temp1, temp2, now;
+  	struct timespec T1, T2, temp1, temp2, now;
 
-		T1 = ktime_to_timespec(TimeT1);
-		T2 = ktime_to_timespec(TimeT2);			
-
-		temp1 = timespec_sub(T2, T1);			
-		ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
-
-		getnstimeofday(&temp2);
-		now = timespec_sub(temp2, ts_ClockSlaveOffset);
-		do_settimeofday(&now);
-		// need to set slave's time by 'now' ...... i couldn't find proper fuction 
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);			
+	
+	temp1 = timespec_sub(T2, T1);			
+	ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
+	
+	getnstimeofday(&temp2);
+	now = timespec_sub(temp2, ts_ClockSlaveOffset);
+	do_settimeofday(&now);
+	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
 		
 }
 	
@@ -473,6 +478,7 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 		       const ktime_t TimeT3, 
 		       const ktime_t TimeT4 ) {
 
+<<<<<<< HEAD
 			struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
 			s64 ns_LinkDelay;
 
@@ -488,6 +494,24 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 			ns_LinkDelay = timespec_to_ns(&temp3)/2;
 
 			return ns_to_timespec(ns_LinkDelay);
+=======
+  	struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
+	s64 ns_LinkDelay;
+	
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);
+	T3 = ktime_to_timespec(TimeT3);
+	T4 = ktime_to_timespec(TimeT4);
+	
+	temp1 = timespec_sub(T4, T3);
+	temp2 = timespec_sub(T2, T1);			
+	temp3 = timespec_add(temp1, temp2);
+	
+	ns_LinkDelay = timespec_to_ns(&temp3)/2;
+	
+	return ns_to_timespec(ns_LinkDelay);
+}
+>>>>>>> 0e9d1c4... before rollback
 
 =======
 static int ethtsyn_sock_check() {
