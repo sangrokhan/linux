@@ -407,16 +407,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
 
-/*
-	int rcv_type;
-	int rcv_ptype;
-	__be32 rcv_dest_ip = skb->;
-	__be32 rcv_src_ip;
-	const unsigned char* rcv_dest_hw;
-	const unsigned char* rcv_src_hw;
-	const unsigned char* rcv_target_hw;
-*/	
-
    	printk(KERN_INFO "Receive Packet!!\n");
 
 	const struct ptphdr *ptp;
@@ -445,9 +435,12 @@ static int ethtsyn_rcv(struct sk_buff* skb,
  
 			RxTimeT3 = ktime_get_real();
 			
-			// call create (Pdelay_Resp)
-		
-			// call create (Pdelay_Resp_Follow_Up which might be contained RxTimeT2, RxTimeT3 )
+			/*
+			ethtsyn_create(PDELAY_RESP, null, null, dev, null, dev->dev_addr, null, null);
+			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT2
+				
+			ethtsyn_create(PDELAY_RESP_FOLLOW_UP, null, null, dev, null, dev->dev_addr, null, null);
+			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT3	*/
 	         
 	         break;
 
@@ -463,7 +456,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
 			// originally, might get SynTimeT1 in packet and save it
 			
-			ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
+			ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay); // ts_LinkDelay is not NULL ??
 	         
 	         break;
 
@@ -482,30 +475,6 @@ freeskb:
 out_of_mem:
   	return 0;
 }
-
-
-
-/*
-static int64_t calculate_offset(struct timespec *ts1,
-				      struct timespec *rt,
-				      struct timespec *ts2)
-{
-	int64_t interval;
-	int64_t offset;
-
-#define NSEC_PER_SEC 1000000000ULL
-	// calculate interval between clock realtime 
-	interval = (ts2->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
-	interval += ts2->tv_nsec - ts1->tv_nsec;
-
-	// assume PHC read occured half way between CLOCK_REALTIME reads 
-
-	offset = (rt->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
-	offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
-
-	return offset;
-}
-*/
 
  //type parameter need to add
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
@@ -530,15 +499,6 @@ void ethtsyn_timer_callback(unsigned long arg) {
    int ret;
 
    printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
-
-/*
-	//dong
-	ktime_t tx_time;
-	tx_time = ktime_get_real();
-	s64 delta;
-	delta = ktime_to_ns(tx_time);
-	printk(KERN_INFO "ktime : %lld  (NOW) \n ", (long long)delta);
-*/	
 
    	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 
