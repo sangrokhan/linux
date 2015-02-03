@@ -13,6 +13,42 @@
 #define FOLLOW_UP 8 /* Follow_Up message */
 #define PDELAY_RESP_FOLLOW_UP 10 /* Pdelay_Resp_Follow_Up message */
 
+typedef uint64_t Octet8;
+typedef Octet8   ClockIdentity;
+
+struct flagField {
+   unsigned alternateMasterFlag  :  1;
+   unsigned twoStepFlag :  1;
+   unsigned unicastFlag :  1;
+   unsigned noDefinition    :  2;    // The bit is not defined
+   unsigned PTPprofileSpecific1  :  1;
+   unsigned PTPprofileSpecific2  :  1;
+   unsigned reserved    :  1;
+   unsigned leap61   :  1;
+   unsigned leap59   :  1;
+   unsigned currentUtcOffsetValid   :  1;
+   unsigned ptpTimescale   :  1;
+   unsigned timeTraceable  :  1;
+   unsigned frequencyTraceable   :  1;
+   unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
+};
+
+struct portIdentity {
+   ClockIdentity clockIdentity;
+   uint16_t portNumber;
+};
+
+/*
+ * 
+ * For example (about Timestamp),
+ * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
+ *
+*/
+struct Timestamp {
+  uint8_t seconds[6];
+  uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
+};
+
 struct ptphdr{
   unsigned 	messageType		:	4;
   unsigned 	transportSpecific	:	4;
@@ -21,14 +57,14 @@ struct ptphdr{
   uint16_t 	messageLength;
   uint8_t	domainNumber;
   uint8_t	domainNumberrsv;
-  uint16_t	flags;
+  flagField	flags;
   uint8_t	correctionField[8];
   uint8_t	Fieldrsv[4];
-  uint8_t	sourcePortIdentity[10];
+  portIdentity	sourcePortIdentity;
   uint16_t	sequenceId;
   uint8_t	control;
   uint8_t	logMessageInterval;
-  ktime_t   timestamp;
+  Timestamp     timestamp;
 };
 
 static inline struct ptphdr *ptp_hdr(const struct sk_buff *skb) {
@@ -45,6 +81,7 @@ static inline int ptp_hdr_len(struct net_device *dev) {
     return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
   }
 }
+
 /*
 struct dst_entry {
    struct net_device *dev;
@@ -68,38 +105,5 @@ struct rtable {
    struct dst_entry  dst;
 };
 */
-struct portIdentity {
-   uint8_t clockIdentity[8];
-   uint8_t portNumber[4];
-};
-
-/*
-struct SynMsg {
-   ptphdr header;
-   timespec originTimestamp;
-};
-
-struct FollowUpMsg {
-   ptphdr header;
-   timespec preciseOriginTimestamp;
-};
-
-struct PdelayReqMsg {
-   ptphdr header;
-   timespec originTimestamp;
-   uint8_t reserved[10];
-};
-
-struct PdelayRespMsg {
-   ptphdr header;
-   timespec requestReceiptTimestamp;
-   portIdentity requestingPortIdentity;
-};
-
-struct PdelayRespFollowUpMsg {
-   ptphdr header;
-   timespec responseOriginTimestamp;
-   portIdentity requestingPortIdentity;
-}; */
 
 #endif
