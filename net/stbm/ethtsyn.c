@@ -42,10 +42,13 @@ StbM_TimeStampRawType* timeStampDiffPtr;
 
 EthTSyn_MessageType Type;
 
-time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
+time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4; // for saving time in RXIndication() & TXConfirmation()
 
-// ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
+
 // timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
+ktime_t EthTSynT1, EthTSynT2, EthTSynT3, EthTSynT4; // for saving time in _create()
+ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
+ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
 
 struct sockaddr_in sockaddr;
 
@@ -72,6 +75,7 @@ static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_
 }
 
 //copied from udp source code 
+<<<<<<< HEAD
 static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 					   struct sock *sk) {
   struct inet_sock *inet = inet_sk(sk);
@@ -172,8 +176,6 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
   }
  out:
   
-
-
  do_confirm:
   dst_confirm(&rt->dst);
   //if(!(msg->msg_flags & MSG_PROBE) || len)//CHECK ABOUT MSG_FLAGS 
@@ -231,74 +233,103 @@ struct sk_buff* ethtsyn_create(int type,
   if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
     goto out;
 
-  switch(type) {
-    ptp->messageType = type;
-      
-    /* Sync */
-  case 0 :
-    printk(KERN_INFO "This is type of Syn.\n");
+#ifdef CONFIG_ETHTSYN_MASTER
+   EthTSyn_ConfigType config = MASTER;
+   ptp->sourcePortIdentity.portNumer = 1;  
+#else
+   EthTSyn_ConfigType config = SLAVE;
+   // ptp->sourceProtIdentity,portNumber = ;   // The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
+#endif
 
-    SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
-      
-    // SynMsg syn_msg;
-    // syn_msg->header = ptp;
-      
-    break;
-      
-    /* Pdelay_Req */
-  case 2 :
-    printk(KERN_INFO "This is type of Pdelay_Req.\n");
+   /* ptphdr initialization */
+   ptp->transportSpecific = {0, 0, 0, 1};
+   ptp->messageType = type;
+   ptp->reserved = {0, 0, 0, 0};
+   ptp->versionPTP = {0, 0, 1, 0};
+   ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
+   ptp->domainNumber = 0;
+   ptp->domainNubberrsv = 0;
+   struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
+   ptp->flags = flags;
+   ptp->correctionField = {0, 0, 0, 0, 0, 0, 0, 0};
+   ptp->Fieldrsv = {0, 0, 0, 0};
+   // ptp->sequenceId;
+   ptp->control = 5;
+   // ptp->logMessageInterval = 0x7F
 
-    TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
+   switch(type) {
       
-    // PdelayReqMsg pdelay_req_msg;
-      
-    //ptp->correctionField = 0;
-    // ptp->domainNumber = 0;
-    // pdelay_req_msg->header = ptp;
-    // clock_gettime(CLOCK_REALTIME, &pdelay_req_msg->originTimestamp);
-      
-    break;
-      
-    /* Pdelay_Resp */
-  case 3 :
-    printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-      
-    // PdelayRespMsg pdelay_resp_msg;
-    //ptp->correctionField = 0; 
-    // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
-    // pdelay_resp_msg->header = ptp;
-      
-    break;
-      
-    /* Follow_Up */
-  case 8 :
-    printk(KERN_INFO "This is type of Follow_Up.\n");
-      
-    // FollowUpMsg follow_up_msg;
-      
-    // follow_up_msg->header = ptp;
-      
-    break;
-      
-    /* Pdelay_Resp_Follow_Up */
-  case 10 :
-    printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-      
-    // PdelayRespFollowUpMsg pdelay_resp_follow_up_msg;
-      
-    // ptp->correctionField = ;   // Copy the correctionField from the Pdelay_Req message to the correctionField of the Pdelay_Resp_Follow_Up message
-    // ptp->sequenceId = ;  // Copy the sequenceId field from the Pdelay_Req message
-      
-    // pdelay_resp_follow_up_msg->header = ptp;
-      
-    break;
-  }
-  
-  return skb;
- out :
-  kfree_skb(skb);
-  return NULL;
+	case SYN :
+	  printk(KERN_INFO "This is type of Syn.\n");
+          uint8_t currentLogSyncInterval;
+	  EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
+	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
+
+	  ptp->control = 0;
+	  ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
+	  ptp->timestamp = EthTSynT1;
+
+	  // Need to set multicast
+	  // Need to set sequenceId
+	  // Need to set logMessageInterval
+
+	  break;
+	  
+	case PDELAY_REQ :
+	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+	  u64 nsec;
+
+	  EthTSynT1 = ktime_get_real();
+	  nsec = ktime_to_ns(EthTSynT1);
+
+	  ptp->correctionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
+	  
+	  // Need to set sequenceId
+	  // Need to set logMessageInterval
+
+	  // Equal to EthTSynT1 (line 282) -> Need to merge
+	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
+	  
+	  break;
+	  
+	case PDELAY_RESP :
+	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+	  u64 nsec;
+
+	  EthTSynT2 = skb_get_ktime(skb);
+	  EthTSynT3 = ktime_get_real();
+	  nsec = ktime_to_ns(EthTSynT2);
+
+	  ptp->correctionField = (uint8_t)(nsec * 65536);
+	  ptp->logMessageInterval = 0x7F;
+
+	  break;
+	  
+	case FOLLOW_UP :
+	  printk(KERN_INFO "This is type of Follow_Up.\n");
+
+	  ptp->timestamp = EthTSynT1;
+
+	  // Need to set logMessageInterval
+
+	  break;
+	  
+	case PDELAY_RESP_FOLLOW_UP :
+	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+	  u64 nsec;
+
+	  nsec = ktime_to_ns(EthTSynT3);
+	  
+	  ptp->control = 2;
+	  ptp->correctionField = (uint8_t)(nsec * 65536);
+	  ptp->logMessageInterval = 0x7F;
+	  break;
+	}
+	
+	return skb;
+out :
+	kfree_skb(skb);
+	return NULL;
 } 
 EXPORT_SYMBOL(ethtsyn_create);
 
@@ -557,6 +588,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
   return 0;
 }
 
+<<<<<<< HEAD
 
 
 /*
