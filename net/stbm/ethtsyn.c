@@ -43,8 +43,6 @@ StbM_TimeStampRawType* timeStampDiffPtr;
 EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4; // for saving time in RXIndication() & TXConfirmation()
-
-
 // timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
 ktime_t EthTSynT1, EthTSynT2, EthTSynT3, EthTSynT4; // for saving time in _create()
 ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
@@ -64,126 +62,181 @@ void ethtsyn_timer_callback(unsigned long arg);
 
 //char type ip address change to sockaddr_storage type
 static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_storage *address) {
-  __be32 tempAddr;
-  uint8_t arr[4];
-  int a, b, c ,d;
-  sscanf(ch_addr, "%d.%d.%d.%d", &a, &b, &c, &d);
-  arr[0] = a; arr[1] = b; arr[2] = c; arr[3] = d;
-  tempAddr = *(uint32_t *)arr;
-  memcpy(address, &tempAddr, 4);
-  audit_sockaddr(4, address);
+  	__be32 tempAddr;
+	uint8_t arr[4];
+	int a, b, c ,d;
+	sscanf(ch_addr, "%d.%d.%d.%d", &a, &b, &c, &d);
+	arr[0] = a; arr[1] = b; arr[2] = c; arr[3] = d;
+	tempAddr = *(uint32_t *)arr;
+	memcpy(address, &tempAddr, 4);
+	audit_sockaddr(4, address);
 }
 
 //copied from udp source code 
-<<<<<<< HEAD
 static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 					   struct sock *sk) {
-  struct inet_sock *inet = inet_sk(sk);
-  struct sk_buff* skb;
-  struct rtable *rt = NULL;
-  struct flowi4 fl4_stack;
-  struct flowi4 *fl4;
-  struct ipcm_cookie ipc;
-  int (*getfrag)(void *, char *, int, int, int, struct sk_buff*);
-  int connected = 0;
-  u8 tos;
-  int err, ulen = 0;
-  int corkreq = msg->msg_flags & MSG_MORE;
-  __be32 daddr, faddr, saddr;
-  __be16 dport;//port value is need? there is no user application
+	struct inet_sock *inet = inet_sk(sk);
+	struct sk_buff* skb;
+	struct rtable *rt = NULL;
+	struct flowi4 fl4_stack;
+	struct flowi4 *fl4;
+	struct ipcm_cookie ipc;
+	int (*getfrag)(void *, char *, int, int, int, struct sk_buff*);
+	int connected = 0;
+	u8 tos;
+	int err, ulen = 0;
+	int corkreq = msg->msg_flags & MSG_MORE;
+	__be32 daddr, faddr, saddr;
+	__be16 dport;//port value is need? there is no user application
+	
+	ipc.opt = NULL;
+	ipc.tx_flags = 0;
+	
+	getfrag = NULL;
+	
+	fl4 = &inet->cork.fl.u.ip4;
+	
+	/* 
+	 * No pending on ethtsyn (gPTP) remove pending check
+	 */
 
-  ipc.opt = NULL;
-  ipc.tx_flags = 0;
-  getfrag = NULL;
+	ulen += sizeof(struct ptphdr);
+	
+	if(msg->msg_name) {
+	  	struct sockaddr_in *usin = (struct sockaddr_in *) msg->msg_name;
+		if(msg->msg_namelen < sizeof(*usin))
+		  	return -EINVAL;
+		if(usin->sin_family != AF_INET) {
+		  	if(usin->sin_family != AF_UNSPEC) {
+		    		return -EAFNOSUPPORT;
+			}
+		}
+		daddr = usin->sin_addr.s_addr;
+		dport = usin->sin_port;		//dport = ?//if need fill the port value
+	} else {
+	  	/*
+		 * No Connection Established Always Need IP Address or multicast source code need
+		 */
+	  	return -EINVAL;
+	}
+	
+  	ipc.addr = inet->inet_saddr;
 
-  ulen += sizeof(struct ptphdr);
+	ipc.oif = sk->sk_bound_dev_if;
 
-  if(msg->msg_name) {
-    struct sockaddr_in *usin = (struct sockaddr_in *) msg->msg_name;
-    if(msg->msg_namelen < sizeof(*usin))
-      return -EINVAL;
-    if(usin->sin_family != AF_INET) {
-      if(usin->sin_family != AF_UNSPEC) {
-	return -EAFNOSUPPORT;
-      }
-    }
-    daddr = usin->sin_addr.s_addr;
-    //dport = ?//if need fill the port value
-  } else {//W/O IP Address
-    return -EINVAL;
-  }
+	sock_tx_timestamp(sk, &ipc.tx_flags);
+
+	if(msg->msg_controllen) {
+	  	/*
+		 * Will be 0 value in msg_controllen
+		 */
+	}
+	
+	if(!ipc.opt) {
+	  	/*
+		 * ipc opt is set when if statement above need to be check
+		 */
+	  	struct ip_options_rcu *inet_opt;
+		
+		rcu_read_lock();
+		inet_opt = rcu_dereference(inet->inet_opt);
+		if (inet_opt) {
+		  memcpy(&opt_copy, inet_opt,
+			 sizeof(*inet_opt) + inet_opt->opt.optlen);
+		  ipc.opt = &opt_copy.opt;
+		}
+		rcu_read_unlock();
+	}
+
+	saddr = ipc.addr;
+	ipc.addr = faddr = daddr;
+	
+	if (ipc.opt && ipc.opt->opt.srr) {
+	  	if (!daddr)
+	    		return -EINVAL;
+		faddr = ipc.opt->opt.faddr;
+		connected = 0;
+	}
+
+	tos = RT_TOS(inet->tos);//need to check what value need to be initialized to inet
+
+	if(sock_flag(sk, SOCK_LOCALROUTE) ||
+	   (msg->msg_flags & MSG_DONTROUTE) ||
+	   (ipc.opt && ipc.opt->opt.is_strictroute)) {
+	  	tos |= RTO_ONLINK;
+	  	connected = 0;
+	}
+
+	if (ipv4_is_multicast(daddr)) {
+		if (!ipc.oif)
+		  	ipc.oif = inet->mc_index;
+	  	if (!saddr)
+		  	saddr = inet->mc_addr;
+		connected = 0;
+	} else if (!ipc.oif)
+	  	ipc.oif = inet->uc_index;
   
-  ipc.addr = inet->inet_saddr;
-  ipc.oif = sk->sk_bound_dev_if;
-  sock_tx_timestamp(sk, &ipc.tx_flags);
-
-  tos = RT_TOS(inet->tos);//need to check what value need to be initialized to inet
-  if(sock_flag(sk, SOCK_LOCALROUTE) ||
-     (msg->msg_flags & MSG_DONTROUTE) ||
-     (ipc.opt && ipc.opt->opt.is_strictroute)) {
-    tos |= RTO_ONLINK;
-    connected = 0;
-  }
-  
-  /*
-   * TCP always connected, so using sk_dst_check for routing 
-   * UDP is not connected always, so flow check is need;
-   */
-  if(connected)
-    rt = (struct rtable *) sk_dst_check(sk, 0);
-
-  if(rt == NULL) {
-    struct net *net = sock_net(sk);  
-    
-    fl4 = &fl4_stack;
-    flowi4_init_output(fl4, ipc.oif, sk->sk_mark, tos,
-		       RT_SCOPE_UNIVERSE, sk->sk_protocol,
-		       inet_sk_flowi_flags(sk) | FLOWI_FLAG_CAN_SLEEP,
-		       faddr, saddr, dport, inet->inet_sport);
-    //security_sk_classify_flow(sk, flowi4_to_flow(fl4));//maybe nothing happend
-    rt = ip_route_output_flow(net, fl4, sk);//flow check function
-    if(IS_ERR(rt)) {
-      err = PTR_ERR(rt);
-      rt = NULL;
-      if(err = -ENETUNREACH)
-	IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
-      goto out;
-    }
-
-    err = -EACCES;
-    if((rt->rt_flags & RTCF_BROADCAST) && 
-       !sock_flag(sk, SOCK_BROADCAST))
-      goto out;
-    if(connected)
-      sk_dst_set(sk, dst_clone(&rt->dst));
-  } 
-
-  if(msg->msg_flags & MSG_CONFIRM)
-    goto do_confirm;
+	/*
+	 * TCP always connected, so using sk_dst_check for routing 
+	 * UDP is not connected always, so flow check is need;
+	 */
+	if(connected)
+	  	rt = (struct rtable *) sk_dst_check(sk, 0);
+	
+	if(rt == NULL) {
+	  	struct net *net = sock_net(sk);  
+	  
+		fl4 = &fl4_stack;
+		flowi4_init_output(fl4, ipc.oif, sk->sk_mark, tos,
+				   RT_SCOPE_UNIVERSE, sk->sk_protocol,
+				   inet_sk_flowi_flags(sk) | FLOWI_FLAG_CAN_SLEEP,
+				   faddr, saddr, dport, inet->inet_sport);
+		//security_sk_classify_flow(sk, flowi4_to_flow(fl4));//maybe nothing happend
+		rt = ip_route_output_flow(net, fl4, sk);//flow check function
+		if(IS_ERR(rt)) {
+		  	err = PTR_ERR(rt);
+			rt = NULL;
+			if(err = -ENETUNREACH)
+			  	IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
+			goto out;
+		}
+		
+		err = -EACCES;
+		
+		if((rt->rt_flags & RTCF_BROADCAST) && 
+		   !sock_flag(sk, SOCK_BROADCAST))
+		  	goto out;
+		
+		if(connected)
+		  	sk_dst_set(sk, dst_clone(&rt->dst));
+	} 
+	
+	if(msg->msg_flags & MSG_CONFIRM)
+	  	goto do_confirm;
  back_from_confirm:
+	
+	saddr = fl4->saddr;
+	if(!ipc.addr)
+	  	daddr = ipc.addr = fl4->daddr;
+	
+	if(!corkreq) {
+	  	skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
+				  sizeof(sutrct udphdr), &ipc, &rt, 
+				  msg->msg_flags);
+		err = PTR_ERR(skb);
+		if(!IS_ERR_OR_NULL(skb))
+		  	err = udp_send_skb(skb, fl4);
+	}
+out:
   
-  saddr = fl4->saddr;
-  if(!ipc.addr)
-    daddr = ipc.addr = fl4->daddr;
-
-  if(!corkreq) {
-    skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
-		      sizeof(sutrct udphdr), &ipc, &rt, 
-		      msg->msg_flags);
-    err = PTR_ERR(skb);
-    if(!IS_ERROR_OR_NULL(skb))
-      err = udp_send_skb(skb, fl4);
-  }
- out:
-  
- do_confirm:
-  dst_confirm(&rt->dst);
-  //if(!(msg->msg_flags & MSG_PROBE) || len)//CHECK ABOUT MSG_FLAGS 
-  //goto back_from_confirm;
-  //err = 0;
-  //goto out;
-  //after confirm, the route is exsit. 
-  //return sk_buff
+do_confirm:
+  	dst_confirm(&rt->dst);
+	//if(!(msg->msg_flags & MSG_PROBE) || len)//CHECK ABOUT MSG_FLAGS 
+	//goto back_from_confirm;
+	//err = 0;
+	//goto out;
+	//after confirm, the route is exsit. 
+	//return sk_buff
 }
 
 //Parameters need to check
@@ -200,71 +253,71 @@ struct sk_buff* ethtsyn_create(int type,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
 			       const unsigned char* target_hw) {
-  struct ptphdr* ptp;
-  unsigned char* ptp_ptr;
-  int hlen = LL_RESERVED_SPACE(dev);
-  int tlen = dev->needed_tailroom;
-
-  /*
-   *Allocate a buffer
-   */
-
-  skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
-  if(skb == NULL) 
-    return NULL;
-
-  skb_reserve(skb, hlen);
-  skb_reset_network_header(skb);
-  ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
-  skb->dev = dev;
-  skb->protocol = htons(ETH_P_1588);
-  if(src_hw == NULL) 
-    src_hw = dev->dev_addr;
-  if(dest_hw == NULL)
-    dest_hw = dev->broadcast;
-  //should not be broadcast. routine needs copied from tcp or udp source code 
-  //how tcp or udp is using arp protocol to get device address
-  //or need to check how address is decided in AUTOSAR standard
-  
-  /*
-   * Fill the device header for the ptp frame
-   */
-
-  if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
-    goto out;
-
+  	struct ptphdr* ptp;
+	unsigned char* ptp_ptr;
+	int hlen = LL_RESERVED_SPACE(dev);
+	int tlen = dev->needed_tailroom;
+	
+	/*
+	 *Allocate a buffer
+	 */
+	
+	skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
+	if(skb == NULL) 
+	  return NULL;
+	
+	skb_reserve(skb, hlen);
+	skb_reset_network_header(skb);
+	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
+	skb->dev = dev;
+	skb->protocol = htons(ETH_P_1588);
+	if(src_hw == NULL) 
+	  	src_hw = dev->dev_addr;
+	if(dest_hw == NULL)
+	  	dest_hw = dev->broadcast;
+	//should not be broadcast. routine needs copied from tcp or udp source code 
+	//how tcp or udp is using arp protocol to get device address
+	//or need to check how address is decided in AUTOSAR standard
+	
+	/*
+	 * Fill the device header for the ptp frame
+	 */
+	
+	if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
+	  	goto out;
+	
 #ifdef CONFIG_ETHTSYN_MASTER
-   EthTSyn_ConfigType config = MASTER;
-   ptp->sourcePortIdentity.portNumer = 1;  
+	EthTSyn_ConfigType config = MASTER;
+	ptp->sourcePortIdentity.portNumer = 1;  
 #else
-   EthTSyn_ConfigType config = SLAVE;
-   // ptp->sourceProtIdentity,portNumber = ;   // The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
+	EthTSyn_ConfigType config = SLAVE;
+	// ptp->sourceProtIdentity,portNumber = ;   // The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
 #endif
-
-   /* ptphdr initialization */
-   ptp->transportSpecific = {0, 0, 0, 1};
-   ptp->messageType = type;
-   ptp->reserved = {0, 0, 0, 0};
-   ptp->versionPTP = {0, 0, 1, 0};
-   ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
-   ptp->domainNumber = 0;
-   ptp->domainNubberrsv = 0;
-   struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
-   ptp->flags = flags;
-   ptp->correctionField = {0, 0, 0, 0, 0, 0, 0, 0};
-   ptp->Fieldrsv = {0, 0, 0, 0};
-   // ptp->sequenceId;
-   ptp->control = 5;
-   // ptp->logMessageInterval = 0x7F
-
-   switch(type) {
-      
+	
+	/* ptphdr initialization */
+	ptp->transportSpecific = {0, 0, 0, 1};
+	ptp->messageType = type;
+	ptp->reserved = {0, 0, 0, 0};
+	ptp->versionPTP = {0, 0, 1, 0};
+	ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
+	ptp->domainNumber = 0;
+	ptp->domainNubberrsv = 0;
+	struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
+	ptp->flags = flags;
+	ptp->correctionField = {0, 0, 0, 0, 0, 0, 0, 0};
+	ptp->Fieldrsv = {0, 0, 0, 0};
+	// ptp->sequenceId;
+	ptp->control = 5;
+	// ptp->logMessageInterval = 0x7F
+	
+	switch(type) {
+	  
 	case SYN :
 	  printk(KERN_INFO "This is type of Syn.\n");
           uint8_t currentLogSyncInterval;
 	  EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
 	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
-
+	  
 	  ptp->control = 0;
 	  ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
 	  ptp->timestamp = EthTSynT1;
@@ -272,13 +325,13 @@ struct sk_buff* ethtsyn_create(int type,
 	  // Need to set multicast
 	  // Need to set sequenceId
 	  // Need to set logMessageInterval
-
+	  
 	  break;
 	  
 	case PDELAY_REQ :
 	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
 	  u64 nsec;
-
+	  
 	  EthTSynT1 = ktime_get_real();
 	  nsec = ktime_to_ns(EthTSynT1);
 
@@ -405,23 +458,25 @@ static struct pernet_operations ethtsyn_net_ops = {
 };
 
 static int __init ethtsyn_proc_init(void) {
-  return register_pernet_subsys(&ethtsyn_net_ops);
+  	return register_pernet_subsys(&ethtsyn_net_ops);
 }
 
-static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, struct timespec Link_Delay){
+static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
+					 const ktime_t TimeT2, 
+					 struct timespec Link_Delay){
 
-  struct timespec T1, T2, temp1, temp2, now;
+  	struct timespec T1, T2, temp1, temp2, now;
 
-  T1 = ktime_to_timespec(TimeT1);
-  T2 = ktime_to_timespec(TimeT2);
-
-  temp1 = timespec_sub(T2, T1);
-  ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
-
-  getnstimeofday(&temp2);
-  now = timespec_sub(temp2, ts_ClockSlaveOffset);
-  do_settimeofday(&now);
-  // need to set slave's time by 'now' ...... i couldn't find proper fuction 
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);
+	
+	temp1 = timespec_sub(T2, T1);
+	ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
+	
+	getnstimeofday(&temp2);
+	now = timespec_sub(temp2, ts_ClockSlaveOffset);
+	do_settimeofday(&now);
+	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
   
 }
 
@@ -430,21 +485,21 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 					     const ktime_t TimeT3, 
 					     const ktime_t TimeT4 ) {
 
-  struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
-  s64 ns_LinkDelay;
-
-  T1 = ktime_to_timespec(TimeT1);
-  T2 = ktime_to_timespec(TimeT2);
-  T3 = ktime_to_timespec(TimeT3);
-  T4 = ktime_to_timespec(TimeT4);
-  
-  temp1 = timespec_sub(T4, T3);
-  temp2 = timespec_sub(T2, T1);
-  temp3 = timespec_add(temp1, temp2);
-
-  ns_LinkDelay = timespec_to_ns(&temp3)/2;
-
-  return ns_to_timespec(ns_LinkDelay);
+  	struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
+	s64 ns_LinkDelay;
+	
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);
+	T3 = ktime_to_timespec(TimeT3);
+	T4 = ktime_to_timespec(TimeT4);
+	
+	temp1 = timespec_sub(T4, T3);
+	temp2 = timespec_sub(T2, T1);
+	temp3 = timespec_add(temp1, temp2);
+	
+	ns_LinkDelay = timespec_to_ns(&temp3)/2;
+	
+	return ns_to_timespec(ns_LinkDelay);
 
 }
 
@@ -489,142 +544,82 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 	return ns_to_timespec(ns_LinkDelay);
 }
 
-static int ethtsyn_sock_check() {
-  	struct sockaddr_storage address;
-	int retval;
-#ifdef CONFIG_ETHTSYN_MASTER
-	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
-#elif CONFIG_ETHTSYN_SLAVE
-	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
-#endif
-	//sock create parameters need to be update
-	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
-	if(retval < 0)
-		goto out;
-	//assume sock setting is finished
-out:
-	return retval;
-}
-
 //dongwon0
 static int ethtsyn_rcv(struct sk_buff* skb, 
 		       struct net_device* dev, 
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
 
-<<<<<<< HEAD
    	printk(KERN_INFO "Receive Packet!!\n");
-=======
-  /*
-    int rcv_type;
-    int rcv_ptype;
-    __be32 rcv_dest_ip = skb->;
-    __be32 rcv_src_ip;
-    const unsigned char* rcv_dest_hw;
-    const unsigned char* rcv_src_hw;
-    const unsigned char* rcv_target_hw;
-  */
 
-  printk(KERN_INFO "Receive Packet!!\n");
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
+  	/*
+	  int rcv_type;
+	  int rcv_ptype;
+	  __be32 rcv_dest_ip = skb->;
+	  __be32 rcv_src_ip;
+	  const unsigned char* rcv_dest_hw;
+	  const unsigned char* rcv_src_hw;
+	  const unsigned char* rcv_target_hw;
+	*/
 
-  const struct ptphdr *ptp;
 
-  ptp = ptp_hdr(skb);
-  
-  skb = skb_share_check(skb, GFP_ATOMIC); // ???????
-  if(!skb)
-    goto out_of_mem;
-
-  int m_type = ptp->messageType;
-
-  switch(m_type){
-
-  case SYN:
-    printk(KERN_INFO "This is type of Syn.\n");
-
-    SynTimeT2 = skb_get_ktime(skb);//save Syn Arrive Time, wait Follow_Up
-      
-    break;
-
-  case PDELAY_REQ:
-    printk(KERN_INFO "This is type of Pdelay_Req.\n");
-
-    RxTimeT2 = skb_get_ktime(skb);
- 
-<<<<<<< HEAD
-			RxTimeT3 = ktime_get_real();
-			
-			/*
-			ethtsyn_create(PDELAY_RESP, null, null, dev, null, dev->dev_addr, null, null);
-			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT2
-				
-			ethtsyn_create(PDELAY_RESP_FOLLOW_UP, null, null, dev, null, dev->dev_addr, null, null);
-			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT3	*/
-	         
-	         break;
-
-	      case PDELAY_RESP:
-	         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-
-			 TxTimeT4 = skb_get_ktime(skb);
-	         
-	         break;
-
-	      case FOLLOW_UP:
-	         printk(KERN_INFO "This is type of Follow_Up.\n");
-
-			// originally, might get SynTimeT1 in packet and save it
-			
-			ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay); // ts_LinkDelay is not NULL ??
-	         
-	         break;
-
-	      case PDELAY_RESP_FOLLOW_UP:
-	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-=======
-    RxTimeT3 = ktime_get_real();
-    
-    // call create (Pdelay_Resp)
-    
-    // call create (Pdelay_Resp_Follow_Up which might be contained RxTimeT2, RxTimeT3 )
-             
-    break;
-
-  case PDELAY_RESP:
-    printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-
-    TxTimeT4 = skb_get_ktime(skb);
-             
-    break;
-
-  case FOLLOW_UP:
-    printk(KERN_INFO "This is type of Follow_Up.\n");
-
-    // originally, might get SynTimeT1 in packet and save it
-    
-    ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
-             
-    break;
-
-  case PDELAY_RESP_FOLLOW_UP:
-    printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-
-    // originally, might get RxTimeT2, RxTimeT3 in packet and save it
-
-    ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
-    
-    break;
-  }
-
+	const struct ptphdr *ptp;
+	
+	ptp = ptp_hdr(skb);
+	
+	skb = skb_share_check(skb, GFP_ATOMIC); // ???????
+	if(!skb)
+	  goto out_of_mem;
+	
+	int m_type = ptp->messageType;
+	
+	switch(m_type){
+	  
+	case SYN:
+	  printk(KERN_INFO "This is type of Syn.\n");
+	  
+	  SynTimeT2 = skb_get_ktime(skb);//save Syn Arrive Time, wait Follow_Up
+	  
+	  break;
+	  
+	case PDELAY_REQ:
+	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+	  
+	  RxTimeT2 = skb_get_ktime(skb);
+	  
+	  break;
+	  
+	case PDELAY_RESP:
+	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+	  
+	  TxTimeT4 = skb_get_ktime(skb);
+	  
+	  break;
+	  
+	case FOLLOW_UP:
+	  printk(KERN_INFO "This is type of Follow_Up.\n");
+	  
+	  // originally, might get SynTimeT1 in packet and save it
+	  
+	  ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
+	  
+	  break;
+	  
+	case PDELAY_RESP_FOLLOW_UP:
+	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+	  
+	  // originally, might get RxTimeT2, RxTimeT3 in packet and save it
+	  
+	  ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
+	  
+	  break;
+	}
+	
  freeskb:
-  kfree_skb(skb);
+	kfree_skb(skb);
  out_of_mem:
-  return 0;
+	return 0;
 }
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
-
-<<<<<<< HEAD
 
 
 /*
@@ -646,40 +641,25 @@ return offset;
 */
  //type parameter need to add
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
-  struct sockaddr_storage address;
-  struct msghdr msg;
-  struct iovec iov;//why?
-  struct sk_buff *skb;
-
-  ethtsyn_ip_to_sockaddr_storage(addr, &address);
-
-  msg.msg_name = (struct sockaddr *) &address;
-  msg.msg_iov = &iov;
-  msg.msg_iovlen = 1;
-  msg.msg_control = NULL;
-  msg.msg_controllen = 0;
-  msg.msg_namelen = addr_len;
- 
-  //ethtsyn_route_check(msg, sk);
-  //skb = ethtsyn_create(sk);
-  if(skb == NULL)
-    return;
-  ethtsyn_xmit(skb);
-}
-
- //type parameter need to add
-void ethtsyn_send(const char* addr, uint32_t addr_len) {
-	struct sockaddr_storage address;
+  	struct sockaddr_storage address;
 	struct msghdr msg;
-
+	struct iovec iov;//why?
+	struct sk_buff *skb;
+	
 	ethtsyn_ip_to_sockaddr_storage(addr, &address);
-
+	
 	msg.msg_name = (struct sockaddr *) &address;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = NULL;
+	msg.msg_controllen = 0;
 	msg.msg_namelen = addr_len;
-
-	//ethtsyn_route_check();
-	//ethtsyn_create();
-	//ethtsyn_xmit();
+	
+	skb = ethtsyn_route_check(msg, thissock);
+	//skb = ethtsyn_create(sk);
+	if(skb == NULL)
+		return;
+	ethtsyn_xmit(skb);
 }
 
 /* Start of Timer */
@@ -691,13 +671,6 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
   printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 
-<<<<<<< HEAD
-   	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
-
-   if(ret) {
-      printk(KERN_INFO "Error in mod_timer\n");
-   }
-=======
   /*
     //dong
     ktime_t tx_time;
@@ -706,7 +679,6 @@ void ethtsyn_timer_callback(unsigned long arg) {
     delta = ktime_to_ns(tx_time);
     printk(KERN_INFO "ktime : %lld  (NOW) \n ", (long long)delta);
   */
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
 
   ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 
@@ -751,11 +723,28 @@ void ethtsyn_timer_cleanup_module(void) {
   return;
 }
 
+static int ethtsyn_sock_check() {
+  	struct sockaddr_storage address;
+	int retval;
+#ifdef CONFIG_ETHTSYN_MASTER
+	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
+#elif CONFIG_ETHTSYN_SLAVE
+	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
+#endif
+	//sock create parameters need to be update
+	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
+	if(retval < 0)
+	  	goto out;	//when error is occured retval will be under 0
+	//assume sock setting is finished
+out:
+	return retval;
+}
+
 /* End of Timer */
 
 static struct packet_type ethtsyn_packet_type __read_mostly = {
-  .type = cpu_to_be16(ETH_P_1588),
-  .func = ethtsyn_rcv
+  	.type = cpu_to_be16(ETH_P_1588),
+  	.func = ethtsyn_rcv
 };
 
 /* Initialize all internal variables and set the EthTSync module to init state */
@@ -788,6 +777,7 @@ void EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
   printk(KERN_INFO "EthTsyn init function called\n");
 
   //copied from arp style
+  ethtsyn_sock_check();
   dev_add_pack(&ethtsyn_packet_type);
   ethtsyn_proc_init();
   register_netdevice_notifier(&ethtsyn_netdev_notifier);   
