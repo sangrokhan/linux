@@ -10,46 +10,46 @@
 #include <net/stbm.h>
 
 typedef enum {
-   INITIALIZING = 1,
-   FAULTY = 2,
-   DISABLED = 3,
-   LISTENING = 4,
-   PRE_MASTER = 5,
-   MASTER = 6,
-   PASSIVE = 7,
-   UNCALIBRATED = 8,
+  INITIALIZING = 1,
+  FAULTY = 2,
+  DISABLED = 3,
+  LISTENING = 4,
+  PRE_MASTER = 5,
+  MASTER = 6,
+  PASSIVE = 7,
+  UNCALIBRATED = 8,
    SLAVE = 9
 } EthTSyn_ConfigType;
 
 typedef enum {
-  	ETHTSYN_TX_OFF = 0,
-	ETHTSYN_TX_ON
+  ETHTSYN_TX_OFF = 0,
+  ETHTSYN_TX_ON
 } EthTSyn_TransmissionModeType;
 
 typedef enum {
-	ETHTSYN_SYNC = 0,
-	ETHTSYN_UNSYNC,
-	ETHTSYN_UNCERTAIN,
-	ETHTSYN_NEVERSYNC
+  ETHTSYN_SYNC = 0,
+  ETHTSYN_UNSYNC,
+  ETHTSYN_UNCERTAIN,
+  ETHTSYN_NEVERSYNC
 } EthTSyn_SyncStateType;
 
 typedef struct {
-	unsigned Pdelay_Req		:	1;
-	unsigned Pdelay_Resp		:	1;
-  	unsigned Pdelay_Resp_Follow_Up	:	1;
-  	unsigned Sync			:	1;
-  	unsigned Follow_up		:	1;
-  	unsigned rsv			:	3;
+  unsigned Pdelay_Req:1;
+  unsigned Pdelay_Resp:1;
+  unsigned Pdelay_Resp_Follow_Up:1;
+  unsigned Sync:1;
+  unsigned Follow_up:1;
+  unsigned rsv:3;
 } EthTSyn_MessageType;
 
 /* for saving time in _rcv() (dongwon0) */
 extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
-extern struct timespec ts_LinkDelay, ts_ClockSlaveOffset;	// dongwon0
+extern struct timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
 
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
 extern bool EthTSynHardwareTimestampSupport;
-extern uint32_t EthTSynMainFunctionPeriod;	/* Standard using floating point to present INF */
+extern uint32_t EthTSynMainFunctionPeriod;/* Standard using floating point to present INF */
 extern bool EthTSynVersionInfo;
 extern time_t EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
@@ -64,25 +64,25 @@ extern uint32_t EthTSynGlobalTimeTxPdelayReqPeriod; /* Standard using floating p
 extern uint32_t EthTSynGlobalTimeTxPeriod; /* Standard using floating point to present INF */
 //extern Unknown EthTSynGlobalTimeEthIfRef; /* Reference to EthIfController */
 
-extern void 		EthTSyn_Init(const EthTSyn_ConfigType* configPtr);
-extern void 		EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo);
-extern Std_ReturnType 	EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
-					       StbM_TimeStampType* timeStampPtr,
-					       EthTSyn_SyncStateType* syncState);
-extern Std_ReturnType 	EthTSyn_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId, 
-					      StbM_TimeStampType* timeStampPtr);
-extern Std_ReturnType	EthTSyn_SetTransmissionMode(uint8_t CtrlIdx, 
-						    EthTSyn_TransmissionModeType Mode);
-extern void		EthTSyn_RxIndication(uint8_t CtrlIdx,
-				     Eth_FrameType FrameType,
-				     bool IsBroadcast,
-				     uint8_t* PhyAddrPtr,
-				     uint8_t* DataPtr,
-				     uint16_t LenByte);
-extern void		EthTSyn_TxConfirmation(uint8_t CtrlIdx,
-				       uint8_t BufIdx);
-extern Std_ReturnType	EthTSyn_TrcvLinkStateChg(uint8_t CtrlIdx, 
-					 EthTrcv_LinkStateType TrcvLinkState);
-extern void 		EthTSyn_MainFunction(void);
+extern void EthTSyn_Init(const EthTSyn_ConfigType* configPtr);
+extern void EthTSyn_GetVersionInfo(Std_VersionInfoType* versioninfo);
+extern Std_ReturnType EthTSyn_GetCurrentTime(StbM_SynchronizedTimeBaseType timeBaseId, 
+					     StbM_TimeStampType* timeStampPtr,
+					     EthTSyn_SyncStateType* syncState);
+extern Std_ReturnType EthTSyn_SetGlobalTime(StbM_SynchronizedTimeBaseType timeBaseId, 
+					    StbM_TimeStampType* timeStampPtr);
+extern Std_ReturnTypeEthTSyn_SetTransmissionMode(uint8_t CtrlIdx, 
+						 EthTSyn_TransmissionModeType Mode);
+extern voidEthTSyn_RxIndication(uint8_t CtrlIdx,
+				Eth_FrameType FrameType,
+				bool IsBroadcast,
+				uint8_t* PhyAddrPtr,
+				uint8_t* DataPtr,
+				uint16_t LenByte);
+extern voidEthTSyn_TxConfirmation(uint8_t CtrlIdx,
+				  uint8_t BufIdx);
+extern Std_ReturnTypeEthTSyn_TrcvLinkStateChg(uint8_t CtrlIdx, 
+					      EthTrcv_LinkStateType TrcvLinkState);
+extern void EthTSyn_MainFunction(void);
 
 #endif
