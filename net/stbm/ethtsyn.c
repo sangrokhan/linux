@@ -43,8 +43,8 @@ EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
-ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
-ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
+// ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
+// timespec ts_LinkDelay, ts_ClockSlaveOffset;	// dongwon0
 
 struct sockaddr_in sockaddr;
 
@@ -284,7 +284,13 @@ struct sk_buff* ethtsyn_create(int type,
 		/* Sync */
 	case 0 :
 	  printk(KERN_INFO "This is type of Syn.\n");
+<<<<<<< HEAD
 >>>>>>> b387883... conflict solve
+=======
+
+	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
+	  
+>>>>>>> d624363... add get_clockslaveoffset and linkdelay function
 	  // SynMsg syn_msg;
 	  // syn_msg->header = ptp;
 	  
@@ -293,6 +299,8 @@ struct sk_buff* ethtsyn_create(int type,
 	  /* Pdelay_Req */
 	case 2 :
 	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+
+	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
 	  
 	  // PdelayReqMsg pdelay_req_msg;
 	  
@@ -452,27 +460,19 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
 	switch(m_type){
 
-		/* Sync */
-	      case 0 :
+	      case SYN:
 	         printk(KERN_INFO "This is type of Syn.\n");
 
 			SynTimeT2 = skb_get_ktime(skb);	//save Syn Arrive Time, wait Follow_Up
 		  
 	         break;
 
-	      /* Pdelay_Req */
-	      case 2 :
+	      case PDELAY_REQ:
 	         printk(KERN_INFO "This is type of Pdelay_Req.\n");
 
 			RxTimeT2 = skb_get_ktime(skb);
  
 			RxTimeT3 = ktime_get_real();
-		
-			/* test print
-			s64 rx_time_t3;
-			rx_time_t3= ktime_to_ns(RxTimeT3);
-			printk(KERN_INFO " RxTimeT3 ktime : %lld  (NOW) \n ", (long long)rx_time_t3);
-			*/
 			
 			// call create (Pdelay_Resp)
 		
@@ -480,28 +480,23 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	         
 	         break;
 
-	      /* Pdelay_Resp */
-	      case 3 :
+	      case PDELAY_RESP:
 	         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
 
 			 TxTimeT4 = skb_get_ktime(skb);
 	         
 	         break;
 
-	      /* Follow_Up */
-	      case 8 :
+	      case FOLLOW_UP:
 	         printk(KERN_INFO "This is type of Follow_Up.\n");
 
 			// originally, might get SynTimeT1 in packet and save it
-
-			ClockSlaveOffset = ktime_sub(SynTimeT2, SynTimeT1);
-
-			//Need to Set Responder's Time
+			
+			ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
 	         
 	         break;
 
-	      /* Pdelay_Resp_Follow_Up */
-	      case 10 :
+	      case PDELAY_RESP_FOLLOW_UP:
 	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 
 <<<<<<< HEAD
@@ -510,13 +505,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 >>>>>>> b387883... conflict solve
 			// originally, might get RxTimeT2, RxTimeT3 in packet and save it
 
-			ktime_t temp1, temp2;
-			temp1 = ktime_sub(TxTimeT4, RxTimeT3);
-			temp2 = ktime_sub(RxTimeT2, TxTimeT1);
-			//LinkDelay = ktime_add(temp1, temp2) / 2;
-
-			// Need to Set Responder's Time
-				
+			ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
+			
 		 break;
 	}	
 <<<<<<< HEAD
@@ -538,7 +528,48 @@ out_of_mem:
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, timespec Link_Delay){
+
+		timespec T1, T2, temp, now;
+
+		T1 = ktime_to_timespec(TimeT1);
+		T2 = ktime_to_timespec(TimeT2);			
+
+		temp = timespec_sub(T2, T1);			
+		ts_ClockSlaveOffset = timespec_sub(temp, Link_Delay);
+
+		getnstimeofday(&now);
+		do_settimeofday(timespec_sub(now, ts_ClockSlaveOffset));
+		
+}
+	
+static timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
+		       const ktime_t TimeT2, 
+		       const ktime_t TimeT3, 
+		       const ktime_t TimeT4 ) {
+
+			timespec T1, T2, T3, T4, temp1, temp2, temp3;
+			s64 ns_LinkDelay;
+
+			T1 = ktime_to_timespec(TimeT1);
+			T2 = ktime_to_timespec(TimeT2);
+			T3 = ktime_to_timespec(TimeT3);
+			T4 = ktime_to_timespec(TimeT4);
+			
+			temp1 = timespec_sub(T4, T3);
+			temp2 = timespec_sub(T2, T1);			
+			temp3 = timespec_add(ts_temp1, ts_temp2);
+
+			ns_LinkDelay = timespec_to_ns(ts_LinkDelay_temp)/2;
+
+			return ns_to_timespec(ns_LinkDelay);
+
+}
+
+>>>>>>> d624363... add get_clockslaveoffset and linkdelay function
 /*
 static int64_t calculate_offset(struct timespec *ts1,
 				      struct timespec *rt,
@@ -576,7 +607,10 @@ void ethtsyn_send(const char* addr, uint32_t addr_len) {
 	//ethtsyn_xmit();
 }
 
+<<<<<<< HEAD
 >>>>>>> 381c465... file format resetting, add ethtsyn_route_check function, but not fully checked. Can't build!!! do not pull yet
+=======
+>>>>>>> d624363... add get_clockslaveoffset and linkdelay function
 /* Start of Timer */
 void ethtsyn_timer_callback(unsigned long arg) {
    struct sk_buff *skb;
@@ -802,4 +836,6 @@ Std_ReturnType	EthTSyn_TrcvLinkStateChg(uint8_t CtrlIdx,
 void 		EthTSyn_MainFunction(void) {
 
 }
+                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                                                                                                         
