@@ -146,12 +146,21 @@ back_from_confirm:
 	  daddr = ipc.addr = fl4->daddr;
 
 	if(!corkreq) {
+<<<<<<< HEAD
 	  skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
 			    sizeof(sutrct udphdr), &ipc, &rt, 
 			    msg->msg_flags);
 	  err = PTR_ERR(skb);
 	  if(!IS_ERROR_OR_NULL(skb))
 	    err = udp_send_skb(skb, fl4);
+=======
+	  	skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
+			    sizeof(struct udphdr), &ipc, &rt, 
+			    msg->msg_flags);
+		err = PTR_ERR(skb);
+		//if(!IS_ERR_OR_NULL(skb))
+	    	//err = udp_send_skb(skb, fl4);
+>>>>>>> 921c280... minor update
 	}
 out:
 	
@@ -171,6 +180,12 @@ do_confirm:
 //parameters may not be need
 //need to compare arp & ptp 
 struct sk_buff* ethtsyn_create(int type, 
+<<<<<<< HEAD
+=======
+			       ktime_t* time,	//might be null when Request, and sync type
+			       struct net_device *dev,
+
+>>>>>>> 921c280... minor update
 			       int ptype, 
 			       __be32 dest_ip, 
 			       struct net_device* dev, 
@@ -178,12 +193,17 @@ struct sk_buff* ethtsyn_create(int type,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
 			       const unsigned char* target_hw) {
+ 	struct sk_buff* skb;
 	struct ptphdr* ptp;
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
+<<<<<<< HEAD
 
 
+=======
+	
+>>>>>>> 921c280... minor update
 	/*
 	 *	Allocate a buffer
 	 */
@@ -430,6 +450,7 @@ static int __init ethtsyn_proc_init(void) {
   	return register_pernet_subsys(&ethtsyn_net_ops);
 }
 
+<<<<<<< HEAD
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, struct timespec Link_Delay){
 
 		struct timespec T1, T2, temp1, temp2, now;
@@ -468,6 +489,23 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 
 			return ns_to_timespec(ns_LinkDelay);
 
+=======
+static int ethtsyn_sock_check() {
+  	struct sockaddr_storage address;
+	int retval;
+#ifdef CONFIG_ETHTSYN_MASTER
+	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
+#elif CONFIG_ETHTSYN_SLAVE
+	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
+#endif
+	//sock create parameters need to be update
+	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
+	if(retval < 0)
+		goto out;
+	//assume sock setting is finished
+out:
+	return retval;
+>>>>>>> 921c280... minor update
 }
 
 
