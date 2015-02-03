@@ -189,9 +189,9 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 //parameters may not be need
 //need to compare arp & ptp 
 struct sk_buff* ethtsyn_create(int type, 
-			       timestamp* time,//might be null when Request, and sync type
+			       ktime_t* time,	//might be null when Request, and sync type
 			       struct net_device *dev,
-			              
+
 			       int ptype, 
 			       __be32 dest_ip, 
 			       __be32 src_ip,
@@ -319,7 +319,6 @@ EXPORT_SYMBOL(ethtsyn_xmit);
  * skb might have a dst pointer attached, refcounted or not.
  * _skb_refdst low order bit is set if refcount was _not_ taken
  */
-
 /*
 #define SKB_DST_NOREF   1UL
 #define SKB_DST_PTRMASK ~(SKB_DST_NOREF)
@@ -418,6 +417,63 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 
 }
 
+static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
+					 const ktime_t TimeT2, 
+					 struct timespec Link_Delay) {
+
+  	struct timespec T1, T2, temp1, temp2, now;
+
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);			
+	
+	temp1 = timespec_sub(T2, T1);			
+	ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
+	
+	getnstimeofday(&temp2);
+	now = timespec_sub(temp2, ts_ClockSlaveOffset);
+	do_settimeofday(&now);
+	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
+		
+}
+	
+static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
+		       const ktime_t TimeT2, 
+		       const ktime_t TimeT3, 
+		       const ktime_t TimeT4 ) {
+
+  	struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
+	s64 ns_LinkDelay;
+	
+	T1 = ktime_to_timespec(TimeT1);
+	T2 = ktime_to_timespec(TimeT2);
+	T3 = ktime_to_timespec(TimeT3);
+	T4 = ktime_to_timespec(TimeT4);
+	
+	temp1 = timespec_sub(T4, T3);
+	temp2 = timespec_sub(T2, T1);			
+	temp3 = timespec_add(temp1, temp2);
+	
+	ns_LinkDelay = timespec_to_ns(&temp3)/2;
+	
+	return ns_to_timespec(ns_LinkDelay);
+}
+
+static int ethtsyn_sock_check() {
+  	struct sockaddr_storage address;
+	int retval;
+#ifdef CONFIG_ETHTSYN_MASTER
+	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
+#elif CONFIG_ETHTSYN_SLAVE
+	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
+#endif
+	//sock create parameters need to be update
+	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
+	if(retval < 0)
+		goto out;
+	//assume sock setting is finished
+out:
+	return retval;
+}
 
 //dongwon0
 static int ethtsyn_rcv(struct sk_buff* skb, 
@@ -520,7 +576,6 @@ offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
 return offset;
 }
 */
-
  //type parameter need to add
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
   struct sockaddr_storage address;
@@ -542,6 +597,45 @@ void ethtsyn_send(const char* addr, uint32_t addr_len) {
   if(skb == NULL)
     return;
   ethtsyn_xmit(skb);
+}
+
+
+
+/*
+static int64_t calculate_offset(struct timespec *ts1,
+				      struct timespec *rt,
+				      struct timespec *ts2)
+{
+	int64_t interval;
+	int64_t offset;
+
+#define NSEC_PER_SEC 1000000000ULL
+	// calculate interval between clock realtime 
+	interval = (ts2->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	interval += ts2->tv_nsec - ts1->tv_nsec;
+
+	// assume PHC read occured half way between CLOCK_REALTIME reads 
+
+	offset = (rt->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
+	offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
+
+	return offset;
+}
+*/
+
+ //type parameter need to add
+void ethtsyn_send(const char* addr, uint32_t addr_len) {
+	struct sockaddr_storage address;
+	struct msghdr msg;
+
+	ethtsyn_ip_to_sockaddr_storage(addr, &address);
+
+	msg.msg_name = (struct sockaddr *) &address;
+	msg.msg_namelen = addr_len;
+
+	//ethtsyn_route_check();
+	//ethtsyn_create();
+	//ethtsyn_xmit();
 }
 
 /* Start of Timer */
@@ -570,9 +664,9 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
   //ethtsyn_send(type);
 
-  // skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
-  // ethtsyn_xmit(skb);
-  //set_device_test(skb);
+   // skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
+   // ethtsyn_xmit(skb);
+   //set_device_test(skb);
 }
 
 int ethtsyn_timer_init_module(void) {
