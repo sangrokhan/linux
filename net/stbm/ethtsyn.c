@@ -146,12 +146,12 @@ back_from_confirm:
 	  daddr = ipc.addr = fl4->daddr;
 
 	if(!corkreq) {
-	  skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
-			    sizeof(sutrct udphdr), &ipc, &rt, 
+	  	skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
+			    sizeof(struct udphdr), &ipc, &rt, 
 			    msg->msg_flags);
-	  err = PTR_ERR(skb);
-	  if(!IS_ERROR_OR_NULL(skb))
-	    err = udp_send_skb(skb, fl4);
+		err = PTR_ERR(skb);
+		//if(!IS_ERR_OR_NULL(skb))
+	    	//err = udp_send_skb(skb, fl4);
 	}
 out:
 	
@@ -171,6 +171,9 @@ do_confirm:
 //parameters may not be need
 //need to compare arp & ptp 
 struct sk_buff* ethtsyn_create(int type, 
+			       ktime_t* time,	//might be null when Request, and sync type
+			       struct net_device *dev,
+
 			       int ptype, 
 			       __be32 dest_ip, 
 			       struct net_device* dev, 
@@ -178,11 +181,11 @@ struct sk_buff* ethtsyn_create(int type,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
 			       const unsigned char* target_hw) {
+ 	struct sk_buff* skb;
 	struct ptphdr* ptp;
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
-
 
 	/*
 	 *	Allocate a buffer
@@ -397,7 +400,23 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 			ns_LinkDelay = timespec_to_ns(&temp3)/2;
 
 			return ns_to_timespec(ns_LinkDelay);
+}
 
+static int ethtsyn_sock_check() {
+  	struct sockaddr_storage address;
+	int retval;
+#ifdef CONFIG_ETHTSYN_MASTER
+	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
+#elif CONFIG_ETHTSYN_SLAVE
+	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
+#endif
+	//sock create parameters need to be update
+	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
+	if(retval < 0)
+		goto out;
+	//assume sock setting is finished
+out:
+	return retval;
 }
 
 
