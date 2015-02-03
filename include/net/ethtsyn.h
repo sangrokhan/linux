@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/time.h>
+#include <uapi/linux/time.h>
 #include <linux/stddef.h>
 #include <net/eth.h>
 #include <net/ethtrcv.h>
@@ -43,7 +44,7 @@ typedef struct {
 
 /* for saving time in _rcv() (dongwon0) */
 extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
-extern timespec ts_LinkDelay, ts_ClockSlaveOffset;	// dongwon0
+extern struct timespec ts_LinkDelay, ts_ClockSlaveOffset;	// dongwon0
 
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;

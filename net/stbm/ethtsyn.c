@@ -9,7 +9,6 @@
 #include <linux/audit.h>
 #include <linux/socket.h>
 #include <linux/byteorder/generic.h>
-#include <uapi/linux/netfilter_arp.h>
 #include <uapi/linux/in.h>
 #include <uapi/linux/snmp.h>
 #include <net/ip.h>
@@ -49,19 +48,15 @@ time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4;
 
 struct sockaddr_in sockaddr;
 
-const char* master_addr = "192.168.100.20";
-const char* slave_addr = "192.168.100.21";
+const char* addr_char = "192.168.0.100";
 
 static struct timer_list ethTSynTimer;
-
-struct inet_sock* thisinetsock;
-struct socket* thissock;
 
 void ethtsyn_timer_callback(unsigned long arg);
 
 //char type ip address change to sockaddr_storage type
 static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_storage *address) {
-  	__be32 tempAddr;
+  	uint32_t tempAddr;
 	uint8_t arr[4];
 	int a, b, c ,d;
 	sscanf(ch_addr, "%d.%d.%d.%d", &a, &b, &c, &d);
@@ -72,27 +67,21 @@ static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_
 }
 
 //copied from udp source code 
-static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
-					struct sock *sk) {
+static void ethtsyn_route_check(struct msghdr *msg,
+				struct sock *sk) {
   	struct inet_sock *inet = inet_sk(sk);
 	struct sk_buff* skb;
 	struct rtable *rt = NULL;
 	struct flowi4 fl4_stack;
 	struct flowi4 *fl4;
 	struct ipcm_cookie ipc;
-	int (*getfrag)(void *, char *, int, int, int, struct sk_buff*);
+	struct sk_buff *skb;
+	
 	int connected = 0;
 	u8 tos;
-	int err, ulen = 0;
-	int corkreq = msg->msg_flags & MSG_MORE;
+	int err, len;
 	__be32 daddr, faddr, saddr;
-	__be16 dport;	//port value is need? there is no user application
-
-	ipc.opt = NULL;
-	ipc.tx_flags = 0;
-	getfrag = NULL;
-
-	ulen += sizeof(struct ptphdr);
+	__be16 dport;	//port value is need? this is not user application
 
 	if(msg->msg_name) {
 		struct sockaddr_in *usin = (struct sockaddr_in *) msg->msg_name;
@@ -105,14 +94,8 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 		}
 		daddr = usin->sin_addr.s_addr;
 		//dport = ?	//if need fill the port value
-	} else {	//W/O IP Address
-	  	return -EINVAL;
 	}
 	
-	ipc.addr = inet->inet_saddr;
-	ipc.oif = sk->sk_bound_dev_if;
-	sock_tx_timestamp(sk, &ipc.tx_flags);
-
 	tos = RT_TOS(inet->tos);	//need to check what value need to be initialized to inet
 	if(sock_flag(sk, SOCK_LOCALROUTE) ||
 	   (msg->msg_flags & MSG_DONTROUTE) ||
@@ -152,23 +135,23 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 		  	goto out;
 		if(connected)
 		  	sk_dst_set(sk, dst_clone(&rt->dst));
-	} 
+	}
 
 	if(msg->msg_flags & MSG_CONFIRM)
-	  	goto do_confirm;
+	  goto do_confirm;
 back_from_confirm:
 	
 	saddr = fl4->saddr;
 	if(!ipc.addr)
-	  	daddr = ipc.addr = fl4->daddr;
+	  daddr = ipc.addr = fl4->daddr;
 
 	if(!corkreq) {
-	  	skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
+	  skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
 			    sizeof(sutrct udphdr), &ipc, &rt, 
 			    msg->msg_flags);
-		err = PTR_ERR(skb);
-		if(!IS_ERROR_OR_NULL(skb))
-	    		err = udp_send_skb(skb, fl4);
+	  err = PTR_ERR(skb);
+	  if(!IS_ERROR_OR_NULL(skb))
+	    err = udp_send_skb(skb, fl4);
 	}
 out:
 	
@@ -177,11 +160,10 @@ out:
 do_confirm:
 	dst_confirm(&rt->dst);
 	//if(!(msg->msg_flags & MSG_PROBE) || len)	//CHECK ABOUT MSG_FLAGS 
-	//goto back_from_confirm;
-	//err = 0;
-	//goto out;
-	//after confirm, the route is exsit. 
-	//return sk_buff
+	  	goto back_from_confirm;
+	err = 0;
+	goto out;
+
 }
 
 //Parameters need to check
@@ -189,11 +171,9 @@ do_confirm:
 //parameters may not be need
 //need to compare arp & ptp 
 struct sk_buff* ethtsyn_create(int type, 
-			       timestamp* time,	//might be null when Request, and sync type
-			       struct net_device *dev,
-			       
 			       int ptype, 
 			       __be32 dest_ip, 
+			       struct net_device* dev, 
 			       __be32 src_ip,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
@@ -202,6 +182,7 @@ struct sk_buff* ethtsyn_create(int type,
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
+
 
 	/*
 	 *	Allocate a buffer
@@ -303,15 +284,12 @@ out :
 EXPORT_SYMBOL(ethtsyn_create);
 
 /*
- * ethtsyn_xmit function 
- * NF_HOOK part should be filled! currently using ARP NF_HOOK
- * will not working currectly
- * Do not send any packet yet!
- */
+* Send an arp packet.
+*/
 void ethtsyn_xmit(struct sk_buff *skb)
 {
       /* Send it off, maybe filter it using firewalling first.  */
-      //NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+      // NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
 }
 EXPORT_SYMBOL(ethtsyn_xmit);
 
@@ -382,25 +360,46 @@ static int __init ethtsyn_proc_init(void) {
   	return register_pernet_subsys(&ethtsyn_net_ops);
 }
 
-static int ethtsyn_sock_check() {
-  	struct sockaddr_storage address;
-	int retval;
-#ifdef CONFIG_ETHTSYN_MASTER
-	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
-#elif CONFIG_ETHTSYN_SLAVE
-	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
-#endif
-	//sock create parameters need to be update
-	//linux/socket.h
-	//linux/net.h
-	//uapi/linux/in.h
-	retval = sock_create(family, type, protocol, &thissock);
-	if(retval < 0)
-		goto out;
-	//assume sock setting is finished
-out:
-	return retval;
+static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, struct timespec Link_Delay){
+
+		struct timespec T1, T2, temp1, temp2, now;
+
+		T1 = ktime_to_timespec(TimeT1);
+		T2 = ktime_to_timespec(TimeT2);			
+
+		temp1 = timespec_sub(T2, T1);			
+		ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
+
+		getnstimeofday(&temp2);
+		now = timespec_sub(temp2, ts_ClockSlaveOffset);
+		do_settimeofday(&now);
+		// need to set slave's time by 'now' ...... i couldn't find proper fuction 
+		
 }
+	
+static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
+		       const ktime_t TimeT2, 
+		       const ktime_t TimeT3, 
+		       const ktime_t TimeT4 ) {
+
+			struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
+			s64 ns_LinkDelay;
+
+			T1 = ktime_to_timespec(TimeT1);
+			T2 = ktime_to_timespec(TimeT2);
+			T3 = ktime_to_timespec(TimeT3);
+			T4 = ktime_to_timespec(TimeT4);
+			
+			temp1 = timespec_sub(T4, T3);
+			temp2 = timespec_sub(T2, T1);			
+			temp3 = timespec_add(temp1, temp2);
+
+			ns_LinkDelay = timespec_to_ns(&temp3)/2;
+
+			return ns_to_timespec(ns_LinkDelay);
+
+}
+
 
 //dongwon0
 static int ethtsyn_rcv(struct sk_buff* skb, 
@@ -426,7 +425,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	
 	skb = skb_share_check(skb, GFP_ATOMIC); // ???????
 	if(!skb)
-	  	goto out_of_mem;
+	  goto out_of_mem;
 
 	int m_type = ptp->messageType;
 
@@ -484,47 +483,8 @@ out_of_mem:
   	return 0;
 }
 
-<<<<<<< HEAD
-static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, const ktime_t TimeT2, timespec Link_Delay){
 
-		timespec T1, T2, temp, now;
 
-		T1 = ktime_to_timespec(TimeT1);
-		T2 = ktime_to_timespec(TimeT2);			
-
-		temp = timespec_sub(T2, T1);			
-		ts_ClockSlaveOffset = timespec_sub(temp, Link_Delay);
-
-		getnstimeofday(&now);
-		do_settimeofday(timespec_sub(now, ts_ClockSlaveOffset));
-		
-}
-	
-static timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
-		       const ktime_t TimeT2, 
-		       const ktime_t TimeT3, 
-		       const ktime_t TimeT4 ) {
-
-			timespec T1, T2, T3, T4, temp1, temp2, temp3;
-			s64 ns_LinkDelay;
-
-			T1 = ktime_to_timespec(TimeT1);
-			T2 = ktime_to_timespec(TimeT2);
-			T3 = ktime_to_timespec(TimeT3);
-			T4 = ktime_to_timespec(TimeT4);
-			
-			temp1 = timespec_sub(T4, T3);
-			temp2 = timespec_sub(T2, T1);			
-			temp3 = timespec_add(ts_temp1, ts_temp2);
-
-			ns_LinkDelay = timespec_to_ns(ts_LinkDelay_temp)/2;
-
-			return ns_to_timespec(ns_LinkDelay);
-
-}
-
-=======
->>>>>>> d5ac4ffbc66e366ee3f87e2e5e15fc1decd5dd03
 /*
 static int64_t calculate_offset(struct timespec *ts1,
 				      struct timespec *rt,
@@ -551,23 +511,15 @@ static int64_t calculate_offset(struct timespec *ts1,
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
 	struct sockaddr_storage address;
 	struct msghdr msg;
-	struct iovec iov;	//why?
-	struct sk_buff *skb;
 
 	ethtsyn_ip_to_sockaddr_storage(addr, &address);
 
 	msg.msg_name = (struct sockaddr *) &address;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = NULL;
-	msg.msg_controllen = 0;
 	msg.msg_namelen = addr_len;
- 
-	//ethtsyn_route_check(msg, sk);
-	//skb = ethtsyn_create(sk);
-	if(skb == NULL)
-	  	return;
-	ethtsyn_xmit(skb);
+
+	//ethtsyn_route_check();
+	//ethtsyn_create();
+	//ethtsyn_xmit();
 }
 
 /* Start of Timer */
@@ -796,5 +748,4 @@ void 		EthTSyn_MainFunction(void) {
 
 }
                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                                                                                                         
