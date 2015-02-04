@@ -75,7 +75,7 @@ static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_
 }
 
 //copied from udp source code 
-<<<<<<< HEAD
+
 static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 					   struct sock *sk) {
   struct inet_sock *inet = inet_sk(sk);
@@ -168,7 +168,7 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 
   if(!corkreq) {
     skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
-		      sizeof(sutrct udphdr), &ipc, &rt, 
+		      sizeof(struct udphdr), &ipc, &rt, 
 		      msg->msg_flags);
     err = PTR_ERR(skb);
     if(!IS_ERROR_OR_NULL(skb))
@@ -257,6 +257,16 @@ struct sk_buff* ethtsyn_create(int type,
    ptp->control = 5;
    // ptp->logMessageInterval = 0x7F
 
+	/* ClockIdentity initialization from Hw Addr */
+   ptp->sourcePortIdentity.clockIdentity.B0 = dev->dev_addr[0];
+   ptp->sourcePortIdentity.clockIdentity.B1 = dev->dev_addr[1];
+   ptp->sourcePortIdentity.clockIdentity.B2 = dev->dev_addr[2];
+   ptp->sourcePortIdentity.clockIdentity.B3 = 0xFF;
+   ptp->sourcePortIdentity.clockIdentity.B4 = 0xFE;
+   ptp->sourcePortIdentity.clockIdentity.B5 = dev->dev_addr[3];
+   ptp->sourcePortIdentity.clockIdentity.B6 = dev->dev_addr[4];
+   ptp->sourcePortIdentity.clockIdentity.B7 = dev->dev_addr[5];
+   
    switch(type) {
       
 	case SYN :
@@ -448,47 +458,6 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 
 }
 
-static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
-					 const ktime_t TimeT2, 
-					 struct timespec Link_Delay) {
-
-  	struct timespec T1, T2, temp1, temp2, now;
-
-	T1 = ktime_to_timespec(TimeT1);
-	T2 = ktime_to_timespec(TimeT2);			
-	
-	temp1 = timespec_sub(T2, T1);			
-	ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
-	
-	getnstimeofday(&temp2);
-	now = timespec_sub(temp2, ts_ClockSlaveOffset);
-	do_settimeofday(&now);
-	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
-		
-}
-	
-static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
-		       const ktime_t TimeT2, 
-		       const ktime_t TimeT3, 
-		       const ktime_t TimeT4 ) {
-
-  	struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
-	s64 ns_LinkDelay;
-	
-	T1 = ktime_to_timespec(TimeT1);
-	T2 = ktime_to_timespec(TimeT2);
-	T3 = ktime_to_timespec(TimeT3);
-	T4 = ktime_to_timespec(TimeT4);
-	
-	temp1 = timespec_sub(T4, T3);
-	temp2 = timespec_sub(T2, T1);			
-	temp3 = timespec_add(temp1, temp2);
-	
-	ns_LinkDelay = timespec_to_ns(&temp3)/2;
-	
-	return ns_to_timespec(ns_LinkDelay);
-}
-
 static int ethtsyn_sock_check() {
   	struct sockaddr_storage address;
 	int retval;
@@ -512,9 +481,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
 
-<<<<<<< HEAD
    	printk(KERN_INFO "Receive Packet!!\n");
-=======
+
   /*
     int rcv_type;
     int rcv_ptype;
@@ -526,7 +494,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
   */
 
   printk(KERN_INFO "Receive Packet!!\n");
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
 
   const struct ptphdr *ptp;
 
@@ -552,7 +519,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
     RxTimeT2 = skb_get_ktime(skb);
  
-<<<<<<< HEAD
 			RxTimeT3 = ktime_get_real();
 			
 			/*
@@ -564,48 +530,21 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	         
 	         break;
 
-	      case PDELAY_RESP:
-	         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+      case PDELAY_RESP:
+         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
 
-			 TxTimeT4 = skb_get_ktime(skb);
+		 TxTimeT4 = skb_get_ktime(skb);
 	         
-	         break;
+         break;
 
-	      case FOLLOW_UP:
-	         printk(KERN_INFO "This is type of Follow_Up.\n");
+      case FOLLOW_UP:
+         printk(KERN_INFO "This is type of Follow_Up.\n");
 
-			// originally, might get SynTimeT1 in packet and save it
+		// originally, might get SynTimeT1 in packet and save it
 			
-			ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay); // ts_LinkDelay is not NULL ??
+		ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay); // ts_LinkDelay is not NULL ??
 	         
-	         break;
-
-	      case PDELAY_RESP_FOLLOW_UP:
-	         printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-=======
-    RxTimeT3 = ktime_get_real();
-    
-    // call create (Pdelay_Resp)
-    
-    // call create (Pdelay_Resp_Follow_Up which might be contained RxTimeT2, RxTimeT3 )
-             
-    break;
-
-  case PDELAY_RESP:
-    printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-
-    TxTimeT4 = skb_get_ktime(skb);
-             
-    break;
-
-  case FOLLOW_UP:
-    printk(KERN_INFO "This is type of Follow_Up.\n");
-
-    // originally, might get SynTimeT1 in packet and save it
-    
-    ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
-             
-    break;
+         break;
 
   case PDELAY_RESP_FOLLOW_UP:
     printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
@@ -613,7 +552,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
     // originally, might get RxTimeT2, RxTimeT3 in packet and save it
 
     ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
-    
+	    
     break;
   }
 
@@ -622,28 +561,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
  out_of_mem:
   return 0;
 }
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
 
-<<<<<<< HEAD
-
-
-/*
-static int64_t calculate_offset(struct timespec *ts1,
-      struct timespec *rt,
-            struct timespec *ts2)
-{
-int64_t interval;
-int64_t offset;
-#define NSEC_PER_SEC 1000000000ULL
-// calculate interval between clock realtime 
-interval = (ts2->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
-interval += ts2->tv_nsec - ts1->tv_nsec;
-// assume PHC read occured half way between CLOCK_REALTIME reads 
-offset = (rt->tv_sec - ts1->tv_sec) * NSEC_PER_SEC;
-offset += (rt->tv_nsec - ts1->tv_nsec) - (interval / 2);
-return offset;
-}
-*/
  //type parameter need to add
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
   struct sockaddr_storage address;
@@ -691,22 +609,11 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
   printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 
-<<<<<<< HEAD
    	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 
    if(ret) {
       printk(KERN_INFO "Error in mod_timer\n");
    }
-=======
-  /*
-    //dong
-    ktime_t tx_time;
-    tx_time = ktime_get_real();
-    s64 delta;
-    delta = ktime_to_ns(tx_time);
-    printk(KERN_INFO "ktime : %lld  (NOW) \n ", (long long)delta);
-  */
->>>>>>> 69e992de3053db9b33fc05a17c3c5cb06468a36a
 
   ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 

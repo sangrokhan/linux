@@ -13,10 +13,19 @@
 #define FOLLOW_UP 8 /* Follow_Up message */
 #define PDELAY_RESP_FOLLOW_UP 10 /* Pdelay_Resp_Follow_Up message */
 
-typedef uint64_t Octet8;
-typedef Octet8   ClockIdentity;
+//typedef uint64_t Octet8;
+typedef struct _ClockIdentity{
+	unsigned char B0 : 8;
+	unsigned char B1 : 8;
+	unsigned char B2 : 8;
+	unsigned char B3 : 8;
+	unsigned char B4 : 8;
+	unsigned char B5 : 8;
+	unsigned char B6 : 8;
+	unsigned char B7 : 8;
+}ClockIdentity;
 
-struct flagField {
+typedef struct _flagField {
    unsigned alternateMasterFlag  :  1;
    unsigned twoStepFlag :  1;
    unsigned unicastFlag :  1;
@@ -30,24 +39,22 @@ struct flagField {
    unsigned ptpTimescale   :  1;
    unsigned timeTraceable  :  1;
    unsigned frequencyTraceable   :  1;
-   unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
-};
+   unsigned reservedForAnnexK    :  2;    // This bit is reserved for the experimental security mechanism of Annex K
+}flagField;
 
-struct portIdentity {
+typedef struct _portIdentity {
    ClockIdentity clockIdentity;
    uint16_t portNumber;
-};
+}portIdentity;
 
-/*
- * 
- * For example (about Timestamp),
- * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
- *
-*/
-struct Timestamp {
+// * For example (about Timestamp),
+// * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
+ 
+
+typedef struct _Timestamp {
   uint8_t seconds[6];
   uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
-};
+}Timestamp;
 
 struct ptphdr{
   unsigned 	messageType		:	4;
