@@ -23,35 +23,37 @@ typedef struct _ClockIdentity{
 	unsigned char B5 : 8;
 	unsigned char B6 : 8;
 	unsigned char B7 : 8;
-}ClockIdentity;
+} ClockIdentity;
 
-typedef struct _flagField {
-   unsigned alternateMasterFlag  :  1;
-   unsigned twoStepFlag :  1;
-   unsigned unicastFlag :  1;
-   unsigned noDefinition    :  2;    // The bit is not defined
-   unsigned PTPprofileSpecific1  :  1;
-   unsigned PTPprofileSpecific2  :  1;
-   unsigned reserved    :  1;
-   unsigned leap61   :  1;
-   unsigned leap59   :  1;
-   unsigned currentUtcOffsetValid   :  1;
-   unsigned ptpTimescale   :  1;
-   unsigned timeTraceable  :  1;
-   unsigned frequencyTraceable   :  1;
-   unsigned reservedForAnnexK    :  2;    // This bit is reserved for the experimental security mechanism of Annex K
-}flagField;
+typedef struct {
+	unsigned alternateMasterFlag  :  1;
+  	unsigned twoStepFlag :  1;
+  	unsigned unicastFlag :  1;
+  	unsigned noDefinition    :  2;    // The bit is not defined
+  	unsigned PTPprofileSpecific1  :  1;
+  	unsigned PTPprofileSpecific2  :  1;
+  	unsigned reserved    :  1;
+   	unsigned leap61   :  1;
+   	unsigned leap59   :  1;
+   	unsigned currentUtcOffsetValid   :  1;
+   	unsigned ptpTimescale   :  1;
+   	unsigned timeTraceable  :  1;
+   	unsigned frequencyTraceable   :  1;
+   	unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
+} flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
 
-typedef struct _portIdentity {
-   ClockIdentity clockIdentity;
-   uint16_t portNumber;
-}portIdentity;
+typedef struct {
+   	ClockIdentity clockIdentity;
+   	uint16_t portNumber;
+} portIdentity;
 
-// * For example (about Timestamp),
-// * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
- 
-
-typedef struct _Timestamp {
+/*
+ * 
+ * For example (about Timestamp),
+ * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
+ *
+*/
+typedef struct {
   uint8_t seconds[6];
   uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
 }Timestamp;
