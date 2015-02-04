@@ -221,7 +221,7 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 	
 	if(!corkreq) {
 	  	skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
-				  sizeof(sutrct udphdr), &ipc, &rt, 
+				  sizeof(struct udphdr), &ipc, &rt, 
 				  msg->msg_flags);
 		err = PTR_ERR(skb);
 		if(!IS_ERR_OR_NULL(skb))
@@ -257,6 +257,8 @@ struct sk_buff* ethtsyn_create(int type,
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
+	u64 nsec;
+	uint8_t *pCorrectionField;
 	
 	/*
 	 *Allocate a buffer
@@ -291,36 +293,41 @@ struct sk_buff* ethtsyn_create(int type,
 	ptp->sourcePortIdentity.portNumer = 1;  
 #else
 	EthTSyn_ConfigType config = SLAVE;
-	// ptp->sourceProtIdentity,portNumber = ;   // The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
+	// The portNumber values for a port on a time-aware end station (i.e., a time-aware system supporting a single port) shall be 1
+	// The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
+	ptp->sourcePortIdentity.portNumber = 1;
 #endif
 	
 	/* ptphdr initialization */
-	ptp->transportSpecific = {0, 0, 0, 1};
+	
+	ptp->transportSpecific = 1;
 	ptp->messageType = type;
-	ptp->reserved = {0, 0, 0, 0};
-	ptp->versionPTP = {0, 0, 1, 0};
+	ptp->reserved = 0;
+	ptp->versionPTP = 2;
 	ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
 	ptp->domainNumber = 0;
-	ptp->domainNubberrsv = 0;
-	struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
-	ptp->flags = flags;
-	ptp->correctionField = {0, 0, 0, 0, 0, 0, 0, 0};
-	ptp->Fieldrsv = {0, 0, 0, 0};
+	ptp->domainNumberrsv = 0;
+	// struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};   // initialized in ptp.h
+	ptp->flags;
+	pCorrectionField = &ptp->correctionField;
+	*pCorrectionField = 0;
+	ptp->Fieldrsv = 0;
 	// ptp->sequenceId;
 	ptp->control = 5;
-	// ptp->logMessageInterval = 0x7F
+	ptp->logMessageInterval = 0x7F;
 	
 	switch(type) {
 	  
 	case SYN :
 	  printk(KERN_INFO "This is type of Syn.\n");
-          uint8_t currentLogSyncInterval;
+          // uint8_t currentLogSyncInterval;
 	  EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
 	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
 	  
 	  ptp->control = 0;
-	  ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
-	  ptp->timestamp = EthTSynT1;
+	  //ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
+	  ptp->timestamp.seconds = EthTSynT1.sec;
+	  ptp->timestamp.nanoseconds = EthTSynT1.nsec;
 
 	  // Need to set multicast
 	  // Need to set sequenceId
@@ -330,38 +337,39 @@ struct sk_buff* ethtsyn_create(int type,
 	  
 	case PDELAY_REQ :
 	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
-	  u64 nsec;
 	  
 	  EthTSynT1 = ktime_get_real();
 	  nsec = ktime_to_ns(EthTSynT1);
 
-	  ptp->correctionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
+	  *pCorrectionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
 	  
 	  // Need to set sequenceId
 	  // Need to set logMessageInterval
 
-	  // Equal to EthTSynT1 (line 282) -> Need to merge
+	  // Equal to EthTSynT1 (line 335) -> Need to merge
 	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
 	  
 	  break;
 	  
 	case PDELAY_RESP :
 	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-	  u64 nsec;
 
 	  EthTSynT2 = skb_get_ktime(skb);
 	  EthTSynT3 = ktime_get_real();
 	  nsec = ktime_to_ns(EthTSynT2);
-
-	  ptp->correctionField = (uint8_t)(nsec * 65536);
-	  ptp->logMessageInterval = 0x7F;
-
+	  
+	  *pCorrectionField = (uint8_t)(nsec * 65536);
+	  
+	  ptp->timestamp.seconds = EthTSynT2.sec;
+	  *ptp->timestamp.nanoseconds = EthTSynT2.nsec;
+  
 	  break;
 	  
 	case FOLLOW_UP :
 	  printk(KERN_INFO "This is type of Follow_Up.\n");
 
-	  ptp->timestamp = EthTSynT1;
+	  ptp->timestamp.seconds = EthTSynT1.sec;
+	  *ptp->timestamp.nanoseconds = EthTSynT1.nsec;
 
 	  // Need to set logMessageInterval
 
@@ -369,13 +377,15 @@ struct sk_buff* ethtsyn_create(int type,
 	  
 	case PDELAY_RESP_FOLLOW_UP :
 	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-	  u64 nsec;
 
 	  nsec = ktime_to_ns(EthTSynT3);
 	  
 	  ptp->control = 2;
-	  ptp->correctionField = (uint8_t)(nsec * 65536);
-	  ptp->logMessageInterval = 0x7F;
+	  *pCorrectionField = (uint8_t)(nsec * 65536);
+
+	  ptp->timestamp.seconds = EthTSynT3.sec;
+	  *ptp->timestamp.nanoseconds = EthTSynT3.nsec;
+	  
 	  break;
 	}
 	

@@ -16,7 +16,7 @@
 typedef uint64_t Octet8;
 typedef Octet8   ClockIdentity;
 
-struct flagField {
+typedef struct {
    unsigned alternateMasterFlag  :  1;
    unsigned twoStepFlag :  1;
    unsigned unicastFlag :  1;
@@ -31,12 +31,12 @@ struct flagField {
    unsigned timeTraceable  :  1;
    unsigned frequencyTraceable   :  1;
    unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
-};
+}flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
 
-struct portIdentity {
+typedef struct {
    ClockIdentity clockIdentity;
    uint16_t portNumber;
-};
+}portIdentity;
 
 /*
  * 
@@ -44,10 +44,10 @@ struct portIdentity {
  * +2,000000001 seconds is represented by seconds = 0x0000 0000 0002 and nanoseconds = 0x000 0001
  *
 */
-struct Timestamp {
+typedef struct {
   uint8_t seconds[6];
   uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
-};
+}Timestamp;
 
 struct ptphdr{
   unsigned 	messageType		:	4;
