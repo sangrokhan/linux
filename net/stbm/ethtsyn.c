@@ -43,10 +43,9 @@ StbM_TimeStampRawType* timeStampDiffPtr;
 EthTSyn_MessageType Type;
 
 time_t temp, EthTSynTime1, EthTSynTime2, EthTSynTime3, EthTSynTime4; // for saving time in RXIndication() & TXConfirmation()
-// timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
+struct  timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
 ktime_t EthTSynT1, EthTSynT2, EthTSynT3, EthTSynT4; // for saving time in _create()
-ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
-ktime_t LinkDelay, ClockSlaveOffset;	// dongwon0
+ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4; // for saving time in _rcv() (dongwon0)
 
 struct sockaddr_in sockaddr;
 
@@ -340,7 +339,6 @@ struct sk_buff* ethtsyn_create(int type,
 	  	printk(KERN_INFO "This is type of Syn.\n");
 		// uint8_t currentLogSyncInterval;
 		EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
-		SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
 		
 		ptp->control = 0;
 		//ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
@@ -356,7 +354,7 @@ struct sk_buff* ethtsyn_create(int type,
 	case PDELAY_REQ :
 		printk(KERN_INFO "This is type of Pdelay_Req.\n");
 	  
-		EthTSynT1 = ktime_get_real();
+		EthTSynT1 = ktime_get_real();	// PDELAY_REQ's time is TxTimeT1. might be modi (dong's opinion)
 		nsec = ktime_to_ns(EthTSynT1);
 		
 		*pCorrectionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
@@ -372,8 +370,8 @@ struct sk_buff* ethtsyn_create(int type,
 	case PDELAY_RESP :
 	  	printk(KERN_INFO "This is type of Pdelay_Resp.\n");
 		
-		EthTSynT2 = skb_get_ktime(skb);
-		EthTSynT3 = ktime_get_real();
+		EthTSynT2 = skb_get_ktime(skb);	// EthTSynT2 is ClockSlave's receive time.might be delete (dong's opinion)
+		EthTSynT3 = ktime_get_real();	// dongwon0
 		nsec = ktime_to_ns(EthTSynT2);
 		
 		*pCorrectionField = (uint8_t)(nsec * 65536);
@@ -487,67 +485,6 @@ static struct pernet_operations ethtsyn_net_ops = {
 static int __init ethtsyn_proc_init(void) {
   	return register_pernet_subsys(&ethtsyn_net_ops);
 }
-/* redefinition error */
-/*
-static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
-					 const ktime_t TimeT2, 
-					 struct timespec Link_Delay){
-
-  	struct timespec T1, T2, temp1, temp2, now;
-
-	T1 = ktime_to_timespec(TimeT1);
-	T2 = ktime_to_timespec(TimeT2);
-	
-	temp1 = timespec_sub(T2, T1);
-	ts_ClockSlaveOffset = timespec_sub(temp1, Link_Delay);
-	
-	getnstimeofday(&temp2);
-	now = timespec_sub(temp2, ts_ClockSlaveOffset);
-	do_settimeofday(&now);
-	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
-  
-}
-
-static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
-					     const ktime_t TimeT2, 
-					     const ktime_t TimeT3, 
-					     const ktime_t TimeT4 ) {
-
-  	struct timespec T1, T2, T3, T4, temp1, temp2, temp3;
-	s64 ns_LinkDelay;
-	
-	T1 = ktime_to_timespec(TimeT1);
-	T2 = ktime_to_timespec(TimeT2);
-	T3 = ktime_to_timespec(TimeT3);
-	T4 = ktime_to_timespec(TimeT4);
-	
-	temp1 = timespec_sub(T4, T3);
-	temp2 = timespec_sub(T2, T1);
-	temp3 = timespec_add(temp1, temp2);
-	
-	ns_LinkDelay = timespec_to_ns(&temp3)/2;
-	
-	return ns_to_timespec(ns_LinkDelay);
-
-}
-
-static int ethtsyn_sock_check() {
-  	struct sockaddr_storage address;
-	int retval;
-#ifdef CONFIG_ETHTSYN_MASTER
-	ethtsyn_ip_to_sockaddr_storage(slave_addr, address);
-#elif CONFIG_ETHTSYN_SLAVE
-	ethtsyn_ip_to_sockaddr_storage(master_addr, address);
-#endif
-	//sock create parameters need to be update
-	retval = sock_create(AF_INET, SOCK_RAW, IPPROTO_RAW, &thissock);
-	if(retval < 0)
-		goto out;
-	//assume sock setting is finished
-out:
-	return retval;
-}
-*/
 
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
 					 const ktime_t TimeT2, 
@@ -565,7 +502,6 @@ static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1,
 	now = timespec_sub(temp2, ts_ClockSlaveOffset);
 	do_settimeofday(&now);
 	// need to set slave's time by 'now' ...... i couldn't find proper fuction 
-		
 }
 	
 static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1, 
@@ -611,21 +547,30 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	switch(m_type){
 	  
 	case SYN:
-	  printk(KERN_INFO "This is type of Syn.\n");
+	  printk(KERN_INFO "Syn Received.\n");
 	  
-	  SynTimeT2 = skb_get_ktime(skb);//save Syn Arrive Time, wait Follow_Up
+	  EthTSynT2 = skb_get_ktime(skb);	//save Syn Arrive Time, wait Follow_Up
 	  
 	  break;
 	  
 	case PDELAY_REQ:
-	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+	  printk(KERN_INFO "Pdelay_Req Received.\n");
 	  
 	  RxTimeT2 = skb_get_ktime(skb);
+
+	  /*
+	    ethtsyn_create(PDELAY_RESP, null, null, dev, null, dev->dev_addr, null, null);
+	    // originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT2
+	    
+	    ethtsyn_create(PDELAY_RESP_FOLLOW_UP, null, null, dev, null, dev->dev_addr, null, null);
+	    // make at case:PDelayResp in ethtsyn_create ???
+	    // originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT3
+	    */
 	  
 	  break;
 	  
 	case PDELAY_RESP:
-	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+	  printk(KERN_INFO "Pdelay_Resp Received.\n");
 	  
 	  TxTimeT4 = skb_get_ktime(skb);
 	  
@@ -635,17 +580,15 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  printk(KERN_INFO "This is type of Follow_Up.\n");
 	  
 	  // originally, might get SynTimeT1 in packet and save it
-	  
-//	  ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);	// error
+	  ethtsyn_get_clockslaveoffset(EthTSynT1, EthTSynT2, ts_LinkDelay);	// correct error
 	  
 	  break;
 	  
 	case PDELAY_RESP_FOLLOW_UP:
 	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
 	  
-	  // originally, might get RxTimeT2, RxTimeT3 in packet and save it
-	  
-//	  ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);		// error
+	  // originally, might get RxTimeT2, RxTimeT3 in packet and save it	  
+	  ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);		// error
 	  
 	  break;
 	}
