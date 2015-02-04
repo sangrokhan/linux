@@ -73,10 +73,6 @@ static void ethtsyn_ip_to_sockaddr_storage(const char* ch_addr, struct sockaddr_
 }
 
 //copied from udp source code 
-<<<<<<< HEAD
-
-=======
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
 static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 					   struct sock *sk) {
 	struct inet_sock *inet = inet_sk(sk);
@@ -180,21 +176,6 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 	} else if (!ipc.oif)
 	  	ipc.oif = inet->uc_index;
   
-<<<<<<< HEAD
-  saddr = fl4->saddr;
-  if(!ipc.addr)
-    daddr = ipc.addr = fl4->daddr;
-
-  if(!corkreq) {
-    skb = ip_make_skb(sk, fl4, getfrag, msg->msg_iov, ulen,
-		      sizeof(struct udphdr), &ipc, &rt, 
-		      msg->msg_flags);
-    err = PTR_ERR(skb);
-    if(!IS_ERROR_OR_NULL(skb))
-      err = udp_send_skb(skb, fl4);
-  }
- out:
-=======
 	/*
 	 * TCP always connected, so using sk_dst_check for routing 
 	 * UDP is not connected always, so flow check is need;
@@ -247,7 +228,6 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 		  	err = udp_send_skb(skb, fl4);
 	}
 out:
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
   
 do_confirm:
   	dst_confirm(&rt->dst);
@@ -313,7 +293,6 @@ struct sk_buff* ethtsyn_create(int type,
 	EthTSyn_ConfigType config = SLAVE;
 	// ptp->sourceProtIdentity,portNumber = ;   // The portNumber values for the ports on a time-aware Bridge supporting N ports shall be 1, 2, ..., N, respectively
 #endif
-<<<<<<< HEAD
 
    /* ptphdr initialization */
    ptp->transportSpecific = {0, 0, 0, 1};
@@ -341,29 +320,8 @@ struct sk_buff* ethtsyn_create(int type,
    ptp->sourcePortIdentity.clockIdentity.B6 = dev->dev_addr[4];
    ptp->sourcePortIdentity.clockIdentity.B7 = dev->dev_addr[5];
    
-   switch(type) {
-      
-=======
-	
-	/* ptphdr initialization */
-	ptp->transportSpecific = {0, 0, 0, 1};
-	ptp->messageType = type;
-	ptp->reserved = {0, 0, 0, 0};
-	ptp->versionPTP = {0, 0, 1, 0};
-	ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
-	ptp->domainNumber = 0;
-	ptp->domainNubberrsv = 0;
-	struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
-	ptp->flags = flags;
-	ptp->correctionField = {0, 0, 0, 0, 0, 0, 0, 0};
-	ptp->Fieldrsv = {0, 0, 0, 0};
-	// ptp->sequenceId;
-	ptp->control = 5;
-	// ptp->logMessageInterval = 0x7F
-	
 	switch(type) {
 	  
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
 	case SYN :
 	  printk(KERN_INFO "This is type of Syn.\n");
           uint8_t currentLogSyncInterval;
@@ -555,7 +513,6 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 
 }
 
-<<<<<<< HEAD
 static int ethtsyn_sock_check() {
   	struct sockaddr_storage address;
 	int retval;
@@ -571,7 +528,8 @@ static int ethtsyn_sock_check() {
 	//assume sock setting is finished
 out:
 	return retval;
-=======
+}
+
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
 					 const ktime_t TimeT2, 
 					 struct timespec Link_Delay) {
@@ -611,7 +569,6 @@ static struct timespec ethtsyn_get_linkdelay(const ktime_t TimeT1,
 	ns_LinkDelay = timespec_to_ns(&temp3)/2;
 	
 	return ns_to_timespec(ns_LinkDelay);
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
 }
 
 //dongwon0
@@ -621,92 +578,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct net_device* orig_dev) {
 
    	printk(KERN_INFO "Receive Packet!!\n");
-<<<<<<< HEAD
-
-  /*
-    int rcv_type;
-    int rcv_ptype;
-    __be32 rcv_dest_ip = skb->;
-    __be32 rcv_src_ip;
-    const unsigned char* rcv_dest_hw;
-    const unsigned char* rcv_src_hw;
-    const unsigned char* rcv_target_hw;
-  */
-
-  printk(KERN_INFO "Receive Packet!!\n");
-
-  const struct ptphdr *ptp;
-
-  ptp = ptp_hdr(skb);
-  
-  skb = skb_share_check(skb, GFP_ATOMIC); // ???????
-  if(!skb)
-    goto out_of_mem;
-
-  int m_type = ptp->messageType;
-
-  switch(m_type){
-=======
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
-
-  	/*
-	  int rcv_type;
-	  int rcv_ptype;
-	  __be32 rcv_dest_ip = skb->;
-	  __be32 rcv_src_ip;
-	  const unsigned char* rcv_dest_hw;
-	  const unsigned char* rcv_src_hw;
-	  const unsigned char* rcv_target_hw;
-	*/
-
-<<<<<<< HEAD
-    SynTimeT2 = skb_get_ktime(skb);//save Syn Arrive Time, wait Follow_Up
-      
-    break;
-
-  case PDELAY_REQ:
-    printk(KERN_INFO "This is type of Pdelay_Req.\n");
-
-    RxTimeT2 = skb_get_ktime(skb);
- 
-			RxTimeT3 = ktime_get_real();
-			
-			/*
-			ethtsyn_create(PDELAY_RESP, null, null, dev, null, dev->dev_addr, null, null);
-			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT2
-				
-			ethtsyn_create(PDELAY_RESP_FOLLOW_UP, null, null, dev, null, dev->dev_addr, null, null);
-			// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT3	*/
-	         
-	         break;
-
-      case PDELAY_RESP:
-         printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-
-		 TxTimeT4 = skb_get_ktime(skb);
-	         
-         break;
-
-      case FOLLOW_UP:
-         printk(KERN_INFO "This is type of Follow_Up.\n");
-
-		// originally, might get SynTimeT1 in packet and save it
-			
-		ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay); // ts_LinkDelay is not NULL ??
-	         
-         break;
-
-  case PDELAY_RESP_FOLLOW_UP:
-    printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-
-    // originally, might get RxTimeT2, RxTimeT3 in packet and save it
-
-    ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
-	    
-    break;
-  }
-=======
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
 
 	const struct ptphdr *ptp;
 	
@@ -765,10 +636,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
  out_of_mem:
 	return 0;
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
 
  //type parameter need to add
 void ethtsyn_send(const char* addr, uint32_t addr_len) {
@@ -795,35 +662,25 @@ void ethtsyn_send(const char* addr, uint32_t addr_len) {
 
 /* Start of Timer */
 void ethtsyn_timer_callback(unsigned long arg) {
-  struct sk_buff *skb;
+  	struct sk_buff *skb;
 
-  unsigned long now = jiffies;
-  int ret;
-
-  printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
-
-<<<<<<< HEAD
-   	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
-
-   if(ret) {
-      printk(KERN_INFO "Error in mod_timer\n");
-   }
-=======
-  /*
-    //dong
-    ktime_t tx_time;
-    tx_time = ktime_get_real();
-    s64 delta;
-    delta = ktime_to_ns(tx_time);
-    printk(KERN_INFO "ktime : %lld  (NOW) \n ", (long long)delta);
-  */
->>>>>>> 50f4fc8ca04f19e7549bc0b05b3311fdacb4d50d
-
-  ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
-
-  if(ret) {
-    printk(KERN_INFO "Error in mod_timer\n");
-  }
+	unsigned long now = jiffies;
+	int ret;
+	
+	printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
+	
+	
+	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
+	
+	if(ret) {
+	  	printk(KERN_INFO "Error in mod_timer\n");
+	}
+	
+	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
+	
+	if(ret) {
+	  	printk(KERN_INFO "Error in mod_timer\n");
+	}
 
   //ethtsyn_send(type);
 
