@@ -40,7 +40,8 @@ typedef struct {
    	unsigned timeTraceable  :  1;
    	unsigned frequencyTraceable   :  1;
    	unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
-} flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
+// } flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
+} flagField;
 
 typedef struct {
    	ClockIdentity clockIdentity;
@@ -54,8 +55,9 @@ typedef struct {
  *
 */
 typedef struct {
-  uint8_t seconds[6];
-  uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
+  	uint8_t seconds[6];
+  	uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
+  	uint8_t pad[6];
 }Timestamp;
 
 struct ptphdr{

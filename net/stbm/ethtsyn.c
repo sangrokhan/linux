@@ -58,6 +58,8 @@ static struct timer_list ethTSynTimer;
 struct inet_sock* thisinetsock;
 struct socket* thissock;
 
+struct net_device *dev;
+
 void ethtsyn_timer_callback(unsigned long arg);
 
 //char type ip address change to sockaddr_storage type
@@ -141,9 +143,10 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 		rcu_read_lock();
 		inet_opt = rcu_dereference(inet->inet_opt);
 		if (inet_opt) {
-		  memcpy(&opt_copy, inet_opt,
+/*		  memcpy(&opt_copy, inet_opt,
 			 sizeof(*inet_opt) + inet_opt->opt.optlen);
 		  ipc.opt = &opt_copy.opt;
+*/	// error
 		}
 		rcu_read_unlock();
 	}
@@ -224,8 +227,8 @@ static struct sk_buff* ethtsyn_route_check(struct msghdr *msg,
 				  sizeof(struct udphdr), &ipc, &rt, 
 				  msg->msg_flags);
 		err = PTR_ERR(skb);
-		if(!IS_ERR_OR_NULL(skb))
-		  	err = udp_send_skb(skb, fl4);
+//		if(!IS_ERR_OR_NULL(skb))	// error
+//			err = udp_send_skb(skb, fl4);	// error
 	}
 out:
   
@@ -253,7 +256,8 @@ struct sk_buff* ethtsyn_create(int type,
 			       const unsigned char* dest_hw, 
 			       const unsigned char* src_hw, 
 			       const unsigned char* target_hw) {
-  	struct ptphdr* ptp;
+  	struct sk_buff *skb;
+	struct ptphdr* ptp;
 	unsigned char* ptp_ptr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
@@ -265,6 +269,7 @@ struct sk_buff* ethtsyn_create(int type,
 	 */
 	
 	skb = alloc_skb(ptp_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);
+
 	if(skb == NULL) 
 	  return NULL;
 	
@@ -288,6 +293,9 @@ struct sk_buff* ethtsyn_create(int type,
 	if(dev_hard_header(skb, dev, ptype, dest_hw, src_hw, skb->len) < 0)
 	  	goto out;
 	
+	/* For Debug */
+	printk(KERN_INFO "Fill PTP Header\n");
+
 #ifdef CONFIG_ETHTSYN_MASTER
 	EthTSyn_ConfigType config = MASTER;
 	ptp->sourcePortIdentity.portNumer = 1;  
@@ -304,14 +312,14 @@ struct sk_buff* ethtsyn_create(int type,
 	ptp->messageType = type;
 	ptp->reserved = 0;
 	ptp->versionPTP = 2;
-	ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)
+	ptp->messageLength = 0x2C;   // 0x2C = 44 (byte)	// sizeof(struct ptphdr)
 	ptp->domainNumber = 0;
 	ptp->domainNumberrsv = 0;
 	// struct flagField flags = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};   // initialized in ptp.h
 	ptp->flags;
 	pCorrectionField = &ptp->correctionField;
 	*pCorrectionField = 0;
-	ptp->Fieldrsv = 0;
+//	ptp->Fieldrsv = 0;	// error
 	// ptp->sequenceId;
 	ptp->control = 5;
 	ptp->logMessageInterval = 0x7F;
@@ -336,8 +344,8 @@ struct sk_buff* ethtsyn_create(int type,
 		
 		ptp->control = 0;
 		//ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
-		ptp->timestamp.seconds = EthTSynT1.sec;
-		ptp->timestamp.nanoseconds = EthTSynT1.nsec;
+//		ptp->timestamp.seconds = EthTSynT1.sec;		// error
+//		ptp->timestamp.nanoseconds = EthTSynT1.nsec;	// error
 		
 		// Need to set multicast
 		// Need to set sequenceId
@@ -370,15 +378,15 @@ struct sk_buff* ethtsyn_create(int type,
 		
 		*pCorrectionField = (uint8_t)(nsec * 65536);
 		
-		ptp->timestamp.seconds = EthTSynT2.sec;
-		*ptp->timestamp.nanoseconds = EthTSynT2.nsec;
+//		ptp->timestamp.seconds = EthTSynT2.sec;		// error
+//		*ptp->timestamp.nanoseconds = EthTSynT2.nsec;	// error
 		
 		break;
 	case FOLLOW_UP :
 	  	printk(KERN_INFO "This is type of Follow_Up.\n");
 		
-		ptp->timestamp.seconds = EthTSynT1.sec;
-		*ptp->timestamp.nanoseconds = EthTSynT1.nsec;
+//		ptp->timestamp.seconds = EthTSynT1.sec;		// error
+//		*ptp->timestamp.nanoseconds = EthTSynT1.nsec;	// error
 		
 		// Need to set logMessageInterval
 		
@@ -392,8 +400,8 @@ struct sk_buff* ethtsyn_create(int type,
 		ptp->control = 2;
 		*pCorrectionField = (uint8_t)(nsec * 65536);
 		
-		ptp->timestamp.seconds = EthTSynT3.sec;
-		*ptp->timestamp.nanoseconds = EthTSynT3.nsec;
+//		ptp->timestamp.seconds = EthTSynT3.sec;		// error
+//		*ptp->timestamp.nanoseconds = EthTSynT3.nsec;	// error
 		
 		break;
 	}
@@ -479,7 +487,8 @@ static struct pernet_operations ethtsyn_net_ops = {
 static int __init ethtsyn_proc_init(void) {
   	return register_pernet_subsys(&ethtsyn_net_ops);
 }
-
+/* redefinition error */
+/*
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
 					 const ktime_t TimeT2, 
 					 struct timespec Link_Delay){
@@ -538,6 +547,7 @@ static int ethtsyn_sock_check() {
 out:
 	return retval;
 }
+*/
 
 static void ethtsyn_get_clockslaveoffset(const ktime_t TimeT1, 
 					 const ktime_t TimeT2, 
@@ -626,7 +636,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  
 	  // originally, might get SynTimeT1 in packet and save it
 	  
-	  ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);
+//	  ethtsyn_get_clockslaveoffset(SynTimeT1, SynTimeT2, ts_LinkDelay);	// error
 	  
 	  break;
 	  
@@ -635,7 +645,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  
 	  // originally, might get RxTimeT2, RxTimeT3 in packet and save it
 	  
-	  ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);
+//	  ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);		// error
 	  
 	  break;
 	}
@@ -662,7 +672,7 @@ void ethtsyn_send(const char* addr, uint32_t addr_len) {
 	msg.msg_controllen = 0;
 	msg.msg_namelen = addr_len;
 	
-	skb = ethtsyn_route_check(msg, thissock);
+//	skb = ethtsyn_route_check(msg, thissock);	// error
 	//skb = ethtsyn_create(sk);
 	if(skb == NULL)
 		return;
@@ -675,25 +685,49 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
 	unsigned long now = jiffies;
 	int ret;
-	
+	char strEth[5] = "eth0";
+
 	printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 	
 	
+	// after testing 'dev' code, remove below annotaion mark
+	/*
 	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
 	
 	if(ret) {
-	  	printk(KERN_INFO "Error in mod_timer\n");
+	 	printk(KERN_INFO "Error in mod_timer\n");
 	}
-	
-	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
-	
-	if(ret) {
-	  	printk(KERN_INFO "Error in mod_timer\n");
-	}
+	*/
 
+	dev = first_net_device(&init_net);
+
+	while(dev) {
+	  	if(!strcmp(dev->name, strEth)) {
+	    		/* Print Device Information */
+		  	printk(KERN_INFO "1. dev->name [%s]\n", dev->name);
+			printk(KERN_INFO "2. dev->base_addr [%lu]\n", dev->base_addr);
+			printk(KERN_INFO "3. dev->ifindex [%d]\n", dev->ifindex);
+			printk(KERN_INFO "4. dev->mtu [%d]\n", dev->mtu);
+			printk(KERN_INFO "5. dev->type [%hu]\n", dev->type);
+			printk(KERN_INFO "6. dev->perm_addr [%s]\n", dev->perm_addr);
+			printk(KERN_INFO "7. dev->addr_len [%02x]\n", dev->addr_len);
+			printk(KERN_INFO "8. dev->dev_id [%hu]\n", dev->dev_id);
+			printk(KERN_INFO "9. dev->last_rx [%lu]\n", dev->last_rx);
+			printk(KERN_INFO "10. dev->dev_addr [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+			       dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
+			       dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
+			printk(KERN_INFO "11. dev->broadcast [%s]\n", dev->broadcast);
+			printk(KERN_INFO "12. dev->trans_start [%lu]\n", dev->trans_start);
+			printk(KERN_INFO "13. dev->group [%s]\n", dev->group);
+			
+			break;
+	  	}
+		dev = next_net_device(dev);
+	}
+	
   //ethtsyn_send(type);
 
-   // skb = ethtsyn_create(SYN, ETH_P_ARP, NULL, NULL, NULL, NULL, NULL, NULL);
+	skb = ethtsyn_create(SYN, NULL, dev, NULL, NULL, NULL, NULL, NULL, NULL);
    // ethtsyn_xmit(skb);
    //set_device_test(skb);
 }
@@ -705,7 +739,7 @@ int ethtsyn_timer_init_module(void) {
 	
 	setup_timer(&ethTSynTimer, ethtsyn_timer_callback, 0);
 	
-	ret = mod_timer(&ethTSynTimer, jiffies + msecs_to_jiffies(200));
+	ret = mod_timer(&ethTSynTimer, jiffies + msecs_to_jiffies(60000));
 	
 	if(ret) {
 	  	printk(KERN_INFO "Error in mod_timer\n");
@@ -727,6 +761,7 @@ void ethtsyn_timer_cleanup_module(void) {
 	
 	return;
 }
+/* End of Timer  */
 
 static int ethtsyn_sock_check() {
   	struct sockaddr_storage address;
@@ -745,8 +780,6 @@ out:
 	return retval;
 }
 
-/* End of Timer */
-
 static struct packet_type ethtsyn_packet_type __read_mostly = {
   	.type = cpu_to_be16(ETH_P_1588),
   	.func = ethtsyn_rcv
@@ -754,39 +787,39 @@ static struct packet_type ethtsyn_packet_type __read_mostly = {
 
 /* Initialize all internal variables and set the EthTSync module to init state */
 void EthTSyn_Init(const EthTSyn_ConfigType* configPtr) {
-  //When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
-  //ETHTSYN_E_NOT_INITIALIZED when any API is called in uninitialized state
+	//When DET reporting is enabled EthTSyn module shall call DEt_ReportError() with the error code
+	//ETHTSYN_E_NOT_INITIALIZED when any API is called in uninitialized state
   
-  //After first initialized, when init function is called, reinitialize
+  	//After first initialized, when init function is called, reinitialize
 
-  //rate correction -> 0
-  //latency for ingress and egress to 0
+  	//rate correction -> 0
+  	//latency for ingress and egress to 0
   
-  switch(*configPtr) {
-  case 6 : // If configured as Time Master,
-    // the StbM shall allow configuration of the initialization value of the Global Time Base.
-    // The initialization value can be either a value from static configuration or a value from non-volatile memory.
-    // StbM_SetGlobalTime();
-    break;
-  case 9 : // If configured as Time slave,
-    // the StbM shall use the Local Time Base while no valid Global Time Base is available (e.g. at startup)
-    //    - Startup with a defined Time Base.
-    // the StbM shall initialize the Local Time Base with 0 at startup.
-    //    - Startup with a network wide common Time Base value.
-    // StbM_SetGlobalTime();
-    break;
-  }
+  	switch(*configPtr) {
+  	case 6 : // If configured as Time Master,
+    	// the StbM shall allow configuration of the initialization value of the Global Time Base.
+    	// The initialization value can be either a value from static configuration or a value from non-volatile memory.
+    	// StbM_SetGlobalTime();
+    	break;
+  	case 9 : // If configured as Time slave,
+    	// the StbM shall use the Local Time Base while no valid Global Time Base is available (e.g. at startup)
+    	//    - Startup with a defined Time Base.
+    	// the StbM shall initialize the Local Time Base with 0 at startup.
+    	//    - Startup with a network wide common Time Base value.
+    	// StbM_SetGlobalTime();
+    	break;
+	}
 
-  EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
+	EthTSynHardwareTimestampSupport = false; //Hardware can't support timestamp on RaspberryPi
 
-  printk(KERN_INFO "EthTsyn init function called\n");
+	printk(KERN_INFO "EthTsyn init function called\n");
 
-  //copied from arp style
-  ethtsyn_sock_check();
-  dev_add_pack(&ethtsyn_packet_type);
-  ethtsyn_proc_init();
-  register_netdevice_notifier(&ethtsyn_netdev_notifier);   
-  ethtsyn_timer_init_module();
+	//copied from arp style
+  	ethtsyn_sock_check();
+  	dev_add_pack(&ethtsyn_packet_type);
+  	ethtsyn_proc_init();
+  	register_netdevice_notifier(&ethtsyn_netdev_notifier);
+	ethtsyn_timer_init_module();
 }
 
 /* Returns the version information of this module */
