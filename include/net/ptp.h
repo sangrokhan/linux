@@ -59,25 +59,25 @@ typedef struct {
 }Timestamp;
 
 struct ptphdr{
-  unsigned 	messageType		:	4;
-  unsigned 	transportSpecific	:	4;
-  unsigned 	versionPTP		:	4;
-  unsigned 	reserved		:	4;
-  uint16_t 	messageLength;
-  uint8_t	domainNumber;
-  uint8_t	domainNumberrsv;
-  flagField	flags;
-  uint8_t	correctionField[8];
-  uint8_t	Fieldrsv[4];
-  portIdentity	sourcePortIdentity;
-  uint16_t	sequenceId;
-  uint8_t	control;
-  uint8_t	logMessageInterval;
-  Timestamp     timestamp;
+  	unsigned 	messageType		:	4;
+  	unsigned 	transportSpecific	:	4;
+  	unsigned 	versionPTP		:	4;
+  	unsigned 	reserved		:	4;
+  	uint16_t 	messageLength;
+  	uint8_t		domainNumber;
+  	uint8_t		domainNumberrsv;
+  	flagField	flags;
+  	uint8_t		correctionField[8];
+  	uint8_t		Fieldrsv[4];
+  	portIdentity	sourcePortIdentity;
+  	uint16_t	sequenceId;
+  	uint8_t		control;
+  	uint8_t		logMessageInterval;
+  	Timestamp     timestamp;
 };
 
 static inline struct ptphdr *ptp_hdr(const struct sk_buff *skb) {
-  return (struct ptphdr *)skb_network_header(skb); 
+  	return (struct ptphdr *)skb_network_header(skb); 
 }
 
 /*
@@ -85,10 +85,10 @@ static inline struct ptphdr *ptp_hdr(const struct sk_buff *skb) {
  * why dev->addr_len and sizeof(u32) need to be multiplied 2 times
  */
 static inline int ptp_hdr_len(struct net_device *dev) {
-  switch(dev->type) {
-  default:
-    return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
-  }
+  	switch(dev->type) {
+	default:
+	  return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
+	}
 }
 
 /*

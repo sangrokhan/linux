@@ -329,74 +329,73 @@ struct sk_buff* ethtsyn_create(int type,
 	switch(type) {
 	  
 	case SYN :
-	  printk(KERN_INFO "This is type of Syn.\n");
-          // uint8_t currentLogSyncInterval;
-	  EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
-	  SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
-	  
-	  ptp->control = 0;
-	  //ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
-	  ptp->timestamp.seconds = EthTSynT1.sec;
-	  ptp->timestamp.nanoseconds = EthTSynT1.nsec;
-
-	  // Need to set multicast
-	  // Need to set sequenceId
-	  // Need to set logMessageInterval
-	  
-	  break;
+	  	printk(KERN_INFO "This is type of Syn.\n");
+		// uint8_t currentLogSyncInterval;
+		EthTSynT1 = ktime_get_real(); // This is coded by jh. Equal to below code -> Need to merge
+		SynTimeT1 = ktime_get_real(); // ClockMaster's SYN T1 Time. later, this t1 might be contained FOLLOW_UP packet. (dongwon0)
+		
+		ptp->control = 0;
+		//ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
+		ptp->timestamp.seconds = EthTSynT1.sec;
+		ptp->timestamp.nanoseconds = EthTSynT1.nsec;
+		
+		// Need to set multicast
+		// Need to set sequenceId
+		// Need to set logMessageInterval
+		
+		break;
 	  
 	case PDELAY_REQ :
-	  printk(KERN_INFO "This is type of Pdelay_Req.\n");
+		printk(KERN_INFO "This is type of Pdelay_Req.\n");
 	  
-	  EthTSynT1 = ktime_get_real();
-	  nsec = ktime_to_ns(EthTSynT1);
-
-	  *pCorrectionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
+		EthTSynT1 = ktime_get_real();
+		nsec = ktime_to_ns(EthTSynT1);
+		
+		*pCorrectionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
+		
+		// Need to set sequenceId
+		// Need to set logMessageInterval
+		
+		// Equal to EthTSynT1 (line 335) -> Need to merge
+		TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
 	  
-	  // Need to set sequenceId
-	  // Need to set logMessageInterval
-
-	  // Equal to EthTSynT1 (line 335) -> Need to merge
-	  TxTimeT1 = ktime_get_real(); // Requester's T1 Time. later, this is calculated (dongwon0)
-	  
-	  break;
+		break;
 	  
 	case PDELAY_RESP :
-	  printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-
-	  EthTSynT2 = skb_get_ktime(skb);
-	  EthTSynT3 = ktime_get_real();
-	  nsec = ktime_to_ns(EthTSynT2);
-	  
-	  *pCorrectionField = (uint8_t)(nsec * 65536);
-	  
-	  ptp->timestamp.seconds = EthTSynT2.sec;
-	  *ptp->timestamp.nanoseconds = EthTSynT2.nsec;
-  
-	  break;
-	  
+	  	printk(KERN_INFO "This is type of Pdelay_Resp.\n");
+		
+		EthTSynT2 = skb_get_ktime(skb);
+		EthTSynT3 = ktime_get_real();
+		nsec = ktime_to_ns(EthTSynT2);
+		
+		*pCorrectionField = (uint8_t)(nsec * 65536);
+		
+		ptp->timestamp.seconds = EthTSynT2.sec;
+		*ptp->timestamp.nanoseconds = EthTSynT2.nsec;
+		
+		break;
 	case FOLLOW_UP :
-	  printk(KERN_INFO "This is type of Follow_Up.\n");
-
-	  ptp->timestamp.seconds = EthTSynT1.sec;
-	  *ptp->timestamp.nanoseconds = EthTSynT1.nsec;
-
-	  // Need to set logMessageInterval
-
-	  break;
-	  
+	  	printk(KERN_INFO "This is type of Follow_Up.\n");
+		
+		ptp->timestamp.seconds = EthTSynT1.sec;
+		*ptp->timestamp.nanoseconds = EthTSynT1.nsec;
+		
+		// Need to set logMessageInterval
+		
+		break;
+		
 	case PDELAY_RESP_FOLLOW_UP :
-	  printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-
-	  nsec = ktime_to_ns(EthTSynT3);
-	  
-	  ptp->control = 2;
-	  *pCorrectionField = (uint8_t)(nsec * 65536);
-
-	  ptp->timestamp.seconds = EthTSynT3.sec;
-	  *ptp->timestamp.nanoseconds = EthTSynT3.nsec;
-	  
-	  break;
+	  	printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
+		
+		nsec = ktime_to_ns(EthTSynT3);
+		
+		ptp->control = 2;
+		*pCorrectionField = (uint8_t)(nsec * 65536);
+		
+		ptp->timestamp.seconds = EthTSynT3.sec;
+		*ptp->timestamp.nanoseconds = EthTSynT3.nsec;
+		
+		break;
 	}
 	
 	return skb;
@@ -444,37 +443,37 @@ void set_device_test(struct sk_buff *skb) {
 static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
 				void* ptr) {
-  struct net_device* dev = netdev_notifier_info_to_dev(ptr);
-  struct netdev_notifier_change_info* change_info;
-
-  switch(event) {
-  default: 
-    break;
-  }
-  return NOTIFY_DONE;
+  	struct net_device* dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_change_info* change_info;
+	
+	switch(event) {
+	default: 
+	  break;
+	}
+	return NOTIFY_DONE;
 }
 
 static struct notifier_block ethtsyn_netdev_notifier = {
-  .notifier_call = ethtsyn_netdev_event,
+  	.notifier_call = ethtsyn_netdev_event,
 };
 
 static const struct file_operations ethtsyn_seq_fops = {
-  .owner = THIS_MODULE,
+  	.owner = THIS_MODULE,
 };
 
 static int __net_init ethtsyn_net_init(struct net *net) {
-  if(!proc_create("ethtsyn", S_IRUGO, net->proc_net, &ethtsyn_seq_fops))
-    return -ENOMEM;
-  return 0;
+  	if(!proc_create("ethtsyn", S_IRUGO, net->proc_net, &ethtsyn_seq_fops))
+	  	return -ENOMEM;
+	return 0;
 }
 
 static void __net_init ethtsyn_net_exit(struct net *net) {
-  remove_proc_entry("ethtsyn",net->proc_net);
+  	remove_proc_entry("ethtsyn",net->proc_net);
 }
 
 static struct pernet_operations ethtsyn_net_ops = {
-  .init = ethtsyn_net_init,
-  .exit = ethtsyn_net_exit,
+  	.init = ethtsyn_net_init,
+  	.exit = ethtsyn_net_exit,
 };
 
 static int __init ethtsyn_proc_init(void) {
@@ -700,33 +699,33 @@ void ethtsyn_timer_callback(unsigned long arg) {
 }
 
 int ethtsyn_timer_init_module(void) {
-  int ret;
+  	int ret;
 
-  printk(KERN_INFO "Timer module installing\n");
+	printk(KERN_INFO "Timer module installing\n");
+	
+	setup_timer(&ethTSynTimer, ethtsyn_timer_callback, 0);
+	
+	ret = mod_timer(&ethTSynTimer, jiffies + msecs_to_jiffies(200));
+	
+	if(ret) {
+	  	printk(KERN_INFO "Error in mod_timer\n");
+	}
 
-  setup_timer(&ethTSynTimer, ethtsyn_timer_callback, 0);
-
-  ret = mod_timer(&ethTSynTimer, jiffies + msecs_to_jiffies(200));
-
-  if(ret) {
-    printk(KERN_INFO "Error in mod_timer\n");
-  }
-
-  return 0;
+	return 0;
 }
 
 void ethtsyn_timer_cleanup_module(void) {
-  int ret;
+  	int ret;
 
-  ret = del_timer(&ethTSynTimer);
-
-  if(ret) {
-    printk(KERN_INFO "The timer is still in use...\n");
-  }
-
-  printk(KERN_INFO "Timer module uninstalling\n");
-
-  return;
+	ret = del_timer(&ethTSynTimer);
+	
+	if(ret) {
+	  	printk(KERN_INFO "The timer is still in use...\n");
+	}
+	
+	printk(KERN_INFO "Timer module uninstalling\n");
+	
+	return;
 }
 
 static int ethtsyn_sock_check() {
