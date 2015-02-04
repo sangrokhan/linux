@@ -422,7 +422,8 @@ EXPORT_SYMBOL(ethtsyn_create);
 void ethtsyn_xmit(struct sk_buff *skb)
 {
   /* Send it off, maybe filter it using firewalling first.  */
-  //NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+  NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+  printk(KERN_INFO "ethtsyn_xmit finish\n");
 }
 EXPORT_SYMBOL(ethtsyn_xmit);
 
@@ -728,7 +729,7 @@ void ethtsyn_timer_callback(unsigned long arg) {
   //ethtsyn_send(type);
 
 	skb = ethtsyn_create(SYN, NULL, dev, NULL, NULL, NULL, NULL, NULL, NULL);
-   // ethtsyn_xmit(skb);
+   	ethtsyn_xmit(skb);
    //set_device_test(skb);
 }
 
