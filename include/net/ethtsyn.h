@@ -43,8 +43,9 @@ typedef struct {
 } EthTSyn_MessageType;
 
 /* for saving time in _rcv() (dongwon0) */
-extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4, SynTimeT1, SynTimeT2; // for saving time in _rcv() (dongwon0)
 extern struct timespec ts_LinkDelay, ts_ClockSlaveOffset;// dongwon0
+extern ktime_t EthTSynT1, EthTSynT2, EthTSynT3, EthTSynT4;
+extern ktime_t RxTimeT2, RxTimeT3, TxTimeT1, TxTimeT4; // for saving time in _rcv() (dongwon0)
 
 /* EthTSynGeneral */
 extern bool EthTSynDevErrorDetect;
