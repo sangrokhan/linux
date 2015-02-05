@@ -690,51 +690,51 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
 	printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
 	
-	
+	if(dev == NULL) {
+		dev = first_net_device(&init_net);
+
+		while(dev) {
+		  	if(!strcmp(dev->name, strEth)) {
+	    			/* Print Device Information */
+			  	printk(KERN_INFO "1. dev->name [%s]\n", dev->name);
+				printk(KERN_INFO "2. dev->base_addr [%lu]\n", dev->base_addr);
+				printk(KERN_INFO "3. dev->ifindex [%d]\n", dev->ifindex);
+				printk(KERN_INFO "4. dev->mtu [%d]\n", dev->mtu);
+				printk(KERN_INFO "5. dev->type [%hu]\n", dev->type);
+				printk(KERN_INFO "6. dev->perm_addr [%s]\n", dev->perm_addr);
+				printk(KERN_INFO "7. dev->addr_len [%02x]\n", dev->addr_len);
+				printk(KERN_INFO "8. dev->dev_id [%hu]\n", dev->dev_id);
+				printk(KERN_INFO "9. dev->last_rx [%lu]\n", dev->last_rx);
+				printk(KERN_INFO "10. dev->dev_addr [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+				       dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
+				       dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
+				printk(KERN_INFO "10. dev->dev_addr [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+				       dev->broadcast[0], dev->broadcast[1], dev->broadcast[2],
+				       dev->broadcast[3], dev->broadcast[4], dev->broadcast[5]);
+				
+				break;
+			}
+			dev = next_net_device(dev);
+		}
+	}
+	//ethtsyn_send(type);
+
 	// after testing 'dev' code, remove below annotaion mark
-	/*
-	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(200));
+	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(2000));
 	
 	if(ret) {
 	 	printk(KERN_INFO "Error in mod_timer\n");
 	}
-	*/
-
-	dev = first_net_device(&init_net);
-
-	while(dev) {
-	  	if(!strcmp(dev->name, strEth)) {
-	    		/* Print Device Information */
-		  	printk(KERN_INFO "1. dev->name [%s]\n", dev->name);
-			printk(KERN_INFO "2. dev->base_addr [%lu]\n", dev->base_addr);
-			printk(KERN_INFO "3. dev->ifindex [%d]\n", dev->ifindex);
-			printk(KERN_INFO "4. dev->mtu [%d]\n", dev->mtu);
-			printk(KERN_INFO "5. dev->type [%hu]\n", dev->type);
-			printk(KERN_INFO "6. dev->perm_addr [%s]\n", dev->perm_addr);
-			printk(KERN_INFO "7. dev->addr_len [%02x]\n", dev->addr_len);
-			printk(KERN_INFO "8. dev->dev_id [%hu]\n", dev->dev_id);
-			printk(KERN_INFO "9. dev->last_rx [%lu]\n", dev->last_rx);
-			printk(KERN_INFO "10. dev->dev_addr [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
-			       dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
-			       dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
-			printk(KERN_INFO "11. dev->broadcast [%s]\n", dev->broadcast);
-			printk(KERN_INFO "12. dev->trans_start [%lu]\n", dev->trans_start);
-			printk(KERN_INFO "13. dev->group [%s]\n", dev->group);
-			
-			break;
-	  	}
-		dev = next_net_device(dev);
-	}
-	
-  //ethtsyn_send(type);
 
 	skb = ethtsyn_create(SYN, NULL, dev, NULL, NULL, NULL, NULL, NULL, NULL);
    	ethtsyn_xmit(skb);
-   //set_device_test(skb);
+	//set_device_test(skb);
 }
 
 int ethtsyn_timer_init_module(void) {
   	int ret;
+
+	dev = NULL;
 
 	printk(KERN_INFO "Timer module installing\n");
 	

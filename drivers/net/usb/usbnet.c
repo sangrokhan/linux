@@ -1360,6 +1360,11 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 		break;
 	case 0:
 		net->trans_start = jiffies;
+
+		if (skb->protocol == htons(ETH_P_1588)) {
+		  	printk(KERN_INFO "usbnet_start_xmit send protocol ETH_P_1588 @ __usbnet_queue_skb\n");
+		}
+
 		__usbnet_queue_skb(&dev->txq, skb, tx_start);
 		if (dev->txq.qlen >= TX_QLEN (dev))
 			netif_stop_queue (net);
