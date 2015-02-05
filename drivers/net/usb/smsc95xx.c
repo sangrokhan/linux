@@ -859,6 +859,8 @@ static int smsc95xx_start_tx_path(struct usbnet *dev)
 	unsigned long flags;
 	int ret;
 
+	printk(KERN_INFO "%s\n", __func__);
+
 	/* Enable Tx at MAC */
 	spin_lock_irqsave(&pdata->mac_cr_lock, flags);
 	pdata->mac_cr |= MAC_CR_TXEN_;
@@ -877,6 +879,8 @@ static int smsc95xx_start_rx_path(struct usbnet *dev, int in_pm)
 {
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	unsigned long flags;
+
+	printk(KERN_INFO "%s\n", __func__);
 
 	spin_lock_irqsave(&pdata->mac_cr_lock, flags);
 	pdata->mac_cr |= MAC_CR_RXEN_;

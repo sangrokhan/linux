@@ -1743,6 +1743,9 @@ static int __init inet_init(void)
 
 	arp_init();
 
+	EthTSyn_Init(&config);
+	printk(KERN_INFO "EthTSyn init call @ net/ipv4/af_inet.c\n");
+
 	/*
 	 *	Set the IP module up
 	 */
@@ -1786,9 +1789,6 @@ static int __init inet_init(void)
 	ipv4_proc_init();
 
 	ipfrag_init();
-
-	EthTSyn_Init(&config);
-	printk(KERN_INFO "EthTSyn init\n");
 
 	dev_add_pack(&ip_packet_type);
 
