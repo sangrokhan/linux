@@ -1557,6 +1557,8 @@ void usb_autopm_put_interface(struct usb_interface *intf)
 	struct usb_device	*udev = interface_to_usbdev(intf);
 	int			status;
 
+        /* For Debugging */
+	printk(KERN_INFO "func: %s\n", __func__);
 	usb_mark_last_busy(udev);
 	atomic_dec(&intf->pm_usage_cnt);
 	status = pm_runtime_put_sync(&intf->dev);

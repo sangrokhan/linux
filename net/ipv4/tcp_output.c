@@ -850,6 +850,9 @@ void tcp_wfree(struct sk_buff *skb)
 static int tcp_transmit_skb(struct sock *sk, struct sk_buff *skb, int clone_it,
 			    gfp_t gfp_mask)
 {
+  	/* For Debugging*/
+  	// printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
+
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	struct inet_sock *inet;
 	struct tcp_sock *tp;
@@ -1935,6 +1938,9 @@ repair:
 		if (push_one)
 			break;
 	}
+
+	/* For Debugging */
+  	// printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	if (likely(sent_pkts)) {
 		if (tcp_in_cwnd_reduction(sk))

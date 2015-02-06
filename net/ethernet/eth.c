@@ -81,10 +81,16 @@ int eth_header(struct sk_buff *skb, struct net_device *dev,
 {
 	struct ethhdr *eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
 
-	if (type != ETH_P_802_3 && type != ETH_P_802_2)
+	if (type != ETH_P_802_3 && type != ETH_P_802_2) {
+		printk(KERN_INFO "func: %s(if)\n", __func__);
 		eth->h_proto = htons(type);
-	else
+	}
+	else {
+		printk(KERN_INFO "func: %s(else)\n", __func__);
 		eth->h_proto = htons(len);
+	}
+
+	printk(KERN_INFO "func: %s,	eth->h_proto: %02x\n", __func__, ntohs(eth->h_proto));
 
 	/*
 	 *      Set the source hardware address.
@@ -157,11 +163,34 @@ EXPORT_SYMBOL(eth_rebuild_header);
 __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 {
 	struct ethhdr *eth;
-
+	__be16* addr;	/* For Debugging */
 	skb->dev = dev;
 	skb_reset_mac_header(skb);
 	skb_pull_inline(skb, ETH_HLEN);
 	eth = eth_hdr(skb);
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(1),     eth->h_dest: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+	       eth->h_dest[0], eth->h_dest[1], eth->h_dest[2],
+	       eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(2),     eth->h_source: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+	       eth->h_source[0], eth->h_source[1], eth->h_source[2],
+	       eth->h_source[3], eth->h_source[4], eth->h_source[5]);
+
+	/* For Debugging */
+	addr = &(eth->h_proto);
+
+	/* For Debugging */
+	printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
+	
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[1],addr[0]);
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[2],addr[1]);
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[3],addr[2]);
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[4],addr[3]);
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[5],addr[4]);
+  	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[6],addr[5]);
 
 	if (unlikely(is_multicast_ether_addr(eth->h_dest))) {
 		if (ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
@@ -210,6 +239,7 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	/*
 	 *      Real 802.2 LLC
 	 */
+
 	return htons(ETH_P_802_2);
 }
 EXPORT_SYMBOL(eth_type_trans);

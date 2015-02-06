@@ -3508,7 +3508,7 @@ static int __netif_receive_skb_core(struct sk_buff *skb, bool pfmemalloc)
 
 	list_for_each_entry_rcu(ptype,
 			&ptype_base[ETH_P_1588 & PTYPE_HASH_MASK], list) {
-	  	printk(KERN_INFO "%d ptype type %08X", ETH_P_1588 & PTYPE_HASH_MASK, ptype->type);
+	  	printk(KERN_INFO "%d ptype type %08X\n", ETH_P_1588 & PTYPE_HASH_MASK, ptype->type);
 	}
 
 	/* if we've gotten here through NAPI, check netpoll */

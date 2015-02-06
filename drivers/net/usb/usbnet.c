@@ -318,8 +318,17 @@ static void __usbnet_status_stop_force(struct usbnet *dev)
 void usbnet_skb_return (struct usbnet *dev, struct sk_buff *skb)
 {
 	int	status;
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(before eth_type_trans()(1)),     proto: %02x\n", __func__, ntohs(skb->protocol));
+
+	/* For Debugging */
+  	// printk(KERN_INFO "func: %s(before eth_type_trans()(2)),     proto: %02x\n", __func__, ntohs(skb->protocol));
+
 
 	if (test_bit(EVENT_RX_PAUSED, &dev->flags)) {
+		/* For Debugging */
+	  	printk(KERN_INFO "usbnet.c if(testbit)\n");
+
 		skb_queue_tail(&dev->rxq_pause, skb);
 		return;
 	}
@@ -327,6 +336,9 @@ void usbnet_skb_return (struct usbnet *dev, struct sk_buff *skb)
 	skb->protocol = eth_type_trans (skb, dev->net);
 	dev->net->stats.rx_packets++;
 	dev->net->stats.rx_bytes += skb->len;
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(after eth_type_trans()),     proto: %04x\n", __func__, ntohs(skb->protocol));
 
 	netif_dbg(dev, rx_status, dev->net, "< rx, len %zu, type 0x%x\n",
 		  skb->len + sizeof (struct ethhdr), skb->protocol);
@@ -406,6 +418,9 @@ EXPORT_SYMBOL_GPL(usbnet_change_mtu);
 static void __usbnet_queue_skb(struct sk_buff_head *list,
 			struct sk_buff *newsk, enum skb_state state)
 {
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s,	proto:%02x\n", __func__, ntohs(newsk->protocol));
+	
 	struct skb_data *entry = (struct skb_data *) newsk->cb;
 
 	__skb_queue_tail(list, newsk);
@@ -573,6 +588,15 @@ static void rx_complete (struct urb *urb)
 	skb_put (skb, urb->actual_length);
 	state = rx_done;
 	entry->urb = NULL;
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s,	proto: %02x,	skb->dev->dev_addr: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__, ntohs(skb->protocol),
+	 	skb->dev->dev_addr[0], skb->dev->dev_addr[1], skb->dev->dev_addr[2],
+	 	skb->dev->dev_addr[3], skb->dev->dev_addr[4], skb->dev->dev_addr[5]);
+
+	/* For Debugging*/
+	printk(KERN_INFO "func: %s,	urb_status: %d\n", __func__, urb_status);
+
 
 	switch (urb_status) {
 	/* success */
@@ -1169,6 +1193,9 @@ static void tx_complete (struct urb *urb)
 	struct skb_data		*entry = (struct skb_data *) skb->cb;
 	struct usbnet		*dev = entry->dev;
 
+	/* For Debugging */
+	printk(KERN_INFO "func: %s,	proto: %02x,	urb_status: %d\n", __func__, ntohs(skb->protocol), urb->status);
+
 	if (urb->status == 0) {
 		if (!(dev->driver_info->flags & FLAG_MULTI_PACKET))
 			dev->net->stats.tx_packets++;
@@ -1348,6 +1375,9 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 #endif
 
 	switch ((retval = usb_submit_urb (urb, GFP_ATOMIC))) {
+
+	/* For Debugging */
+	  printk(KERN_INFO "retval: %d\n", retval);
 	case -EPIPE:
 		netif_stop_queue (net);
 		usbnet_defer_kevent (dev, EVENT_TX_HALT);
@@ -1366,8 +1396,11 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 		}
 
 		__usbnet_queue_skb(&dev->txq, skb, tx_start);
-		if (dev->txq.qlen >= TX_QLEN (dev))
+		if (dev->txq.qlen >= TX_QLEN (dev)) {
+			/* For Debugging */
+		  	printk(KERN_INFO "This is if(dev->txq.qlen >= TX_QLEN(dev))\n");
 			netif_stop_queue (net);
+		}
 	}
 	spin_unlock_irqrestore (&dev->txq.lock, flags);
 

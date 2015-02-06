@@ -264,6 +264,9 @@ static int __rpm_callback(int (*cb)(struct device *), struct device *dev)
  */
 static int rpm_idle(struct device *dev, int rpmflags)
 {
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s,     dev_name1: %s,	dev_name2: %s\n", __func__, dev->init_name, dev->type->name);
+
 	int (*callback)(struct device *);
 	int retval;
 
@@ -883,6 +886,9 @@ EXPORT_SYMBOL_GPL(pm_schedule_suspend);
  */
 int __pm_runtime_idle(struct device *dev, int rpmflags)
 {
+  	/* For Debugging */
+  	printk(KERN_INFO "func: %s,     dev_name1: %s,	dev_name2: %s\n", __func__, dev->init_name, dev->type->name);
+
 	unsigned long flags;
 	int retval;
 

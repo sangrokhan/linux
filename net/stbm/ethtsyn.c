@@ -275,12 +275,23 @@ struct sk_buff* ethtsyn_create(int type,
 	skb_reserve(skb, hlen);
 	skb_reset_network_header(skb);
 	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(1),     ptp_hdr_len(dev): %d\n", __func__, ptp_hdr_len(dev));
+
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_1588);
 	if(src_hw == NULL) 
 	  	src_hw = dev->dev_addr;
 	if(dest_hw == NULL)
 	  	dest_hw = dev->broadcast;
+
+	/* For Debugging */
+  	printk(KERN_INFO "func: %s(2),     dest_hw: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+	       dest_hw[0], dest_hw[1], dest_hw[2],
+	       dest_hw[3], dest_hw[4], dest_hw[5]);
+
+
 	//should not be broadcast. routine needs copied from tcp or udp source code 
 	//how tcp or udp is using arp protocol to get device address
 	//or need to check how address is decided in AUTOSAR standard
@@ -663,13 +674,25 @@ void ethtsyn_timer_callback(unsigned long arg) {
 	//ethtsyn_send(type);
 
 	// after testing 'dev' code, remove below annotaion mark
-	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(2000));
+	ret = mod_timer(&ethTSynTimer, now + msecs_to_jiffies(5000));
 	
 	if(ret) {
 	 	printk(KERN_INFO "Error in mod_timer\n");
 	}
 
-	skb = ethtsyn_create(SYN, NULL, dev, NULL, NULL, NULL, NULL, NULL, NULL);
+	unsigned char dest_addr[6];
+
+	/* This address is address of raspberry pi(36) */
+	dest_addr[0] = 0xb8;
+	dest_addr[1] = 0x27;
+	dest_addr[2] = 0xeb;
+	dest_addr[3] = 0x38;
+	dest_addr[4] = 0x9c;
+	dest_addr[5] = 0x50;
+
+	skb = ethtsyn_create(SYN, NULL, dev, ETH_P_1588, NULL, NULL, dest_addr, NULL, NULL);		// Send to dest_addr
+	//skb = ethtsyn_create(SYN, NULL, dev, NULL, NULL, NULL, NULL, NULL, NULL);		// Send to broadcaat
+
    	ethtsyn_xmit(skb);
 	//set_device_test(skb);
 }
