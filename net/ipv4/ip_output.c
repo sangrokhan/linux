@@ -326,7 +326,7 @@ int ip_queue_xmit(struct sk_buff *skb, struct flowi *fl)
 	int res;
 
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s,     proto: %02x\n", __func__, ntohs(skb->protocol));
+//  	printk(KERN_INFO "func: %s,     proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	/* Skip all of this if the packet is already routed,
 	 * f.e. by something like SCTP.

@@ -82,15 +82,16 @@ int eth_header(struct sk_buff *skb, struct net_device *dev,
 	struct ethhdr *eth = (struct ethhdr *)skb_push(skb, ETH_HLEN);
 
 	if (type != ETH_P_802_3 && type != ETH_P_802_2) {
-		printk(KERN_INFO "func: %s(if)\n", __func__);
+	  	/* For Debugging */
+//		printk(KERN_INFO "func: %s(if)\n", __func__);
 		eth->h_proto = htons(type);
 	}
 	else {
-		printk(KERN_INFO "func: %s(else)\n", __func__);
+//		printk(KERN_INFO "func: %s(else)\n", __func__);
 		eth->h_proto = htons(len);
 	}
 
-	printk(KERN_INFO "func: %s,	eth->h_proto: %02x\n", __func__, ntohs(eth->h_proto));
+//	printk(KERN_INFO "func: %s,	eth->h_proto: %02x\n", __func__, ntohs(eth->h_proto));
 
 	/*
 	 *      Set the source hardware address.
@@ -170,20 +171,20 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	eth = eth_hdr(skb);
 
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s(1),     eth->h_dest: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
-	       eth->h_dest[0], eth->h_dest[1], eth->h_dest[2],
-	       eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
+//  	printk(KERN_INFO "func: %s(1),     eth->h_dest: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+//	       eth->h_dest[0], eth->h_dest[1], eth->h_dest[2],
+//	       eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
 
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s(2),     eth->h_source: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
-	       eth->h_source[0], eth->h_source[1], eth->h_source[2],
-	       eth->h_source[3], eth->h_source[4], eth->h_source[5]);
+//  	printk(KERN_INFO "func: %s(2),     eth->h_source: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+//	       eth->h_source[0], eth->h_source[1], eth->h_source[2],
+//	       eth->h_source[3], eth->h_source[4], eth->h_source[5]);
 
 	/* For Debugging */
-	addr = &(eth->h_proto);
+//	addr = &(eth->h_proto);
 
 	/* For Debugging */
-	printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
+//	printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
 	
   	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[1],addr[0]);
   	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[2],addr[1]);

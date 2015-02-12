@@ -263,4 +263,7 @@ extern void usbnet_update_max_qlen(struct usbnet *dev);
 extern void usbnet_get_tx_timestamp(struct timespec *timeStamp);
 extern void usbnet_get_rx_timestamp(struct timespec *timeStamp);
 
+/* Use by ethtsyn.c */
+extern ktime_t ethTSynTxTimestamp;
+
 #endif /* __LINUX_USB_USBNET_H */

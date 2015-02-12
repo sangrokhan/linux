@@ -3501,16 +3501,18 @@ static int __netif_receive_skb_core(struct sk_buff *skb, bool pfmemalloc)
 
 	trace_netif_receive_skb(skb);
 
-	printk(KERN_INFO "1current packet type %02x\n",ntohs(skb->protocol));
-  	if(skb->protocol == htons(ETH_P_1588)) {
-	 	printk(KERN_INFO "net/dev.c netif_receive_skb print ETH_P_1588 recevie\n");
-  	}
+	/* For Debugging */
+//	printk(KERN_INFO "1current packet type %02x\n",ntohs(skb->protocol));
+//  	if(skb->protocol == htons(ETH_P_1588)) {
+//	 	printk(KERN_INFO "net/dev.c netif_receive_skb print ETH_P_1588 recevie\n");
+//  	}
 
+/*
 	list_for_each_entry_rcu(ptype,
 			&ptype_base[ETH_P_1588 & PTYPE_HASH_MASK], list) {
 	  	printk(KERN_INFO "%d ptype type %08X\n", ETH_P_1588 & PTYPE_HASH_MASK, ptype->type);
 	}
-
+*/
 	/* if we've gotten here through NAPI, check netpoll */
 	if (netpoll_receive_skb(skb))
 		goto out;

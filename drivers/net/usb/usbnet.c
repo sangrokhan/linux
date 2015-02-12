@@ -1297,8 +1297,22 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 	unsigned long		flags;
 	int retval;
 
-	if (skb)
+	if (skb) {
+	  	/* For Debugging */
+	  	printk(KERN_INFO "func: %s(if-1)\n", __func__);
+
 		skb_tx_timestamp(skb);
+
+		if(skb->protocol == htons(ETH_P_1588)) {
+			// ethTSynTxTimestamp = skb->phydev->drv->tstamp;
+			// ethTSynTxTimestamp = skb->tstamp;
+			ethTSynTxTimestamp = ktime_get_real();
+			s64 delta = ktime_to_ns(ethTSynTxTimestamp);
+
+			/* For Debugging */
+			printk(KERN_INFO "func: %s(if-2),	time0: %lld ns\n", __func__, (long long)delta);
+		}
+	}
 
 	// some devices want funky USB-level framing, for
 	// win32 driver (usually) and/or hardware quirks

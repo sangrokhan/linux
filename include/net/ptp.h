@@ -13,6 +13,7 @@
 #define FOLLOW_UP 8 /* Follow_Up message */
 #define PDELAY_RESP_FOLLOW_UP 10 /* Pdelay_Resp_Follow_Up message */
 
+
 //typedef uint64_t Octet8;
 typedef struct _ClockIdentity{
 	unsigned char B0 : 8;
@@ -40,7 +41,7 @@ typedef struct {
    	unsigned timeTraceable  :  1;
    	unsigned frequencyTraceable   :  1;
    	unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
-// } flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
+// } flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};	// error
 } flagField;
 
 typedef struct {
@@ -55,10 +56,10 @@ typedef struct {
  *
 */
 typedef struct {
-  	uint8_t seconds[6];
-  	uint8_t nanoseconds[4];   // The nanoseconds member is always less than 10e9
-  	uint8_t pad[6];
-}Timestamp;
+  	u16 secondHigh;
+  	unsigned long seconds;
+  	unsigned long nanoseconds;   // The nanoseconds member is always less than 10e9
+} Timestamp;
 
 struct ptphdr{
   	unsigned 	messageType		:	4;
@@ -92,29 +93,5 @@ static inline int ptp_hdr_len(struct net_device *dev) {
 	  return sizeof(struct ptphdr) + (dev->addr_len + sizeof(u32)) * 2;
 	}
 }
-
-/*
-struct dst_entry {
-   struct net_device *dev;
-   int         (*input)(struct sk_buff *);
-   int         (*output)(struct sk_buff *);
-
-   unsigned short    flags;
-#define DST_HOST     0x0001
-#define DST_NOXFRM      0x0002
-#define DST_NOPOLICY    0x0004
-#define DST_NOHASH      0x0008
-#define DST_NOCACHE     0x0010
-#define DST_NOCOUNT     0x0020
-#define DST_NOPEER      0x0040
-#define DST_FAKE_RTABLE    0x0080
-#define DST_XFRM_TUNNEL    0x0100
-#define DST_XFRM_QUEUE     0x0200
-};
-
-struct rtable {
-   struct dst_entry  dst;
-};
-*/
 
 #endif

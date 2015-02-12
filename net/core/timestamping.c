@@ -29,16 +29,22 @@ static struct sock_filter ptp_filter[] = {
 
 static unsigned int classify(const struct sk_buff *skb)
 {
+  	/* Modified */
+	if(skb->protocol == htons(ETH_P_1588))
+	  	return PTP_CLASS_V2_VLAN;
+
 	if (likely(skb->dev &&
 		   skb->dev->phydev &&
 		   skb->dev->phydev->drv))
 		return sk_run_filter(skb, ptp_filter);
 	else
-		return PTP_CLASS_NONE;
+	  	return PTP_CLASS_NONE;
 }
 
 void skb_clone_tx_timestamp(struct sk_buff *skb)
 {
+  	printk(KERN_INFO "func: %s\n", __func__);
+
 	struct phy_device *phydev;
 	struct sk_buff *clone;
 	struct sock *sk = skb->sk;
