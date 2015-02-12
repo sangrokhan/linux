@@ -319,7 +319,7 @@ void usbnet_skb_return (struct usbnet *dev, struct sk_buff *skb)
 {
 	int	status;
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s(before eth_type_trans()(1)),     proto: %02x\n", __func__, ntohs(skb->protocol));
+//  	printk(KERN_INFO "func: %s(before eth_type_trans()(1)),     proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	/* For Debugging */
   	// printk(KERN_INFO "func: %s(before eth_type_trans()(2)),     proto: %02x\n", __func__, ntohs(skb->protocol));
@@ -327,7 +327,7 @@ void usbnet_skb_return (struct usbnet *dev, struct sk_buff *skb)
 
 	if (test_bit(EVENT_RX_PAUSED, &dev->flags)) {
 		/* For Debugging */
-	  	printk(KERN_INFO "usbnet.c if(testbit)\n");
+//	  	printk(KERN_INFO "usbnet.c if(testbit)\n");
 
 		skb_queue_tail(&dev->rxq_pause, skb);
 		return;
@@ -338,7 +338,7 @@ void usbnet_skb_return (struct usbnet *dev, struct sk_buff *skb)
 	dev->net->stats.rx_bytes += skb->len;
 
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s(after eth_type_trans()),     proto: %04x\n", __func__, ntohs(skb->protocol));
+//  	printk(KERN_INFO "func: %s(after eth_type_trans()),     proto: %04x\n", __func__, ntohs(skb->protocol));
 
 	netif_dbg(dev, rx_status, dev->net, "< rx, len %zu, type 0x%x\n",
 		  skb->len + sizeof (struct ethhdr), skb->protocol);
@@ -419,7 +419,7 @@ static void __usbnet_queue_skb(struct sk_buff_head *list,
 			struct sk_buff *newsk, enum skb_state state)
 {
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s,	proto:%02x\n", __func__, ntohs(newsk->protocol));
+//  	printk(KERN_INFO "func: %s,	proto:%02x\n", __func__, ntohs(newsk->protocol));
 	
 	struct skb_data *entry = (struct skb_data *) newsk->cb;
 
@@ -590,12 +590,12 @@ static void rx_complete (struct urb *urb)
 	entry->urb = NULL;
 
 	/* For Debugging */
-  	printk(KERN_INFO "func: %s,	proto: %02x,	skb->dev->dev_addr: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__, ntohs(skb->protocol),
-	 	skb->dev->dev_addr[0], skb->dev->dev_addr[1], skb->dev->dev_addr[2],
-	 	skb->dev->dev_addr[3], skb->dev->dev_addr[4], skb->dev->dev_addr[5]);
+//  	printk(KERN_INFO "func: %s,	proto: %02x,	skb->dev->dev_addr: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__, ntohs(skb->protocol),
+//	 	skb->dev->dev_addr[0], skb->dev->dev_addr[1], skb->dev->dev_addr[2],
+//	 	skb->dev->dev_addr[3], skb->dev->dev_addr[4], skb->dev->dev_addr[5]);
 
 	/* For Debugging*/
-	printk(KERN_INFO "func: %s,	urb_status: %d\n", __func__, urb_status);
+//	printk(KERN_INFO "func: %s,	urb_status: %d\n", __func__, urb_status);
 
 
 	switch (urb_status) {
@@ -1194,7 +1194,7 @@ static void tx_complete (struct urb *urb)
 	struct usbnet		*dev = entry->dev;
 
 	/* For Debugging */
-	printk(KERN_INFO "func: %s,	proto: %02x,	urb_status: %d\n", __func__, ntohs(skb->protocol), urb->status);
+//	printk(KERN_INFO "func: %s,	proto: %02x,	urb_status: %d\n", __func__, ntohs(skb->protocol), urb->status);
 
 	if (urb->status == 0) {
 		if (!(dev->driver_info->flags & FLAG_MULTI_PACKET))
@@ -1299,7 +1299,7 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 
 	if (skb) {
 	  	/* For Debugging */
-	  	printk(KERN_INFO "func: %s(if-1)\n", __func__);
+//	  	printk(KERN_INFO "func: %s(if-1)\n", __func__);
 
 		skb_tx_timestamp(skb);
 
@@ -1310,7 +1310,7 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 			s64 delta = ktime_to_ns(ethTSynTxTimestamp);
 
 			/* For Debugging */
-			printk(KERN_INFO "func: %s(if-2),	time0: %lld ns\n", __func__, (long long)delta);
+//			printk(KERN_INFO "func: %s(if-2),	time0: %lld ns\n", __func__, (long long)delta);
 		}
 	}
 
@@ -1391,7 +1391,7 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 	switch ((retval = usb_submit_urb (urb, GFP_ATOMIC))) {
 
 	/* For Debugging */
-	  printk(KERN_INFO "retval: %d\n", retval);
+//	  printk(KERN_INFO "retval: %d\n", retval);
 	case -EPIPE:
 		netif_stop_queue (net);
 		usbnet_defer_kevent (dev, EVENT_TX_HALT);
@@ -1405,14 +1405,15 @@ netdev_tx_t usbnet_start_xmit (struct sk_buff *skb,
 	case 0:
 		net->trans_start = jiffies;
 
-		if (skb->protocol == htons(ETH_P_1588)) {
-		  	printk(KERN_INFO "usbnet_start_xmit send protocol ETH_P_1588 @ __usbnet_queue_skb\n");
-		}
+		/* For Debugging */
+//		if (skb->protocol == htons(ETH_P_1588)) {
+//		  	printk(KERN_INFO "usbnet_start_xmit send protocol ETH_P_1588 @ __usbnet_queue_skb\n");
+//		}
 
 		__usbnet_queue_skb(&dev->txq, skb, tx_start);
 		if (dev->txq.qlen >= TX_QLEN (dev)) {
 			/* For Debugging */
-		  	printk(KERN_INFO "This is if(dev->txq.qlen >= TX_QLEN(dev))\n");
+//		  	printk(KERN_INFO "This is if(dev->txq.qlen >= TX_QLEN(dev))\n");
 			netif_stop_queue (net);
 		}
 	}

@@ -43,7 +43,7 @@ static unsigned int classify(const struct sk_buff *skb)
 
 void skb_clone_tx_timestamp(struct sk_buff *skb)
 {
-  	printk(KERN_INFO "func: %s\n", __func__);
+//  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct phy_device *phydev;
 	struct sk_buff *clone;
