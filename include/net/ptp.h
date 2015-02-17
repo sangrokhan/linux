@@ -7,11 +7,11 @@
 #include <linux/ktime.h>
 #include <net/route.h>
 
-#define SYN 0 /* Sync message */
-#define PDELAY_REQ 2 /* Pdelay_Req message */
-#define PDELAY_RESP 3 /* Pdelay_Resp message */
-#define FOLLOW_UP 8 /* Follow_Up message */
-#define PDELAY_RESP_FOLLOW_UP 10 /* Pdelay_Resp_Follow_Up message */
+#define SYN 	       		0	/* Sync message */
+#define PDELAY_REQ 		2	/* Pdelay_Req message */
+#define PDELAY_RESP		3	/* Pdelay_Resp message */
+#define FOLLOW_UP		8	/* Follow_Up message */
+#define PDELAY_RESP_FOLLOW_UP	10	/* Pdelay_Resp_Follow_Up message */
 
 
 //typedef uint64_t Octet8;
@@ -27,20 +27,20 @@ typedef struct _ClockIdentity{
 } ClockIdentity;
 
 typedef struct {
-	unsigned alternateMasterFlag  :  1;
-  	unsigned twoStepFlag :  1;
-  	unsigned unicastFlag :  1;
-  	unsigned noDefinition    :  2;    // The bit is not defined
-  	unsigned PTPprofileSpecific1  :  1;
-  	unsigned PTPprofileSpecific2  :  1;
-  	unsigned reserved    :  1;
-   	unsigned leap61   :  1;
-   	unsigned leap59   :  1;
-   	unsigned currentUtcOffsetValid   :  1;
-   	unsigned ptpTimescale   :  1;
-   	unsigned timeTraceable  :  1;
-   	unsigned frequencyTraceable   :  1;
-   	unsigned reservedForAnnexK    :  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
+	unsigned alternateMasterFlag	:  1;
+  	unsigned twoStepFlag 		:  1;
+  	unsigned unicastFlag 		:  1;
+  	unsigned noDefinition		:  2;    // The bit is not defined
+  	unsigned PTPprofileSpecific1	:  1;
+  	unsigned PTPprofileSpecific2	:  1;
+  	unsigned reserved		:  1;
+   	unsigned leap61			:  1;
+   	unsigned leap59			:  1;
+   	unsigned currentUtcOffsetValid	:  1;
+   	unsigned ptpTimescale		:  1;
+   	unsigned timeTraceable		:  1;
+   	unsigned frequencyTraceable   	:  1;
+   	unsigned reservedForAnnexK    	:  2;    /* This bit is reserved for the experimental security mechanism of Annex K */
 // } flagField = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};	// error
 } flagField;
 
