@@ -620,7 +620,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  goto out_of_mem;
 	
 	int m_type = ptp->messageType;
-        
+	// printk(KERN_INFO "mtype: %d \n", m_type);
+
 	switch(m_type){
 	  
 	case SYN:
