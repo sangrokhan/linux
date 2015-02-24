@@ -725,7 +725,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 #else
 		if(delta_result == 0) {
 			ethtsyn_create(PDELAY_REQ, NULL, dev, ETH_P_1588, NULL, NULL, NULL, NULL, NULL);
-		  	break;
+		  	goto out_of_mem;
 		}
 #endif
 
