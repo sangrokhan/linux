@@ -25,7 +25,9 @@ static struct timer_list probe_timer;
 void announce_timer_callback(void);
 void probe_timer_callback(void);
 
-void generate_address(unsigned char* requestor_address) {
+struct maaphdr *tx_maap;
+
+void generate_address(struct maaphdr *maap, unsigned char* requestor_address) {
   	unsigned int rand;
 
 	generated_address[0] = 0x91;
@@ -50,8 +52,11 @@ void generate_address(unsigned char* requestor_address) {
 	/* For Debugging */
 	printk("func: %s,	rand2: %02x\n", __func__, rand);
 
+	memcpy(maap->requested_start_address, generated_address, MAC_ADDR_LEN);
+
 	if(maap_state == INITIAL) {
 	  	init_maap_probe_count();
+		memcpy(tx_maap, maap, sizeof(maaphdr));		// tx_maap = maap;
 	  	maap_init_timer(&probe_timer, probe_timer_callback, MAAP_PROBE_INTERVAL_BASE, 0);
 	}
 }
@@ -88,29 +93,31 @@ int compare_MAC(unsigned char* current_mac_address, unsigned char* received_mac_
 
 /* Send a MAAP_PROBE PDU */
 void sProbe() {
-    	struct maaphdr* maap;
+	tx_maap->message_type = MAAP_PROBE;
+//	memcpy(maap->requested_start_address, generated_address, MAC_ADDR_LEN);
+//    	maap->requested_count = 0x00;
+//	maap->conflict_start_address[0] = 0x00;
+//	maap->conflict_start_address[1] = 0x00;
+//	maap->conflict_start_address[2] = 0x00;
+//	maap->conflict_start_address[3] = 0x00;
+//	maap->conflict_start_address[4] = 0x00;
+//	maap->conflict_start_address[5] = 0x00;
+//	maap->conflict_count = 0;
+	
+	avtp_create();
 
-	maap->message_type = MAAP_PROBE;
-	memcpy(maap->requested_start_address, generated_address, MAC_ADDR_LEN);
-    	maap->requested_count = 0x00;
-	maap->conflict_start_address[0] = 0x00;
-	maap->conflict_start_address[1] = 0x00;
-	maap->conflict_start_address[2] = 0x00;
-	maap->conflict_start_address[3] = 0x00;
-	maap->conflict_start_address[4] = 0x00;
-	maap->conflict_start_address[5] = 0x00;
-	maap->conflict_count = 0;
+	free(tx_maap);
 }
 
 /* Send a MAAP_DEFEND PDU */
-void sDefend(struct maaphdr *rcv_maap) {
+void sDefend(struct maaphdr *rx_maap) {
     	struct maaphdr* maap;
 
 	maap->message_type = MAAP_DEFEND;
 //	maap->requested_start_address = ;
 //    	maap->requested_count = ;
-	memcpy(maap->conflict_start_address, rcv_maap->requested_start_address, MAC_ADDR_LEN);
-	maap->conflict_count = rcv_maap->requested_count;
+	memcpy(maap->conflict_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
+	maap->conflict_count = rx_maap->requested_count;
 }
 
 /* Send a MAAP_ANNOUNCE PDU */
@@ -130,21 +137,21 @@ void sAnnounce() {
 }
 
 // Need to determine parameter
-static int maap_rcv(struct maaphdr *rcv_maap) {
+static int maap_rcv(struct maaphdr *rx_maap) {
   	int ret;
 
-	switch(rcv_maap->message_type) {
+	switch(rx_maap->message_type) {
 	case MAAP_PROBE:
   		if(maap_state == PROBE) {
-		  	if(!(ret = compare_MAC(generated_address, rcv_maap->requested_start_address))) break;
+		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 	  		
 			maap_cleanup_timer(&probe_timer);
 			maap_state = INITIAL;
-			generate_address(rcv_maap->requested_start_address);
+			generate_address(rx_maap->requested_start_address);
   		}
 
 		if(maap_state == DEFEND) {
-		  	sDefend(rcv_maap);
+		  	sDefend(rx_maap);
 		}
 
 		break;
@@ -155,13 +162,13 @@ static int maap_rcv(struct maaphdr *rcv_maap) {
 	  	}
 
 		if(maap_state == DEFEND) {
-		  	if(!(ret = compare_MAC(generated_address, rcv_maap->requested_start_address))) break;
+		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 
 		        maap_cleanup_timer(&announce_timer);
 		}
 
 		maap_state = INITIAL;
-		generate_address(rcv_maap->requested_start_address);
+		generate_address(rx_maap->requested_start_address);
 
 		break;
 
@@ -171,14 +178,14 @@ static int maap_rcv(struct maaphdr *rcv_maap) {
 		}
 
 		if(maap_state == DEFEND) {
-		  	if(!(ret = compare_MAC(generated_address, rcv_maap->requested_start_address))) break;
+		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 
 		  	maap_cleanup_timer(&announce_timer);
 
 		}
 
 		maap_state = INITIAL;
-		generate_address(rcv_maap->requested_start_address);
+		generate_address(rx_maap->requested_start_address);
 
 		break;
 	}
@@ -213,7 +220,7 @@ int maap_init_timer(struct timer_list *timer, void (*function)(void), int second
 
 	setup_timer(timer, function, 0);
 
-	ret = mod_timer(&timer, jiffies + msecs_to_jiffies(second * 1000 + millisecond));
+	ret = mod_timer(timer, jiffies + msecs_to_jiffies((second * 1000) + millisecond));
 	if(ret) printk("Error in mod_timer(announce_timer)\n");
 
 	return 0;
@@ -222,8 +229,30 @@ int maap_init_timer(struct timer_list *timer, void (*function)(void), int second
 void maap_cleanup_timer(struct timer_list *timer) {
   	int ret;
 
-	ret = del_timer(&timer);
+	ret = del_timer(timer);
 	if(ret) printk("The announce timer is still in use...\n");
 
 	return;
+}
+
+void maap_init(struct maaphdr *maap) {
+  	maap_state = INITIAL;
+  	maap->message_type = 0x00;
+  	maap->version = 0x01;
+  	maap->maap_data_length = 0x10;
+  	maap->stream_id = 0x00;
+  	maap->requested_start_address[0] = 0x00;
+	maap->requested_start_address[1] = 0x00;
+	maap->requested_start_address[2] = 0x00;
+	maap->requested_start_address[3] = 0x00;
+	maap->requested_start_address[4] = 0x00;
+	maap->requested_start_address[5] = 0x00;
+	maap->requested_count = 0x00;
+	maap->conflict_start_address[0] = 0x00;
+	maap->conflict_start_address[1] = 0x00;
+	maap->conflict_start_address[2] = 0x00;
+	maap->conflict_start_address[3] = 0x00;
+	maap->conflict_start_address[4] = 0x00;
+	maap->conflict_start_address[5] = 0x00;
+	maap->conflict_count = 0x00;
 }
