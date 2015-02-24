@@ -117,6 +117,7 @@
 #include <net/secure_seq.h>
 
 #include <net/ethtsyn.h>
+#include <net/avtp.h>
 
 #ifdef CONFIG_IP_MROUTE
 #include <linux/mroute.h>
@@ -1742,6 +1743,10 @@ static int __init inet_init(void)
 	 */
 
 	arp_init();
+
+	
+	avtp_init();
+	printk(KERN_INFO "Avtp init call @ net/ipv4/af_inet.c\n");	
 
 	EthTSyn_Init(&config);
 	printk(KERN_INFO "EthTSyn init call @ net/ipv4/af_inet.c\n");

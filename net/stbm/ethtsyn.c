@@ -19,6 +19,8 @@
 #include <net/ptp.h>
 #include <net/sock.h>
 #include <net/route.h>
+#include <net/avtp.h>
+
 
 MODULE_LICENSE("GPL");
 
@@ -878,6 +880,8 @@ void ethtsyn_timer_callback(unsigned long arg) {
 			dev = next_net_device(dev);
 		}
 	}
+	// For AVTP debug (dongwon0)
+	avtp_create(0x7E, NULL, dev, NULL, NULL, NULL, NULL, NULL, dev->broadcast);
 
 	switch(state) {
 	case SYN:

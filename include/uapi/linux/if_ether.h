@@ -39,6 +39,8 @@
  *	These are the defined Ethernet Protocol ID's.
  */
 
+#define ETH_P_AVTP	0x22F0		/*AVTP Ethertype (dongwon0)*/			
+
 #define ETH_P_LOOP	0x0060		/* Ethernet Loopback packet	*/
 #define ETH_P_PUP	0x0200		/* Xerox PUP packet		*/
 #define ETH_P_PUPAT	0x0201		/* Xerox PUP Addr Trans packet	*/
