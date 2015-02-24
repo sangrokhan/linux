@@ -52,5 +52,6 @@ static int maap_rcv(struct maaphdr *rcv_maap);
 int maap_init_timer(struct timer_list *timer, void (*function)(void), int second, int millisecond);
 void maap_cleanup_timer(struct timer_list *timer);
 
+void maap_init(struct maaphdr *maap);
 
 #endif
