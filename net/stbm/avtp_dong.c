@@ -22,30 +22,6 @@
 
 //struct net_device *avtp_dev;
 
-/*
-void maap_send(unsigned cd,
-	       unsigned subtype,
-	       unsigned sv,
-	       unsigned message_type,
-	       unsigned maap_version,
-	       unsigned maap_data_len,
-	       const unsigned char* req_start_addr,
-	       __be16 req_count,
-	       const unsisgned char* conflict_start_addr,
-	       __be16 conflict_count){
-
-	struct sk_buff* skb;
-
-	skb = avtp_create(cd, subtype, sv, NULL, message_type, maap_version, maap_data_len, 
-			  NULL, req_start_addr, req_count, conflict_start_addr, conflict_count);
-
-	if(skb == NULL)
-	  return;
-
-	avtp_xmit(skb);
-}
-*/
-
 void avtp_xmit(struct sk_buff* skb){
 
   	printk(KERN_INFO "[avtp]avtp_xmit function called\n");
@@ -94,23 +70,30 @@ struct sk_buff* avtp_create(uint8_t type,
 		if(dest_hw == NULL)
 		  dest_hw = dev->broadcast;
 
-		if(dev_hard_header(skb, dev, ETH_P_AVTP, dest_hw, src_hw, skb->len) < 0)
-		  goto out;
-		/*
+		// For Debugging sources - send to 28th raspberry pi  (dongwon0)	
+		unsigned char pi28_addr[6];	// raspberry 28's mac addr
+		pi28_addr[0]=0xb8;
+		pi28_addr[1]=0x27;
+		pi28_addr[2]=0xeb;
+		pi28_addr[3]=0x32;
+		pi28_addr[4]=0x44;
+		pi28_addr[5]=0x54;
+		dest_hw = pi28_addr;
+
 		avtp_maap->cd = 1;
 		avtp_maap->subtype = 0x7E;
-		avtp_maap->sv = 0;
-		avtp_maap->version = 0;
-		avtp_maap->message_type = message_type;
-		avtp_maap->maap_version = 1;
-		avtp_maap->maap_data_length = 16;
-		memset(avtp_maap->stream_id, 0, 8);
-		memcpy(avtp_maap->requested_start_address, req_start_addr, 6);
-		avtp_maap->requested_count = req_count;
-		memcpy(avtp_maap->conflict_start_address, conflict_start_addr, 6);
-		avtp_maap->conflict_count = conflict_count;
-		*/
+	     
+		printk(KERN_INFO "[avtp]func:%s(2), src_hw: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+		       src_hw[0], src_hw[1], src_hw[2],
+		       src_hw[3], src_hw[4], src_hw[5]);
+		printk(KERN_INFO "[avtp]func:%s(2), dest_hw(raspberry 28: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+		       dest_hw[0], dest_hw[1], dest_hw[2],
+		       dest_hw[3], dest_hw[4], dest_hw[5]);	// For debuging source end!
 
+
+
+		if(dev_hard_header(skb, dev, ETH_P_AVTP, dest_hw, src_hw, skb->len) < 0)
+		  goto out;
 
 		printk(KERN_INFO "=============MAAP heaader==========\n");
 		printk(KERN_INFO "[avtp]1. cd [%u]\n", 		avtp_maap->cd);
@@ -120,15 +103,17 @@ struct sk_buff* avtp_create(uint8_t type,
 		printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
 		printk(KERN_INFO "[avtp]6. maap_version [%u]\n", 	avtp_maap->maap_version);
 		printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",avtp_maap->maap_data_length);
-		printk(KERN_INFO "[avtp]8. stream_id[0] [%d]\n", 	avtp_maap->stream_id[0]);
+		printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+			avtp_maap->requested_start_address[0], avtp_maap->requested_start_address[1], 
+			avtp_maap->requested_start_address[2], avtp_maap->requested_start_address[3],
+			avtp_maap->requested_start_address[4], avtp_maap->requested_start_address[5]);
+		printk(KERN_INFO "[avtp]10. requested_count [%lu]\n", avtp_maap->requested_count);
+		printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+			avtp_maap->conflict_start_address[0], avtp_maap->conflict_start_address[1], 
+			avtp_maap->conflict_start_address[2], avtp_maap->conflict_start_address[3],
+			avtp_maap->conflict_start_address[4], avtp_maap->conflict_start_address[5]);
+		printk(KERN_INFO "[avtp]13. conflict_count [%lu]\n", avtp_maap->conflict_count);
 		printk(KERN_INFO "=============MAAP heaader==========\n");
-		//printk(KERN_INFO "9. dev->last_rx [%lu]\n", dev->last_rx);
-		//printk(KERN_INFO "10.  [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
-		//	dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
-		//       dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
-		//printk(KERN_INFO "11. dev->broadcast [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
-		//       dev->broadcast[0], dev->broadcast[1], dev->broadcast[2],
-		//       dev->broadcast[3], dev->broadcast[4], dev->broadcast[5]);
 	}
 
 	avtp_xmit(skb);
@@ -140,33 +125,6 @@ out :
 
 	return NULL;
   
-	/*
-       	if(cd == 0){	  // stream data AVTPDU
-
-		skb = alloc_skb(avtp_str_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);	// what is hlen, tlen, GFP_ATOMIC ???
-
-  		if(skb == NULL) 
-    			return NULL;
-  
-  		skb_reserve(skb, hlen);
-  		skb_reset_network_header(skb);
-  		avtp = (struct aptp_str_hdr *)skb_put(skb, avtp_str_hdr_len(dev));
-
-
-	}
-	else if(cd == 1){	  // control AVTPDU (include MAAP) 
-
-		skb = alloc_skb(avtp_ctr_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);	// what is hlen, tlen, GFP_ATOMIC ???
-
-  		if(skb == NULL) 
-    			return NULL;
-  
-  		skb_reserve(skb, hlen);
-  		skb_reset_network_header(skb);
-  		avtp = (struct aptp_ctr_hdr *)skb_put(skb, avtp_ctr_hdr_len(dev));
-	}
-	*/
-
 }
 EXPORT_SYMBOL(avtp_create);
 
@@ -175,9 +133,10 @@ static int avtp_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev){
   	printk(KERN_INFO "[avtp]avtp_rcv function called\n");
-	const struct avtp_ctr_hdr* avtp_ctr;
-	const struct avtp_str_hdr* avtp_str;
+	//	const struct avtp_ctr_hdr* avtp_ctr;
+	//	const struct avtp_str_hdr* avtp_str;
 	const struct avtp_common_hdr* avtp_common;
+	const struct avtp_maap_hdr* avtp_maap;
 
 	avtp_common = avtp_common_hdr(skb);
 
@@ -186,15 +145,15 @@ static int avtp_rcv(struct sk_buff* skb,
 	if(!skb)
 	  goto out_of_mem;
 
-	int cd = avtp_common->cd;
-	// need to declare m_type ? for switch
+	unsigned cd = avtp_common->cd;
+	uint8_t m_type = 0;
+	m_type = avtp_common->subtype;	
 
        	if(cd == 0){	  // stream data AVTPDU
-
 		
 	}
 	else if(cd == 1){	  // control AVTPDU (include MAAP) 
-	  /*	
+	  		
 		switch(m_type){
 	    		
 		case IIDC_66883_SUBTYPE :
@@ -206,23 +165,41 @@ static int avtp_rcv(struct sk_buff* skb,
 		  break;
 
 		case MAAP :
+		        avtp_maap = avtp_maap_hdr(skb);	// need to check which get header data correctly because avtp header is changeable
 
+			printk(KERN_INFO "=============Received MAAP heaader==========\n");
+			printk(KERN_INFO "[avtp]1. cd [%u]\n", 		avtp_maap->cd);
+			printk(KERN_INFO "[avtp]2. subtype [%u]\n", 		avtp_maap->subtype);
+			printk(KERN_INFO "[avtp]3. sv [%u]\n", 		avtp_maap->sv);
+			printk(KERN_INFO "[avtp]4. version [%u]\n", 		avtp_maap->version);
+			printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
+			printk(KERN_INFO "[avtp]6. maap_version [%u]\n", 	avtp_maap->maap_version);
+			printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",avtp_maap->maap_data_length);
+			printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+				avtp_maap->requested_start_address[0], avtp_maap->requested_start_address[1], 
+				avtp_maap->requested_start_address[2], avtp_maap->requested_start_address[3],
+				avtp_maap->requested_start_address[4], avtp_maap->requested_start_address[5]);
+			printk(KERN_INFO "[avtp]10. requested_count [%lu]\n", avtp_maap->requested_count);
+			printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
+				avtp_maap->conflict_start_address[0], avtp_maap->conflict_start_address[1], 
+				avtp_maap->conflict_start_address[2], avtp_maap->conflict_start_address[3],
+				avtp_maap->conflict_start_address[4], avtp_maap->conflict_start_address[5]);
+			printk(KERN_INFO "[avtp]13. conflict_count [%lu]\n", avtp_maap->conflict_count);
+			printk(KERN_INFO "=============Received MAAP heaader==========\n");
 		  
-
 		  break;
 
 		case EXPERIMENTAL_SUBTYPE :
 
 		  break;
 	  	}
-	  */
+	  
 	}
 
 	freeskb:
 		kfree_skb(skb);
  	out_of_mem:
 		return 0;
-
 
 }
 
@@ -233,7 +210,8 @@ static int avtp_netdev_event(struct notifier_block* this,
   struct net_device* dev = netdev_notifier_info_to_dev(ptr);
   struct netdev_notifier_change_info* change_info;
 
-	      //Print Device Information
+  		/*
+	      //For debuging - Print Device Information
 	      printk(KERN_INFO "[avtp]1. dev->name [%s]\n", dev->name);
 	      printk(KERN_INFO "[avtp]2. dev->base_addr [%lu]\n", dev->base_addr);
 	      printk(KERN_INFO "[avtp]3. dev->ifindex [%d]\n", dev->ifindex);
@@ -249,7 +227,7 @@ static int avtp_netdev_event(struct notifier_block* this,
 	      printk(KERN_INFO "[avtp]11. dev->broadcast [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
 	             dev->broadcast[0], dev->broadcast[1], dev->broadcast[2],
 	             dev->broadcast[3], dev->broadcast[4], dev->broadcast[5]);	      
-
+		*/
   
   switch(event) {
   default: 
@@ -297,13 +275,10 @@ void avtp_init(void){
 	printk(KERN_INFO "======================================\n");
 	struct sk_buff *skb;
 
-	//	avtp_sock_check();	// ?????
+	//	avtp_sock_check();	// need to check which function necessary or not
 	dev_add_pack(&avtp_packet_type);
-	printk(KERN_INFO "[avtp]dev_add_pack() complete\n");
        	avtp_proc_init();
-	printk(KERN_INFO "[avtp]avtp_proc_init() complete\n");
 	register_netdevice_notifier(&avtp_netdev_notifier);
-	printk(KERN_INFO "[avtp]register_netdevice_notifier() complete\n");
 
 }
 
