@@ -4967,6 +4967,9 @@ EXPORT_SYMBOL(dev_set_allmulti);
  */
 void __dev_set_rx_mode(struct net_device *dev)
 {
+  	/* For Debugging */
+  	printk(KERN_INFO "func: %s,	dev->priv_flags: %d\n", __func__, dev->flags);
+
 	const struct net_device_ops *ops = dev->netdev_ops;
 
 	/* dev_open will call this function so the list will stay sane. */

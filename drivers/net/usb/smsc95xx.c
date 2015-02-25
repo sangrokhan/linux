@@ -115,7 +115,7 @@ static int __must_check __smsc95xx_write_reg(struct usbnet *dev, u32 index,
 					     u32 data, int in_pm)
 {
   	/* For Debugging */
-  	// printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 buf;
 	int ret;
@@ -145,7 +145,7 @@ static int __must_check smsc95xx_read_reg_nopm(struct usbnet *dev, u32 index,
 					       u32 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_read_reg(dev, index, data, 1);
 }
@@ -154,7 +154,7 @@ static int __must_check smsc95xx_write_reg_nopm(struct usbnet *dev, u32 index,
 						u32 data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_write_reg(dev, index, data, 1);
 }
@@ -163,7 +163,7 @@ static int __must_check smsc95xx_read_reg(struct usbnet *dev, u32 index,
 					  u32 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_read_reg(dev, index, data, 0);
 }
@@ -172,7 +172,7 @@ static int __must_check smsc95xx_write_reg(struct usbnet *dev, u32 index,
 					   u32 data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_write_reg(dev, index, data, 0);
 }
@@ -183,7 +183,7 @@ static int __must_check __smsc95xx_phy_wait_not_busy(struct usbnet *dev,
 						     int in_pm)
 {
   	/* For Debugging */
-  	// printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	unsigned long start_time = jiffies;
 	u32 val;
@@ -207,7 +207,7 @@ static int __smsc95xx_mdio_read(struct net_device *netdev, int phy_id, int idx,
 				int in_pm)
 {
   	/* For Debugging */
-// 	printk(KERN_INFO "func: %s\n", __func__);
+ 	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 	u32 val, addr;
@@ -255,7 +255,7 @@ static void __smsc95xx_mdio_write(struct net_device *netdev, int phy_id,
 				  int idx, int regval, int in_pm)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 	u32 val, addr;
@@ -301,7 +301,7 @@ static int smsc95xx_mdio_read_nopm(struct net_device *netdev, int phy_id,
 				   int idx)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_mdio_read(netdev, phy_id, idx, 1);
 }
@@ -310,7 +310,7 @@ static void smsc95xx_mdio_write_nopm(struct net_device *netdev, int phy_id,
 				     int idx, int regval)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	__smsc95xx_mdio_write(netdev, phy_id, idx, regval, 1);
 }
@@ -318,7 +318,7 @@ static void smsc95xx_mdio_write_nopm(struct net_device *netdev, int phy_id,
 static int smsc95xx_mdio_read(struct net_device *netdev, int phy_id, int idx)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return __smsc95xx_mdio_read(netdev, phy_id, idx, 0);
 }
@@ -327,7 +327,7 @@ static void smsc95xx_mdio_write(struct net_device *netdev, int phy_id, int idx,
 				int regval)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	__smsc95xx_mdio_write(netdev, phy_id, idx, regval, 0);
 }
@@ -335,7 +335,7 @@ static void smsc95xx_mdio_write(struct net_device *netdev, int phy_id, int idx,
 static int __must_check smsc95xx_wait_eeprom(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	unsigned long start_time = jiffies;
 	u32 val;
@@ -364,7 +364,7 @@ static int __must_check smsc95xx_wait_eeprom(struct usbnet *dev)
 static int __must_check smsc95xx_eeprom_confirm_not_busy(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	unsigned long start_time = jiffies;
 	u32 val;
@@ -391,7 +391,7 @@ static int smsc95xx_read_eeprom(struct usbnet *dev, u32 offset, u32 length,
 				u8 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 val;
 	int i, ret;
@@ -432,7 +432,7 @@ static int smsc95xx_write_eeprom(struct usbnet *dev, u32 offset, u32 length,
 				 u8 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 val;
 	int i, ret;
@@ -488,7 +488,7 @@ static int __must_check smsc95xx_write_reg_async(struct usbnet *dev, u16 index,
 						 u32 data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	const u16 size = 4;
 	u32 buf;
@@ -513,7 +513,7 @@ static int __must_check smsc95xx_write_reg_async(struct usbnet *dev, u16 index,
 static unsigned int smsc95xx_hash(char addr[ETH_ALEN])
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return (ether_crc(ETH_ALEN, addr) >> 26) & 0x3f;
 }
@@ -521,7 +521,7 @@ static unsigned int smsc95xx_hash(char addr[ETH_ALEN])
 static void smsc95xx_set_multicast(struct net_device *netdev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
@@ -532,6 +532,10 @@ static void smsc95xx_set_multicast(struct net_device *netdev)
 	pdata->hash_lo = 0;
 
 	spin_lock_irqsave(&pdata->mac_cr_lock, flags);
+
+  	/* For Debugging */
+  	printk(KERN_INFO "func: %s,	dev->net->flags: %02x\n", __func__, dev->net->flags);
+  	printk(KERN_INFO "func: %s,	netdev_mc_empty: %d\n", __func__, netdev_mc_empty(dev->net));
 
 	if (dev->net->flags & IFF_PROMISC) {
 		netif_dbg(dev, drv, dev->net, "promiscuous mode enabled\n");
@@ -584,7 +588,7 @@ static int smsc95xx_phy_update_flowcontrol(struct usbnet *dev, u8 duplex,
 					   u16 lcladv, u16 rmtadv)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 flow, afc_cfg = 0;
 
@@ -624,7 +628,7 @@ static int smsc95xx_phy_update_flowcontrol(struct usbnet *dev, u8 duplex,
 static int smsc95xx_link_reset(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	struct mii_if_info *mii = &dev->mii;
@@ -675,7 +679,7 @@ static int smsc95xx_link_reset(struct usbnet *dev)
 static void smsc95xx_status(struct usbnet *dev, struct urb *urb)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 intdata;
 
@@ -702,7 +706,7 @@ static int smsc95xx_set_features(struct net_device *netdev,
 	netdev_features_t features)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 	u32 read_buf;
@@ -733,7 +737,7 @@ static int smsc95xx_set_features(struct net_device *netdev,
 static int smsc95xx_ethtool_get_eeprom_len(struct net_device *net)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	return MAX_EEPROM_SIZE;
 }
@@ -742,7 +746,7 @@ static int smsc95xx_ethtool_get_eeprom(struct net_device *netdev,
 				       struct ethtool_eeprom *ee, u8 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 
@@ -755,7 +759,7 @@ static int smsc95xx_ethtool_set_eeprom(struct net_device *netdev,
 				       struct ethtool_eeprom *ee, u8 *data)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 
@@ -771,7 +775,7 @@ static int smsc95xx_ethtool_set_eeprom(struct net_device *netdev,
 static int smsc95xx_ethtool_getregslen(struct net_device *netdev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	/* all smsc95xx registers */
 	return COE_CR - ID_REV + sizeof(u32);
@@ -782,7 +786,7 @@ smsc95xx_ethtool_getregs(struct net_device *netdev, struct ethtool_regs *regs,
 			 void *buf)
 {
   	/* For Debugging */
-// 	printk(KERN_INFO "func: %s\n", __func__);
+ 	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 	unsigned int i, j;
@@ -808,7 +812,7 @@ static void smsc95xx_ethtool_get_wol(struct net_device *net,
 				     struct ethtool_wolinfo *wolinfo)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(net);
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
@@ -821,7 +825,7 @@ static int smsc95xx_ethtool_set_wol(struct net_device *net,
 				    struct ethtool_wolinfo *wolinfo)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(net);
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
@@ -856,7 +860,7 @@ static const struct ethtool_ops smsc95xx_ethtool_ops = {
 static int smsc95xx_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = netdev_priv(netdev);
 
@@ -870,7 +874,7 @@ static int smsc95xx_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
 static int smsc95xx_is_macaddr_param(struct usbnet *dev, u8 *dev_mac)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
        int i, j, got_num, num;
        u8 mtbl[MAC_ADDR_LEN];
@@ -919,7 +923,7 @@ static int smsc95xx_is_macaddr_param(struct usbnet *dev, u8 *dev_mac)
 static void smsc95xx_init_mac_address(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
        /* Check module parameters */
        if (smsc95xx_is_macaddr_param(dev, dev->net->dev_addr))
@@ -943,7 +947,7 @@ static void smsc95xx_init_mac_address(struct usbnet *dev)
 static int smsc95xx_set_mac_address(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 addr_lo = dev->net->dev_addr[0] | dev->net->dev_addr[1] << 8 |
 		dev->net->dev_addr[2] << 16 | dev->net->dev_addr[3] << 24;
@@ -961,13 +965,13 @@ static int smsc95xx_set_mac_address(struct usbnet *dev)
 static int smsc95xx_start_tx_path(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	unsigned long flags;
 	int ret;
 
-//	printk(KERN_INFO "%s\n", __func__);
+	printk(KERN_INFO "%s\n", __func__);
 
 	/* Enable Tx at MAC */
 	spin_lock_irqsave(&pdata->mac_cr_lock, flags);
@@ -986,12 +990,12 @@ static int smsc95xx_start_tx_path(struct usbnet *dev)
 static int smsc95xx_start_rx_path(struct usbnet *dev, int in_pm)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	unsigned long flags;
 
-//	printk(KERN_INFO "%s\n", __func__);
+	printk(KERN_INFO "%s\n", __func__);
 
 	spin_lock_irqsave(&pdata->mac_cr_lock, flags);
 	pdata->mac_cr |= MAC_CR_RXEN_;
@@ -1003,7 +1007,7 @@ static int smsc95xx_start_rx_path(struct usbnet *dev, int in_pm)
 static int smsc95xx_phy_initialize(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	int bmcr, ret, timeout = 0;
 
@@ -1051,7 +1055,7 @@ static int smsc95xx_phy_initialize(struct usbnet *dev)
 static int smsc95xx_reset(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	u32 read_buf, write_buf, burst_cap;
@@ -1281,13 +1285,13 @@ static const struct net_device_ops smsc95xx_netdev_ops = {
 static int smsc95xx_bind(struct usbnet *dev, struct usb_interface *intf)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = NULL;
 	u32 val;
 	int ret;
 
-//	printk(KERN_INFO SMSC_CHIPNAME " v" SMSC_DRIVER_VERSION "\n");
+	printk(KERN_INFO SMSC_CHIPNAME " v" SMSC_DRIVER_VERSION "\n");
 
 	ret = usbnet_get_endpoints(dev, intf);
 	if (ret < 0) {
@@ -1332,7 +1336,7 @@ static int smsc95xx_bind(struct usbnet *dev, struct usb_interface *intf)
 
 	dev->net->netdev_ops = &smsc95xx_netdev_ops;
 	dev->net->ethtool_ops = &smsc95xx_ethtool_ops;
-	dev->net->flags |= IFF_MULTICAST;
+	dev->net->flags |= IFF_ALLMULTI;	// IFF_MULTICAST;
 	dev->net->hard_header_len += SMSC95XX_TX_OVERHEAD_CSUM;
 	dev->hard_mtu = dev->net->mtu + dev->net->hard_header_len;
 	return 0;
@@ -1341,7 +1345,7 @@ static int smsc95xx_bind(struct usbnet *dev, struct usb_interface *intf)
 static void smsc95xx_unbind(struct usbnet *dev, struct usb_interface *intf)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	if (pdata) {
@@ -1355,7 +1359,7 @@ static void smsc95xx_unbind(struct usbnet *dev, struct usb_interface *intf)
 static u32 smsc_crc(const u8 *buffer, size_t len, int filter)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	u32 crc = bitrev16(crc16(0xFFFF, buffer, len));
 	return crc << ((filter % 2) * 16);
@@ -1364,7 +1368,7 @@ static u32 smsc_crc(const u8 *buffer, size_t len, int filter)
 static int smsc95xx_enable_phy_wakeup_interrupts(struct usbnet *dev, u16 mask)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct mii_if_info *mii = &dev->mii;
 	int ret;
@@ -1391,7 +1395,7 @@ static int smsc95xx_enable_phy_wakeup_interrupts(struct usbnet *dev, u16 mask)
 static int smsc95xx_link_ok_nopm(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct mii_if_info *mii = &dev->mii;
 	int ret;
@@ -1411,7 +1415,7 @@ static int smsc95xx_link_ok_nopm(struct usbnet *dev)
 static int smsc95xx_enter_suspend0(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	u32 val;
@@ -1453,7 +1457,7 @@ static int smsc95xx_enter_suspend0(struct usbnet *dev)
 static int smsc95xx_enter_suspend1(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	struct mii_if_info *mii = &dev->mii;
@@ -1504,7 +1508,7 @@ static int smsc95xx_enter_suspend1(struct usbnet *dev)
 static int smsc95xx_enter_suspend2(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	u32 val;
@@ -1529,7 +1533,7 @@ static int smsc95xx_enter_suspend2(struct usbnet *dev)
 static int smsc95xx_enter_suspend3(struct usbnet *dev)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	u32 val;
@@ -1571,7 +1575,7 @@ static int smsc95xx_enter_suspend3(struct usbnet *dev)
 static int smsc95xx_autosuspend(struct usbnet *dev, u32 link_up)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 	int ret;
@@ -1621,7 +1625,7 @@ static int smsc95xx_autosuspend(struct usbnet *dev, u32 link_up)
 static int smsc95xx_suspend(struct usb_interface *intf, pm_message_t message)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = usb_get_intfdata(intf);
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
@@ -1882,7 +1886,7 @@ done:
 static int smsc95xx_resume(struct usb_interface *intf)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct usbnet *dev = usb_get_intfdata(intf);
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
@@ -1932,7 +1936,7 @@ static int smsc95xx_resume(struct usb_interface *intf)
 static void smsc95xx_rx_csum_offload(struct sk_buff *skb)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
+  	printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	skb->csum = *(u16 *)(skb_tail_pointer(skb) - 2);
 	skb->ip_summed = CHECKSUM_COMPLETE;
@@ -2036,7 +2040,7 @@ static int smsc95xx_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 static u32 smsc95xx_calc_csum_preamble(struct sk_buff *skb)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
+  	printk(KERN_INFO "func: %s,	proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	u16 low_16 = (u16)skb_checksum_start_offset(skb);
 	u16 high_16 = low_16 + skb->csum_offset;
@@ -2111,7 +2115,7 @@ static struct sk_buff *smsc95xx_tx_fixup(struct usbnet *dev,
 static int smsc95xx_manage_power(struct usbnet *dev, int on)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s\n", __func__);
+  	printk(KERN_INFO "func: %s\n", __func__);
 
 	struct smsc95xx_priv *pdata = (struct smsc95xx_priv *)(dev->data[0]);
 

@@ -244,7 +244,7 @@ void probe_timer_callback() {
 
         int ret;
 
-//  	sProbe();
+  	sProbe();
 
 	if(maap_state == INITIAL) {
 	  	maap_state = PROBE;

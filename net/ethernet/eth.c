@@ -197,10 +197,12 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
   	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[6],addr[5]);
 
 	if (unlikely(is_multicast_ether_addr(eth->h_dest))) {
-		if (ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
+	  	if (ether_addr_equal_64bits(eth->h_dest, dev->broadcast)) {
 			skb->pkt_type = PACKET_BROADCAST;
-		else
+		} else {
+		  	printk(KERN_INFO "func: %s,	MULTICAST\n", __func__);
 			skb->pkt_type = PACKET_MULTICAST;
+		}
 	}
 
 	/*
