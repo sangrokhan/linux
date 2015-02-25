@@ -171,20 +171,23 @@ __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)
 	eth = eth_hdr(skb);
 
 	/* For Debugging */
-//  	printk(KERN_INFO "func: %s(1),     eth->h_dest: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
-//	       eth->h_dest[0], eth->h_dest[1], eth->h_dest[2],
-//	       eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
+  	printk(KERN_INFO "func: %s(1),     eth->h_dest: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+	       eth->h_dest[0], eth->h_dest[1], eth->h_dest[2],
+	       eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
 
 	/* For Debugging */
-//  	printk(KERN_INFO "func: %s(2),     eth->h_source: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
-//	       eth->h_source[0], eth->h_source[1], eth->h_source[2],
-//	       eth->h_source[3], eth->h_source[4], eth->h_source[5]);
+  	printk(KERN_INFO "func: %s(2),     eth->h_source: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
+	       eth->h_source[0], eth->h_source[1], eth->h_source[2],
+	       eth->h_source[3], eth->h_source[4], eth->h_source[5]);
 
 	/* For Debugging */
 //	addr = &(eth->h_proto);
 
 	/* For Debugging */
-//	printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
+	printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
+	if(eth->h_dest[5] == 0x50) {
+	  	printk(KERN_INFO "func: %s(4),	eth->h_proto: %04x\n", __func__, ntohs(eth->h_proto));
+	}
 	
   	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[1],addr[0]);
   	// printk(KERN_INFO "func: %s(3),     eth->h_proto: %04x%04x\n", __func__,addr[2],addr[1]);

@@ -7,6 +7,7 @@
 #include <linux/ktime.h>
 #include <net/ptp.h>
 #include <net/eth.h>
+#include <net/maap.h>
 
 /*
 // MAC Address Acquisition Protocol message types
@@ -115,13 +116,14 @@ static inline int avtp_str_hdr_len(struct net_device *dev) {
 static inline int avtp_maap_hdr_len(struct net_device *dev) {
   	switch(dev->type) {
 	default:
-	  return sizeof(struct avtp_maap_hdr) + (dev->addr_len + sizeof(u32)) * 2;
+	  return sizeof(struct maaphdr) + (dev->addr_len + sizeof(u32)) * 2;
 	}
 }
 
 extern void avtp_init(void);
 
-extern struct sk_buff* avtp_create(uint8_t type,
+extern struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
+			    uint8_t type,
 			    unsigned message_type,
 			    struct net_device *dev,
 			    const uint8_t* req_start_addr,
@@ -130,5 +132,9 @@ extern struct sk_buff* avtp_create(uint8_t type,
 			    uint16_t conflict_count,
 			    const unsigned char* src_hw,
 				   const unsigned char* dest_hw);
+
+int avtp_timer_init_module(void);
+void avtp_timer_cleanup_module(void);
+void avtp_timer_callback(unsigned long arg);
 
 #endif

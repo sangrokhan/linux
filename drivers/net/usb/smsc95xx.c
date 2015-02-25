@@ -1942,7 +1942,7 @@ static void smsc95xx_rx_csum_offload(struct sk_buff *skb)
 static int smsc95xx_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 {
   	/* For Debugging */
-//  	printk(KERN_INFO "func: %s(1),	proto: %02x\n", __func__, ntohs(skb->protocol));
+  	printk(KERN_INFO "func: %s(1),	proto: %02x\n", __func__, ntohs(skb->protocol));
 
 	/* This check is no longer done by usbnet */
 	if (skb->len < dev->net->hard_header_len)
@@ -1964,7 +1964,7 @@ static int smsc95xx_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 		align_count = (4 - ((size + NET_IP_ALIGN) % 4)) % 4;
 
 		/* For Debugging */
-//	  	printk(KERN_INFO "func: %s(2),	size: %d(%02x), sizeof(skb->data): %d(%02x)\n", __func__, size, size, sizeof(skb->data), sizeof(skb->data));
+	  	printk(KERN_INFO "func: %s(2),	size: %d(%02x), sizeof(skb->data): %d(%02x)\n", __func__, size, size, sizeof(skb->data), sizeof(skb->data));
 
 		if (unlikely(header & RX_STS_ES_)) {
 			netif_dbg(dev, rx_err, dev->net,

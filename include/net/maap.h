@@ -26,7 +26,7 @@ struct maaphdr {
   	unsigned	message_type		:	4;
   	unsigned	maap_version		:	5;
   	unsigned	maap_data_length	:	11;
-  	uint8_t		stream_id[8];
+  	u64		stream_id;
   	uint8_t		requested_start_address[6];
   	u16		requested_count;
   	uint8_t		conflict_start_address[6];
@@ -47,11 +47,11 @@ void sDefend(struct maaphdr *rcv_maap);
 
 void sAnnounce(void);
 
-static int maap_rcv(struct maaphdr *rcv_maap);
+int maap_rcv(struct maaphdr *rcv_maap);
 
 int maap_init_timer(struct timer_list *timer, void (*function)(void), int second, int millisecond);
 void maap_cleanup_timer(struct timer_list *timer);
 
-void maap_init(struct maaphdr *maap);
+void maap_init(void);
 
 #endif

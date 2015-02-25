@@ -19,8 +19,13 @@
 #include <net/sock.h>
 #include <net/route.h>
 #include <net/avtp.h>
+#include <net/maap.h>
 
-//struct net_device *avtp_dev;
+struct net_device *avtp_dev;
+
+static struct timer_list avtp_timer;
+
+void avtp_timer_callback(unsigned long arg);
 
 void avtp_xmit(struct sk_buff* skb){
 
@@ -31,7 +36,8 @@ void avtp_xmit(struct sk_buff* skb){
   	dev_queue_xmit(skb);
 }
 
-struct sk_buff* avtp_create(uint8_t type,
+struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
+			    uint8_t type,
 			    unsigned message_type,
 			    struct net_device *dev,
 			    const uint8_t* req_start_addr,
@@ -45,11 +51,21 @@ struct sk_buff* avtp_create(uint8_t type,
 	//struct avtp_common_hdr* avtp_common;
 	//struct avtp_ctr_hdr* avtp_ctr;
 	//struct avtp_str_hdr* avtp_str;
-	struct avtp_maap_hdr* avtp_maap;
+	//	struct avtp_maap_hdr* avtp_maap;
 	unsigned char* avtp_ptr;
+
+	/* For Debugging */
+	printk(KERN_INFO "func: %s,	avtp_dev->name: %s\n", __func__, avtp_dev->name);
+
+	if(dev == NULL) {
+	  	dev = avtp_dev;
+	}
 
 	int hlen = LL_RESERVED_SPACE(dev);	// ???????
 	int tlen = dev->needed_tailroom;	// ???????
+
+	/* For Debugging */
+	printk(KERN_INFO "func: %s,	dev->name: %s\n", __func__, dev->name);
 
 	if(type == MAAP){
 
@@ -60,7 +76,7 @@ struct sk_buff* avtp_create(uint8_t type,
   
   		skb_reserve(skb, hlen);
   		skb_reset_network_header(skb);
-  		avtp_maap = (struct avtp_maap_hdr *)skb_put(skb, avtp_maap_hdr_len(dev));
+  		avtp_maap = (struct maaphdr *)skb_put(skb, avtp_maap_hdr_len(dev));
 
 		skb->dev = dev;
 		skb->protocol = htons(ETH_P_AVTP);
@@ -71,14 +87,14 @@ struct sk_buff* avtp_create(uint8_t type,
 		  dest_hw = dev->broadcast;
 
 		// For Debugging sources - send to 28th raspberry pi  (dongwon0)	
-		unsigned char pi28_addr[6];	// raspberry 28's mac addr
-		pi28_addr[0]=0xb8;
-		pi28_addr[1]=0x27;
-		pi28_addr[2]=0xeb;
-		pi28_addr[3]=0x32;
-		pi28_addr[4]=0x44;
-		pi28_addr[5]=0x54;
-		dest_hw = pi28_addr;
+		unsigned char mc_addr[6];	// raspberry 28's mac addr
+		mc_addr[0]=0x91;
+		mc_addr[1]=0xE0;
+		mc_addr[2]=0xF0;
+		mc_addr[3]=0x00;
+		mc_addr[4]=0xFF;
+		mc_addr[5]=0x00;
+		dest_hw = mc_addr;
 
 		avtp_maap->cd = 1;
 		avtp_maap->subtype = 0x7E;
@@ -133,6 +149,7 @@ static int avtp_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev){
   	printk(KERN_INFO "[avtp]avtp_rcv function called\n");
+	printk(KERN_INFO "Receive AVTP!!\n");
 	//	const struct avtp_ctr_hdr* avtp_ctr;
 	//	const struct avtp_str_hdr* avtp_str;
 	const struct avtp_common_hdr* avtp_common;
@@ -186,6 +203,8 @@ static int avtp_rcv(struct sk_buff* skb,
 				avtp_maap->conflict_start_address[4], avtp_maap->conflict_start_address[5]);
 			printk(KERN_INFO "[avtp]13. conflict_count [%lu]\n", avtp_maap->conflict_count);
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
+
+			maap_rcv(avtp_maap);
 		  
 		  break;
 
@@ -268,17 +287,73 @@ static struct packet_type avtp_packet_type __read_mostly = {
   .func = avtp_rcv
 };
 
+void avtp_timer_callback(unsigned long arg) {
+  	int ret;
+	char strEth[5] = "eth0";
+
+	if(avtp_dev == NULL) {
+	  	avtp_dev = first_net_device(&init_net);
+
+	  	while(avtp_dev) {
+	    		if(!strcmp(avtp_dev->name, strEth)) break;
+		        avtp_dev = next_net_device(avtp_dev);
+	  	}
+
+		/* For Debugging */
+		printk(KERN_INFO "func: %s,	avtp_dev->name: %s\n", __func__, avtp_dev->name);
+	}	
+}
+
+int avtp_timer_init_module(void) {
+  	int ret;
+
+	avtp_dev = NULL;
+
+	setup_timer(&avtp_timer, avtp_timer_callback, 0);
+
+	ret = mod_timer(&avtp_timer, jiffies + msecs_to_jiffies(60000));
+
+	if(ret) return 0;
+
+	return 0;
+}
+
+void avtp_timer_cleanup_module(void) {
+  	int ret;
+
+	ret = del_timer(&avtp_timer);
+
+	if(ret) return;
+
+	return;
+}
+
 
 void avtp_init(void){
 	printk(KERN_INFO "======================================\n");
 	printk(KERN_INFO "[avtp]avtp init function called\n");
 	printk(KERN_INFO "======================================\n");
 	struct sk_buff *skb;
+//	char strEth[5] = "eth0";
 
 	//	avtp_sock_check();	// need to check which function necessary or not
 	dev_add_pack(&avtp_packet_type);
        	avtp_proc_init();
 	register_netdevice_notifier(&avtp_netdev_notifier);
+
+	avtp_timer_init_module();
+
+//	if(avtp_dev == NULL) {
+//	  	avtp_dev = first_net_device(&init_net);
+
+//	  	while(avtp_dev) {
+//	    		if(!strcmp(avtp_dev->name, strEth)) break;
+//		        avtp_dev = next_net_device(avtp_dev);
+//	  	}
+
+		/* For Debugging */
+//		printk(KERN_INFO "func: %s, avtp_dev->name: %s\n", __func__, avtp_dev->name);
+//	}
 
 }
 

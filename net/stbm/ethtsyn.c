@@ -20,6 +20,7 @@
 #include <net/sock.h>
 #include <net/route.h>
 #include <net/avtp.h>
+#include <net/maap.h>
 
 
 MODULE_LICENSE("GPL");
@@ -881,7 +882,9 @@ void ethtsyn_timer_callback(unsigned long arg) {
 		}
 	}
 	// For AVTP debug (dongwon0)
-	avtp_create(0x7E, NULL, dev, NULL, NULL, NULL, NULL, NULL, dev->broadcast);
+//	avtp_create(0x7E, NULL, dev, NULL, NULL, NULL, NULL, NULL, dev->broadcast);
+	
+	generate_address(dev->dev_addr);
 
 	switch(state) {
 	case SYN:

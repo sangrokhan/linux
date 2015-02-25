@@ -118,6 +118,7 @@
 
 #include <net/ethtsyn.h>
 #include <net/avtp.h>
+#include <net/maap.h>
 
 #ifdef CONFIG_IP_MROUTE
 #include <linux/mroute.h>
@@ -1747,6 +1748,9 @@ static int __init inet_init(void)
 	
 	avtp_init();
 	printk(KERN_INFO "Avtp init call @ net/ipv4/af_inet.c\n");	
+
+	maap_init();
+	printk(KERN_INFO "MAAP init call @ net/ipv4/af_inet.c\n");
 
 	EthTSyn_Init(&config);
 	printk(KERN_INFO "EthTSyn init call @ net/ipv4/af_inet.c\n");
