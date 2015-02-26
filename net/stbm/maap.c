@@ -295,7 +295,12 @@ void maap_init() {
 
 	if(!tx_maap)  {
 	  	printk(KERN_INFO "[Error] maap_init(): Couldn't initialize.\n");
+		return;
 	}
+
+	tx_maap->cd = 1;
+	tx_maap->subtype = 0x7E;
+  	printk(KERN_INFO "maap_init data cd:[%u]|subtype : [%x]\n", __func__, tx_maap->cd, tx_maap->subtype);
 
   	tx_maap->message_type = 0x00;
   	tx_maap->version = 0x01;

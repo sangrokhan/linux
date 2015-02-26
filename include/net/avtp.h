@@ -30,6 +30,7 @@ struct avtp_common_hdr{
 	unsigned	version		: 	3;
   	unsigned 	type_speci_data	:	20;
 	uint8_t		stream_id[8];
+	unsigned char	*ctr_data_payload;    
 };
 
 struct avtp_ctr_hdr{
@@ -122,7 +123,7 @@ static inline int avtp_maap_hdr_len(struct net_device *dev) {
 
 extern void avtp_init(void);
 
-extern struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
+extern struct sk_buff* avtp_create(struct avtp_common_hdr *avtp_maap,
 			    uint8_t type,
 			    unsigned message_type,
 			    struct net_device *dev,
@@ -136,5 +137,12 @@ extern struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 int avtp_timer_init_module(void);
 void avtp_timer_cleanup_module(void);
 void avtp_timer_callback(unsigned long arg);
+
+static inline bool is_ctr_avtp_packet(const u8* addr){
+  	return 0x80 & addr[0];
+}
+static inline bool is_maap_packet(const u8* addr){
+	return 
+}
 
 #endif
