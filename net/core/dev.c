@@ -3502,17 +3502,17 @@ static int __netif_receive_skb_core(struct sk_buff *skb, bool pfmemalloc)
 	trace_netif_receive_skb(skb);
 
 	/* For Debugging */
-	printk(KERN_INFO "1current packet type %02x\n",ntohs(skb->protocol));
-  	if(skb->protocol == htons(ETH_P_AVTP)) {
-	  	printk(KERN_INFO "I'm here!!! \n");
-	 	printk(KERN_INFO "net/dev.c netif_receive_skb print ETH_P_AVTP recevie\n");
-  	}
+//	printk(KERN_INFO "1current packet type %02x\n",ntohs(skb->protocol));
+//  	if(skb->protocol == htons(ETH_P_AVTP)) {
+//	  	printk(KERN_INFO "I'm here!!! \n");
+//	 	printk(KERN_INFO "net/dev.c netif_receive_skb print ETH_P_AVTP recevie\n");
+// 	}
 
 
-	list_for_each_entry_rcu(ptype,
-			&ptype_base[ETH_P_AVTP & PTYPE_HASH_MASK], list) {
-	  	printk(KERN_INFO "%d ptype type %08X\n", ETH_P_AVTP & PTYPE_HASH_MASK, ptype->type);
-	}
+//	list_for_each_entry_rcu(ptype,
+//			&ptype_base[ETH_P_AVTP & PTYPE_HASH_MASK], list) {
+//	  	printk(KERN_INFO "%d ptype type %08X\n", ETH_P_AVTP & PTYPE_HASH_MASK, ptype->type);
+//	}
 
 	/* if we've gotten here through NAPI, check netpoll */
 	if (netpoll_receive_skb(skb))
@@ -4968,7 +4968,7 @@ EXPORT_SYMBOL(dev_set_allmulti);
 void __dev_set_rx_mode(struct net_device *dev)
 {
   	/* For Debugging */
-  	printk(KERN_INFO "func: %s,	dev->priv_flags: %d\n", __func__, dev->flags);
+//  	printk(KERN_INFO "func: %s,	dev->priv_flags: %d\n", __func__, dev->flags);
 
 	const struct net_device_ops *ops = dev->netdev_ops;
 

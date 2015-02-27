@@ -36,14 +36,14 @@ void avtp_xmit(struct sk_buff* skb){
   	dev_queue_xmit(skb);
 }
 
-struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
+struct sk_buff* avtp_create(struct maaphdr *maap,
 			    uint8_t type,
-			    unsigned message_type,
-			    struct net_device *dev,
-			    const uint8_t* req_start_addr,
-			    uint16_t req_count,
-			    const uint8_t* conflict_start_addr,
-			    uint16_t conflict_count,
+//			    unsigned message_type,
+//			    struct net_device *dev,
+//			    const uint8_t* req_start_addr,
+//			    uint16_t req_count,
+//			    const uint8_t* conflict_start_addr,
+//			    uint16_t conflict_count,
 			    const unsigned char* src_hw,
 			    const unsigned char* dest_hw){
   	printk(KERN_INFO "[avtp]avtp_create function called\n");
@@ -51,8 +51,12 @@ struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 	//struct avtp_common_hdr* avtp_common;
 	//struct avtp_ctr_hdr* avtp_ctr;
 	//struct avtp_str_hdr* avtp_str;
-	//	struct avtp_maap_hdr* avtp_maap;
+	struct maaphdr* avtp_maap = kmalloc(sizeof(struct maaphdr), GFP_KERNEL);
 	unsigned char* avtp_ptr;
+
+	struct net_device *dev = NULL;
+
+	memcpy(avtp_maap, maap, sizeof(struct maaphdr));
 
 	/* For Debugging */
 	printk(KERN_INFO "func: %s,	avtp_dev->name: %s\n", __func__, avtp_dev->name);
@@ -68,7 +72,6 @@ struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 	printk(KERN_INFO "func: %s,	dev->name: %s\n", __func__, dev->name);
 
 	if(type == MAAP){
-
 		skb = alloc_skb(avtp_maap_hdr_len(dev) + hlen + tlen, GFP_ATOMIC);	// what is hlen, tlen, GFP_ATOMIC ???
 
   		if(skb == NULL) 
@@ -77,6 +80,7 @@ struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
   		skb_reserve(skb, hlen);
   		skb_reset_network_header(skb);
   		avtp_maap = (struct maaphdr *)skb_put(skb, avtp_maap_hdr_len(dev));
+		memcpy(avtp_maap, maap, sizeof (struct maaphdr));
 
 		skb->dev = dev;
 		skb->protocol = htons(ETH_P_AVTP);
@@ -86,19 +90,12 @@ struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 		if(dest_hw == NULL)
 		  dest_hw = dev->broadcast;
 
-		// For Debugging sources - send to 28th raspberry pi  (dongwon0)	
-		unsigned char mc_addr[6];	// raspberry 28's mac addr
-		mc_addr[0]=0x91;
-		mc_addr[1]=0xE0;
-		mc_addr[2]=0xF0;
-		mc_addr[3]=0x00;
-		mc_addr[4]=0xFF;
-		mc_addr[5]=0x00;
-		dest_hw = mc_addr;
+		char *frm = (char *)avtp_maap;
+		frm[0] = 1 << 7 | 0x7E;
 
-		avtp_maap->cd = 1;
-		avtp_maap->subtype = 0x7E;
-	     
+//		avtp_maap->cd = 1;
+//		avtp_maap->subtype = 0x7E;
+
 		printk(KERN_INFO "[avtp]func:%s(2), src_hw: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
 		       src_hw[0], src_hw[1], src_hw[2],
 		       src_hw[3], src_hw[4], src_hw[5]);
@@ -106,30 +103,28 @@ struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 		       dest_hw[0], dest_hw[1], dest_hw[2],
 		       dest_hw[3], dest_hw[4], dest_hw[5]);	// For debuging source end!
 
-
-
-		if(dev_hard_header(skb, dev, ETH_P_AVTP, dest_hw, src_hw, skb->len) < 0)
-		  goto out;
-
 		printk(KERN_INFO "=============MAAP heaader==========\n");
 		printk(KERN_INFO "[avtp]1. cd [%u]\n", 		avtp_maap->cd);
-		printk(KERN_INFO "[avtp]2. subtype [%u]\n", 		avtp_maap->subtype);
+		printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
 		printk(KERN_INFO "[avtp]3. sv [%u]\n", 		avtp_maap->sv);
 		printk(KERN_INFO "[avtp]4. version [%u]\n", 		avtp_maap->version);
 		printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
 		printk(KERN_INFO "[avtp]6. maap_version [%u]\n", 	avtp_maap->maap_version);
-		printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",avtp_maap->maap_data_length);
+		printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",avtp_maap->maap_data_length);
 		printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
 			avtp_maap->requested_start_address[0], avtp_maap->requested_start_address[1], 
 			avtp_maap->requested_start_address[2], avtp_maap->requested_start_address[3],
 			avtp_maap->requested_start_address[4], avtp_maap->requested_start_address[5]);
-		printk(KERN_INFO "[avtp]10. requested_count [%lu]\n", avtp_maap->requested_count);
+		printk(KERN_INFO "[avtp]10. requested_count [%u]\n", avtp_maap->requested_count);
 		printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
 			avtp_maap->conflict_start_address[0], avtp_maap->conflict_start_address[1], 
 			avtp_maap->conflict_start_address[2], avtp_maap->conflict_start_address[3],
 			avtp_maap->conflict_start_address[4], avtp_maap->conflict_start_address[5]);
-		printk(KERN_INFO "[avtp]13. conflict_count [%lu]\n", avtp_maap->conflict_count);
+		printk(KERN_INFO "[avtp]13. conflict_count [%u]\n", avtp_maap->conflict_count);
 		printk(KERN_INFO "=============MAAP heaader==========\n");
+
+		if(dev_hard_header(skb, dev, ETH_P_AVTP, dest_hw, src_hw, skb->len) < 0)
+		  goto out;
 	}
 
 	avtp_xmit(skb);
@@ -153,7 +148,7 @@ static int avtp_rcv(struct sk_buff* skb,
 	//	const struct avtp_ctr_hdr* avtp_ctr;
 	//	const struct avtp_str_hdr* avtp_str;
 	const struct avtp_common_hdr* avtp_common;
-	const struct avtp_maap_hdr* avtp_maap;
+	const struct maaphdr* avtp_maap;
 
 	avtp_common = avtp_common_hdr(skb);
 
@@ -186,22 +181,22 @@ static int avtp_rcv(struct sk_buff* skb,
 
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
 			printk(KERN_INFO "[avtp]1. cd [%u]\n", 		avtp_maap->cd);
-			printk(KERN_INFO "[avtp]2. subtype [%u]\n", 		avtp_maap->subtype);
+			printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
 			printk(KERN_INFO "[avtp]3. sv [%u]\n", 		avtp_maap->sv);
 			printk(KERN_INFO "[avtp]4. version [%u]\n", 		avtp_maap->version);
 			printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
 			printk(KERN_INFO "[avtp]6. maap_version [%u]\n", 	avtp_maap->maap_version);
-			printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",avtp_maap->maap_data_length);
+			printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",avtp_maap->maap_data_length);
 			printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
 				avtp_maap->requested_start_address[0], avtp_maap->requested_start_address[1], 
 				avtp_maap->requested_start_address[2], avtp_maap->requested_start_address[3],
 				avtp_maap->requested_start_address[4], avtp_maap->requested_start_address[5]);
-			printk(KERN_INFO "[avtp]10. requested_count [%lu]\n", avtp_maap->requested_count);
+			printk(KERN_INFO "[avtp]10. requested_count [%u]\n", avtp_maap->requested_count);
 			printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n", 
 				avtp_maap->conflict_start_address[0], avtp_maap->conflict_start_address[1], 
 				avtp_maap->conflict_start_address[2], avtp_maap->conflict_start_address[3],
 				avtp_maap->conflict_start_address[4], avtp_maap->conflict_start_address[5]);
-			printk(KERN_INFO "[avtp]13. conflict_count [%lu]\n", avtp_maap->conflict_count);
+			printk(KERN_INFO "[avtp]13. conflict_count [%u]\n", avtp_maap->conflict_count);
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
 
 			maap_rcv(avtp_maap);

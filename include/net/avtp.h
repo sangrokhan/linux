@@ -124,14 +124,14 @@ extern void avtp_init(void);
 
 extern struct sk_buff* avtp_create(struct maaphdr *avtp_maap,
 			    uint8_t type,
-			    unsigned message_type,
-			    struct net_device *dev,
-			    const uint8_t* req_start_addr,
-			    uint16_t req_count,
-			    const uint8_t* conflict_start_addr,
-			    uint16_t conflict_count,
+//			    unsigned message_type,
+//			    struct net_device *dev,
+//			    const uint8_t* req_start_addr,
+//			    uint16_t req_count,
+//			    const uint8_t* conflict_start_addr,
+//			    uint16_t conflict_count,
 			    const unsigned char* src_hw,
-				   const unsigned char* dest_hw);
+				const unsigned char* dest_hw);
 
 int avtp_timer_init_module(void);
 void avtp_timer_cleanup_module(void);
