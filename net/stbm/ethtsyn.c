@@ -25,7 +25,7 @@
 
 // MODULE_LICENSE("GPL");
 
-#define CONFIG_STBM_MASTER
+// #define CONFIG_STBM_MASTER
 
 bool EthTSynHardwareTimestampSupport;
 

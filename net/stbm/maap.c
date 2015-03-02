@@ -105,6 +105,8 @@ int compare_MAC(unsigned char* current_mac_address, unsigned char* received_mac_
 	result = memcmp(current_mac_address, received_mac_address, strlen(current_mac_address));
 
 	if(result == 0) {
+	  	/* For Debugging */
+	  	printk(KERN_INFO "func: %s,	Same Address!!\n", __func__);
 	  	return 1;
 	}
 
