@@ -23,9 +23,9 @@
 #include <net/maap.h>
 
 
-MODULE_LICENSE("GPL");
+// MODULE_LICENSE("GPL");
 
-// #define CONFIG_STBM_MASTER
+#define CONFIG_STBM_MASTER
 
 bool EthTSynHardwareTimestampSupport;
 
@@ -69,6 +69,8 @@ struct net_device *dev;
 
 int state;
 unsigned char dest_addr[6];
+unsigned char ptp_mc_addr[6];
+unsigned char ptp_mc_addr_p[6];
 
 void ethtsyn_timer_callback(unsigned long arg);
 
@@ -260,9 +262,11 @@ do_confirm:
  */
 void ethtsyn_xmit(struct sk_buff *skb)
 {
-  /* Send it off, maybe filter it using firewalling first.  */
-  //  NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
-//  printk(KERN_INFO "ethtsyn_xmit finish\n");
+	/* Send it off, maybe filter it using firewalling first.  */
+	NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+
+	/* For Debugging */
+//  	printk(KERN_INFO "ethtsyn_xmit finish\n");
 }
 EXPORT_SYMBOL(ethtsyn_xmit);
 
@@ -303,28 +307,6 @@ struct sk_buff* ethtsyn_create(int type,
 	skb_reserve(skb, hlen);
 	skb_reset_network_header(skb);
 	ptp = (struct ptphdr *)skb_put(skb, ptp_hdr_len(dev));
-
-//	unsigned char dest_addr[6];
-
-//#ifdef CONFIG_STBM_MASTER
-		/* This address is address of raspberry pi(36) */
-//		dest_addr[0] = 0xb8;
-//		dest_addr[1] = 0x27;
-//		dest_addr[2] = 0xeb;
-//		dest_addr[3] = 0x38;
-//		dest_addr[4] = 0x9c;
-//		dest_addr[5] = 0x50;
-//#else
-		/* This address is address of raspberry pi(37) */
-//		dest_addr[0] = 0xb8;
-//		dest_addr[1] = 0x27;
-//		dest_addr[2] = 0xeb;
-//		dest_addr[3] = 0x38;
-//		dest_addr[4] = 0x1f;
-//		dest_addr[5] = 0x3f;
-//#endif
-
-//	dest_hw = dest_addr;
 
 	/* For Debugging */
 // 	printk(KERN_INFO "func: %s(1),     ptp_hdr_len(dev): %d\n", __func__, ptp_hdr_len(dev));
@@ -399,42 +381,29 @@ struct sk_buff* ethtsyn_create(int type,
 	switch(type) {
 	  
 	case SYN :
-//	  	printk(KERN_INFO "This is type of Syn.\n");
-		// uint8_t currentLogSyncInterval;
-		
 		ptp->control = 0;
 		//ptp->logMessageInterval = currentLogSyncInterval;    // currentLogSyncInterval specifies the current value of the sync interval, and is a per-port attributea
 
-		// Need to set multicast
 		// Need to set sequenceId
 		// Need to set logMessageInterval
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(tx: SYN)\n", __func__);
 
 		break;
 	  
 	case PDELAY_REQ :
- //		printk(KERN_INFO "This is type of Pdelay_Req.\n");
-	  
-		// EthTSynT1 = ktime_get_real();	// dongwon0	// PDELAY_REQ's time is TxTimeT1. might be modi (dong's opinion)
-		// nsec = ktime_to_ns(EthTSynT1);	// dongwon0
-		
 		*pCorrectionField = (uint8_t)(nsec * 65536);   // is it corrected?? need to check
 		
 		// Need to set sequenceId
 		// Need to set logMessageInterval
-		
+
+		/* For Debugging */		
 //		printk(KERN_INFO "func: %s(tx: PDELAY_REQ)\n", __func__);
 
 		break;
 	  
 	case PDELAY_RESP :
-//	  	printk(KERN_INFO "This is type of Pdelay_Resp.\n");
-		
-		// EthTSynT2 = skb_get_ktime(skb);	// dongwon0	//EthTSynT2 is ClockSlave's receive time.might be delete (dong's opinion)
-		// EthTSynT3 = ktime_get_real();	// dongwon0
-		// nsec = ktime_to_ns(EthTSynT2);	// dongwon0
-		
 		*pCorrectionField = (uint8_t)(nsec * 65536);
 		
 		tmp = ktime_to_timespec(EthTSynT2_p);
@@ -444,12 +413,12 @@ struct sk_buff* ethtsyn_create(int type,
 		ktime_tmp = timespec_to_ktime(tmp);
 
 		delta = ktime_to_ns(ktime_tmp);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(tx: RDELAY_RESP), time: %lld ns\n", __func__, (long long)delta);
 
 		break;
 	case FOLLOW_UP :
-//	  	printk(KERN_INFO "This is type of Follow_Up.\n");
-		
 		EthTSynT1_s = ethTSynTxTimestamp;
 	        tmp = ktime_to_timespec(EthTSynT1_s);
 		ptp->timestamp.seconds = tmp.tv_sec;
@@ -458,6 +427,8 @@ struct sk_buff* ethtsyn_create(int type,
 		ktime_tmp = timespec_to_ktime(tmp);
 
 		delta = ktime_to_ns(ktime_tmp);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(tx: FOLLOW_UP), time: %lld ns\n", __func__, (long long)delta);
 	
 		// Need to set logMessageInterval
@@ -465,10 +436,6 @@ struct sk_buff* ethtsyn_create(int type,
 		break;
 		
 	case PDELAY_RESP_FOLLOW_UP :
-//	  	printk(KERN_INFO "This is type of Pdelay_Resp_Follow_Up.\n");
-		
-		// nsec = ktime_to_ns(EthTSynT3);		// dongwon0
-		
 		ptp->control = 2;
 		*pCorrectionField = (uint8_t)(nsec * 65536);
 		
@@ -480,6 +447,8 @@ struct sk_buff* ethtsyn_create(int type,
 		ktime_tmp = timespec_to_ktime(tmp);
 
 		delta = ktime_to_ns(ktime_tmp);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(tx: PDELAY_RESP_FOLLOW_UP), time: %lld ns\n", __func__, (long long)delta); 
 		
 		break;
@@ -493,28 +462,6 @@ out :
 	return NULL;
 } 
 EXPORT_SYMBOL(ethtsyn_create);
-
-/*
- * skb might have a dst pointer attached, refcounted or not.
- * _skb_refdst low order bit is set if refcount was _not_ taken
- */
-/*
-#define SKB_DST_NOREF   1UL
-#define SKB_DST_PTRMASK ~(SKB_DST_NOREF)
-void set_device_test(struct sk_buff *skb) {
-   struct sock *sk = skb->sk;
-   struct rtable *rt;
-   struct net_device *dev;
-   rt = (struct rtable *) (skb->_skb_refdst & SKB_DST_PTRMASK);
-   rt = (struct rtable *) __sk_dst_get(sk);
-   dev = &rt->dst.dev;
-   if(!dev) {
-      printk(KERN_INFO "dev is null\n");
-   } else {
-      printk(KERN_INFO "dev is set\n");
-   }
-}
-*/
 
 static int ethtsyn_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
@@ -601,7 +548,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		       struct packet_type* pt, 
 		       struct net_device* orig_dev) {
 
-//   	printk(KERN_INFO "Receive Packet!!\n");
+  	/* For Debugging */
+//   	printk(KERN_INFO "func: %s,	Receive Packet!!\n, __func__");
 
 	const struct ptphdr *ptp;
 
@@ -623,13 +571,13 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  goto out_of_mem;
 	
 	int m_type = ptp->messageType;
+
+	/* For Debugging */
 	// printk(KERN_INFO "mtype: %d \n", m_type);
 
 	switch(m_type){
 	  
 	case SYN:
-//        	printk(KERN_INFO "Syn Received.\n");
-	  
 	  	EthTSynT2_s = skb_get_ktime(skb);	//save Syn Arrive Time, wait Follow_Up
 
 		delta2 = ktime_to_ns(EthTSynT2_s);
@@ -637,6 +585,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		if(delta2 < 0 || delta2 == 0)
 		  	goto freeskb;
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: SYN),	time: %lld ms\n", __func__, (long long)delta2);
 
   	  	break;
@@ -645,18 +594,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		if(state == PDELAY_REQ || state == PDELAY_RESP)
 		  	goto freeskb;
 
-//	  	printk(KERN_INFO "Pdelay_Req Received.\n");
-	  
-	  	// RxTimeT2 = skb_get_ktime(skb);	// dongwon0
-
-	  	/*
-	    	ethtsyn_create(PDELAY_RESP, null, null, dev, null, dev->dev_addr, null, null);
-	    	// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT2
-	    
-	    	ethtsyn_create(PDELAY_RESP_FOLLOW_UP, null, null, dev, null, dev->dev_addr, null, null);
-	    	// make at case:PDelayResp in ethtsyn_create ???
-	    	// originally, Pdelay_Resp_Follow_Up which might be contained RxTimeT3
-	    	*/
 		state = PDELAY_REQ;
 
 		dest_addr[0] = ptp->sourcePortIdentity.clockIdentity.B0;
@@ -669,6 +606,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		EthTSynT2_p = skb_get_ktime(skb);
 		delta2 = ktime_to_ns(EthTSynT2_p);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_REQ), time: %lld ns\n", __func__, (long long)delta2);
 
 		/* Send Pdelay_resp message to Master */
@@ -685,10 +623,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	  	break;
 #endif	  
 	case PDELAY_RESP:
-//	  	printk(KERN_INFO "Pdelay_Resp Received.\n");
-	  
-	  	// TxTimeT4 = skb_get_ktime(skb);	// dongwon0
-
 		/* For Debugging */
 		//		EthTSynT4_p = ktime_get_real();
 		//		delta4 = ktime_to_ns(EthTSynT4_p);
@@ -703,11 +637,13 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		EthTSynT1_p = ethTSynTxTimestamp;		// There is the reason why this code is here.
 		delta = ktime_to_ns(EthTSynT1_p);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP), t4(2): %lld ns\n", __func__, (long long)delta4);
 
 		temp_diff = ktime_sub(EthTSynT4_p, EthTSynT1_p);
        		delta_diff = ktime_to_ns(temp_diff);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP), t1: %lld ns\n", __func__, (long long)delta);
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP), t4(3): %lld ns\n", __func__, (long long)delta4);
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP), diff_t1_t4: %lld ns\n", __func__, (long long)delta_diff);
@@ -717,6 +653,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		EthTSynT2_p = timespec_to_ktime(tsEthTSynT2);
 
 		delta2 = ktime_to_ns(EthTSynT2_p);
+
+	        /* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP)\n", __func__);
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP), t2: %lld ns\n", __func__, (long long)delta2);
 
@@ -728,15 +666,17 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
 #else
 		if(delta_result == 0) {
-			ethtsyn_create(PDELAY_REQ, NULL, dev, ETH_P_1588, NULL, NULL, NULL, NULL, NULL);
+			ptp_mc_addr_p[0] = 0x01;
+	  		ptp_mc_addr_p[1] = 0x80;
+	  		ptp_mc_addr_p[2] = 0xC2;
+	  		ptp_mc_addr_p[3] = 0x00;
+	  		ptp_mc_addr_p[4] = 0x00;
+	  		ptp_mc_addr_p[5] = 0x0E;
+
+			ethtsyn_create(PDELAY_REQ, NULL, dev, ETH_P_1588, NULL, NULL, ptp_mc_addr_p, NULL, NULL);
 		  	goto out_of_mem;
 		}
 #endif
-
-//	  	printk(KERN_INFO "Follow_Up Received.\n");
-	  
-	  	// originally, might get SynTimeT1 in packet and save it
-	  	// ethtsyn_get_clockslaveoffset(EthTSynT1, EthTSynT2, ts_LinkDelay);	// dongwon0	// correct error
 
 		delta2 = ktime_to_ns(EthTSynT2_s);
 		
@@ -748,6 +688,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		temp_diff = ktime_sub(EthTSynT1_s, EthTSynT2_s);
        		delta_diff = ktime_to_ns(temp_diff);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), time1: %lld ns\n", __func__, (long long)delta);
 //		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), time2: %lld ns\n", __func__, (long long)delta2);
 		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), diff: %lld ns\n", __func__, (long long)delta_diff);
@@ -760,6 +701,8 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
 		ktime_t kt_now = ktime_get_real();
 		s64 delta_now = ktime_to_ns(kt_now);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), before_offset: %lld ns\n", __func__, (long long)delta_now);
 		
 		struct timespec ts = ktime_to_timespec(temp_offset);
@@ -767,25 +710,24 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 
 		kt_now = ktime_get_real();
 		delta_now = ktime_to_ns(kt_now);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), after_offset: %lld ns\n", __func__, (long long)delta_now);
 //		printk(KERN_INFO "func: %s(rx: FOLLOW_UP), delta_result: %lld ns\n", __func__, (long long)delta_result);
 	  
 	  	break;
 	  
 	case PDELAY_RESP_FOLLOW_UP:
-//	  	printk(KERN_INFO "Pdelay_Resp_Follow_Up Received.\n");
-
 		if(delta < 0 || delta4 == 0)
 		  	goto freeskb;
 	  
-	  	// originally, might get RxTimeT2, RxTimeT3 in packet and save it	  
-	  	// ts_LinkDelay = ethtsyn_get_linkdelay(TxTimeT1, RxTimeT2, RxTimeT3, TxTimeT4);	// dongwon0	// error
-
 		tsEthTSynT3.tv_sec = ptp->timestamp.seconds;
 		tsEthTSynT3.tv_nsec = ptp->timestamp.nanoseconds;
 		EthTSynT3_p = timespec_to_ktime(tsEthTSynT3);
 
 		delta3 = ktime_to_ns(EthTSynT3_p);
+
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP_FOLLOW_UP), t3: %lld ns\n", __func__, (long long)delta3);
 
 
@@ -793,6 +735,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		temp_diff_t1_t4 = ktime_sub(EthTSynT4_p, EthTSynT1_p);
        		delta_diff_t1_t4 = ktime_to_ns(temp_diff_t1_t4);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP_FOLLOW_UP), diff_t1_t4: %lld ns\n", __func__, (long long)delta_diff_t1_t4);
 
 
@@ -800,6 +743,7 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 		temp_diff_t2_t3 = ktime_sub(EthTSynT3_p, EthTSynT2_p);
        		delta_diff_t2_t3 = ktime_to_ns(temp_diff_t2_t3);
 
+		/* For Debugging */
 //		printk(KERN_INFO "func: %s(rx: PDELAY_RESP_FOLLOW_UP), diff_t2_t3: %lld ns\n", __func__, (long long)delta_diff_t2_t3);
 
 
@@ -821,29 +765,6 @@ static int ethtsyn_rcv(struct sk_buff* skb,
 	return 0;
 }
 
- //type parameter need to add
-void ethtsyn_send(const char* addr, uint32_t addr_len) {
-  	struct sockaddr_storage address;
-	struct msghdr msg;
-	struct iovec iov;//why?
-	struct sk_buff *skb;
-	
-	ethtsyn_ip_to_sockaddr_storage(addr, &address);
-	
-	msg.msg_name = (struct sockaddr *) &address;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = NULL;
-	msg.msg_controllen = 0;
-	msg.msg_namelen = addr_len;
-	
-//	skb = ethtsyn_route_check(msg, thissock);	// error
-	//skb = ethtsyn_create(sk);
-	if(skb == NULL)
-		return;
-	ethtsyn_xmit(skb);
-}
-
 /* Start of Timer */
 void ethtsyn_timer_callback(unsigned long arg) {
   	struct sk_buff *skb;
@@ -852,13 +773,12 @@ void ethtsyn_timer_callback(unsigned long arg) {
 	int ret;
 	char strEth[5] = "eth0";
 
-//	printk(KERN_INFO "Hello world, this is ethtsyn_timer_callback()\n");
-	
 	if(dev == NULL) {
 		dev = first_net_device(&init_net);
 
 		while(dev) {
 		  	if(!strcmp(dev->name, strEth)) {
+			  	/* For Debugging */
 	    			/* Print Device Information */
 //			  	printk(KERN_INFO "1. dev->name [%s]\n", dev->name);
 //				printk(KERN_INFO "2. dev->base_addr [%lu]\n", dev->base_addr);
@@ -886,7 +806,7 @@ void ethtsyn_timer_callback(unsigned long arg) {
 
 	switch(state) {
 	case SYN:
-	 	skb = ethtsyn_create(FOLLOW_UP, NULL, dev, ETH_P_1588, NULL, NULL, dev->broadcast, NULL, NULL);
+	 	skb = ethtsyn_create(FOLLOW_UP, NULL, dev, ETH_P_1588, NULL, NULL, ptp_mc_addr, NULL, NULL);
 
 		state = FOLLOW_UP;
 
@@ -912,7 +832,15 @@ void ethtsyn_timer_callback(unsigned long arg) {
  
 		break;
 	case FOLLOW_UP:
-		skb = ethtsyn_create(SYN, NULL, dev, ETH_P_1588, NULL, NULL, dev->broadcast, NULL, NULL);
+	  	ptp_mc_addr[0] = 0x01;
+	  	ptp_mc_addr[1] = 0x1B;
+	  	ptp_mc_addr[2] = 0x19;
+	  	ptp_mc_addr[3] = 0x00;
+	  	ptp_mc_addr[4] = 0x00;
+	  	ptp_mc_addr[5] = 0x00;
+
+	 	skb = ethtsyn_create(SYN, NULL, dev, ETH_P_1588, NULL, NULL, ptp_mc_addr, NULL, NULL);
+
 
 		state = SYN;
 
