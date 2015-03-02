@@ -140,7 +140,7 @@ void sProbe() {
 	printk(KERN_INFO "[avtp]12. conflict_count [%u]\n", tx_maap->conflict_count);
 	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
 	
-	avtp_create(tx_maap, dev, NULL, multicast_address);
+	avtp_create(tx_maap, NULL, NULL, multicast_address);
 }
 
 /* Send a MAAP_DEFEND PDU */
@@ -176,7 +176,7 @@ void sDefend(struct maaphdr *rx_maap) {
 	printk(KERN_INFO "[avtp]12. conflict_count [%u]\n", tx_maap->conflict_count);
 	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
 
-	avtp_create(tx_maap, dev, NULL, multicast_address);	
+	avtp_create(tx_maap, NULL, NULL, multicast_address);	
 }
 
 /* Send a MAAP_ANNOUNCE PDU */
@@ -217,7 +217,7 @@ void sAnnounce() {
 	printk(KERN_INFO "[avtp]12. conflict_count [%u]\n", tx_maap->conflict_count);
 	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
 
-	avtp_create(tx_maap, dev, NULL, multicast_address);
+	avtp_create(tx_maap, NULL, NULL, multicast_address);
 }
 
 int maap_rcv(struct maaphdr *rx_maap) {

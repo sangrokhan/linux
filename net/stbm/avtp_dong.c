@@ -67,7 +67,7 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 	if(is_ctr_avtp_packet(temp_hdr)){	//contol data
 
 
-  		switch(avtp_common->subtype){
+  		switch(temp_hdr->subtype){
 
 		case IIDC_66883_SUBTYPE :
 
@@ -248,6 +248,7 @@ static int avtp_rcv(struct sk_buff* skb,
 		case MMA_SUBTYPE :
 
 		  break;
+		}
 
 	}
 
@@ -255,7 +256,6 @@ static int avtp_rcv(struct sk_buff* skb,
 		kfree_skb(skb);
  	out_of_mem:
 		return 0;
-
 }
 
 static int avtp_netdev_event(struct notifier_block* this, 
@@ -370,26 +370,15 @@ void avtp_init(void){
 	printk(KERN_INFO "[avtp]avtp init function called\n");
 	printk(KERN_INFO "======================================\n");
 	struct sk_buff *skb;
-//	char strEth[5] = "eth0";
+	
+	//	char strEth[5] = "eth0";
 
 	//	avtp_sock_check();	// need to check which function necessary or not
+	
 	dev_add_pack(&avtp_packet_type);
        	avtp_proc_init();
 	register_netdevice_notifier(&avtp_netdev_notifier);
 
 	avtp_timer_init_module();
-
-//	if(avtp_dev == NULL) {
-//	  	avtp_dev = first_net_device(&init_net);
-
-//	  	while(avtp_dev) {
-//	    		if(!strcmp(avtp_dev->name, strEth)) break;
-//		        avtp_dev = next_net_device(avtp_dev);
-//	  	}
-
-		/* For Debugging */
-//		printk(KERN_INFO "func: %s, avtp_dev->name: %s\n", __func__, avtp_dev->name);
-//	}
-
 }
 
