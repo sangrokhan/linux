@@ -9,13 +9,6 @@
 #include <net/eth.h>
 #include <net/maap.h>
 
-/*
-// MAC Address Acquisition Protocol message types
-#define MAAP_PROBE 1	// probe MAC address PDU
-#define MAAP_DEFEND 2	// defend address response PDU
-#define MAAP_ANNOUNCE 3	// announce MAC address acquired PDU
-*/
-
 
 // AVTP subtype values
 #define IIDC_66883_SUBTYPE	0x00
@@ -29,7 +22,7 @@ struct avtp_common_hdr{
   	unsigned	sv		: 	1;
 	unsigned	version		: 	3;
   	unsigned 	type_speci_data	:	20;
-	uint8_t		stream_id[8];
+	u64		stream_id;
 	unsigned char	*ctr_data_payload;    
 };
 
@@ -41,8 +34,23 @@ struct avtp_ctr_hdr{
 	unsigned	ctr_data	: 	4;
 	unsigned	status		: 	5;
 	unsigned	ctr_data_len	: 	11;
-	uint8_t		stream_id[8];
+	u64		stream_id;
 	unsigned char	*ctr_data_payload;       
+};
+
+struct avtp_maap_hdr{
+	unsigned	cd		:	1;
+	unsigned 	subtype		:	7;
+	unsigned	sv		:	1;
+	unsigned	version		:	3;
+	unsigned	message_type	:	4;
+	unsigned	maap_version	:	5;
+	unsigned	maap_data_length:	11;
+  	u64		stream_id;
+	uint8_t		requested_start_address[6];
+  	uint16_t	requested_count;
+  	uint8_t		conflict_start_address[6];
+  	uint16_t	conflict_count;
 };
 
 struct avtp_str_hdr{
@@ -57,7 +65,7 @@ struct avtp_str_hdr{
   	uint8_t		sequence_num;
   	unsigned	reserved	:	7;
   	unsigned	tu		:	1;
-	uint8_t		stream_id[8];
+	u64		stream_id;
   	uint32_t	avtp_timestamp;
   	uint32_t	gateway_info;
   	uint16_t	stream_data_length;
@@ -65,20 +73,120 @@ struct avtp_str_hdr{
 	unsigned char	*stream_data_payload;
 };
 
-struct avtp_maap_hdr{
+struct avtp_mma_hdr{
 	unsigned	cd		:	1;
-	unsigned 	subtype		:	7;
-	unsigned	sv		:	1;
-	unsigned	version		:	3;
-	unsigned	message_type	:	4;
-	unsigned	maap_version	:	5;
-	unsigned	maap_data_length:	11;
-  	uint8_t		stream_id[8];
-	uint8_t		requested_start_address[6];
-  	uint16_t	requested_count;
-  	uint8_t		conflict_start_address[6];
-  	uint16_t	conflict_count;
+  	unsigned	subtype		: 	7;
+  	unsigned	sv		: 	1;
+	unsigned	version		: 	3;
+	unsigned	mr		:	1;
+	unsigned	r		:	1;
+  	unsigned	gv		:	1;
+  	unsigned	tv		:	1;
+  	uint8_t		sequence_num;
+  	unsigned	reserved	:	7;
+  	unsigned	tu		:	1;
+	u64		stream_id;
+  	uint32_t	avtp_timestamp;
+  	uint32_t	gateway_info;
+  	uint16_t	packet_data_length;
+  	uint16_t	mma_payload_form_version;
+	unsigned char	*mma_data_payload;
 };
+
+struct avtp_iidc_str_hdr{
+	unsigned	cd		:	1;
+  	unsigned	subtype		: 	7;
+  	unsigned	sv		: 	1;
+	unsigned	version		: 	3;
+	unsigned	mr		:	1;
+	unsigned	r		:	1;
+  	unsigned	gv		:	1;
+  	unsigned	tv		:	1;
+  	uint8_t		sequence_num;
+  	unsigned	reserved	:	7;
+  	unsigned	tu		:	1;
+	u64		stream_id;
+  	uint32_t	avtp_timestamp;
+  	uint32_t	gateway_info;
+  	uint16_t	stream_data_length;
+  	unsigned	tag		:	2;
+  	unsigned	channel		:	6;
+  	unsigned	tcode		:	4;
+  	unsigned	sy		:	4;
+	unsigned char	*video_data_payload;
+};
+
+struct avtp_iec_str_hdr{
+	unsigned	cd		:	1;
+  	unsigned	subtype		: 	7;
+  	unsigned	sv		: 	1;
+	unsigned	version		: 	3;
+	unsigned	mr		:	1;
+	unsigned	r		:	1;
+  	unsigned	gv		:	1;
+  	unsigned	tv		:	1;
+  	uint8_t		sequence_num;
+  	unsigned	reserved	:	7;
+  	unsigned	tu		:	1;
+	u64		stream_id;
+  	uint32_t	avtp_timestamp;
+  	uint32_t	gateway_info;
+  	uint16_t	stream_data_length;
+  	unsigned	tag		:	2;
+  	unsigned	channel		:	6;
+  	unsigned	tcode		:	4;
+  	unsigned	sy		:	4;
+  	unsigned	first_qi	:	2;
+  	unsigned	sid		:	6;
+  	uint8_t		dbs;
+  	unsigned	fn		:	2;
+  	unsigned	qpc		:	3;
+  	unsigned 	sph		:	1;
+  	unsigned 	rsv		:	2;
+  	uint8_t 	dbc;
+  	unsigned 	second_qi	:	2;
+  	unsigned 	fmt		:	6;
+  	unsigned 	fdf		:	8;
+  	uint16_t 	syt;
+	unsigned char	*cip_packet_data;
+};
+
+struct avtp_iec_str_hdr_sph{
+	unsigned	cd		:	1;
+  	unsigned	subtype		: 	7;
+  	unsigned	sv		: 	1;
+	unsigned	version		: 	3;
+	unsigned	mr		:	1;
+	unsigned	r		:	1;
+  	unsigned	gv		:	1;
+  	unsigned	tv		:	1;
+  	uint8_t		sequence_num;
+  	unsigned	reserved	:	7;
+  	unsigned	tu		:	1;
+	u64		stream_id;
+  	uint32_t	avtp_timestamp;
+  	uint32_t	gateway_info;
+  	uint16_t	stream_data_length;
+  	unsigned	tag		:	2;
+  	unsigned	channel		:	6;
+  	unsigned	tcode		:	4;
+  	unsigned	sy		:	4;
+  	unsigned	first_qi	:	2;
+  	unsigned	sid		:	6;
+  	uint8_t		dbs;
+  	unsigned	fn		:	2;
+  	unsigned	qpc		:	3;
+  	unsigned 	sph		:	1;
+  	unsigned 	rsv		:	2;
+  	uint8_t 	dbc;
+  	unsigned 	second_qi	:	2;
+  	unsigned 	fmt		:	6;
+  	unsigned 	fdf		:	24;
+  	uint32_t	avbtp_src_packet_hdr_tstamp;
+	unsigned char	*source_packet_data_tstamps;
+};
+
+
 
 // need to check if this is used or not
 // later, these may be united
@@ -117,7 +225,7 @@ static inline int avtp_str_hdr_len(struct net_device *dev) {
 static inline int avtp_maap_hdr_len(struct net_device *dev) {
   	switch(dev->type) {
 	default:
-	  return sizeof(struct maaphdr) + (dev->addr_len + sizeof(u32)) * 2;
+	  return sizeof(struct avtp_maap_hdr) + (dev->addr_len + sizeof(u32)) * 2;
 	}
 }
 
@@ -141,8 +249,6 @@ void avtp_timer_callback(unsigned long arg);
 static inline bool is_ctr_avtp_packet(const u8* addr){
   	return 0x80 & addr[0];
 }
-static inline bool is_maap_packet(const u8* addr){
-	return 
-}
+
 
 #endif

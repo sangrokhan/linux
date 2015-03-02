@@ -117,6 +117,27 @@ void sProbe() {
 //	maap->conflict_start_address[4] = 0x00;
 //	maap->conflict_start_address[5] = 0x00;
 //	maap->conflict_count = 0;
+
+	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
+	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	printk(KERN_INFO "[avtp]2. subtype [%x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",tx_maap->maap_data_length);
+	printk(KERN_INFO "[avtp]8. stream_id [%lu]\n",tx_maap->stream_id);
+	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
+	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
+	       tx_maap->requested_start_address[4], tx_maap->requested_start_address[5]);
+	printk(KERN_INFO "[avtp]10. req count [%lu]\n",tx_maap->requested_count);
+	printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->conflict_start_address[0], tx_maap->conflict_start_address[1],
+	       tx_maap->conflict_start_address[2], tx_maap->conflict_start_address[3],
+	       tx_maap->conflict_start_address[4], tx_maap->conflict_start_address[5]);
+	printk(KERN_INFO "[avtp]12. conflict_count [%lu]\n", tx_maap->conflict_count);
+	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
 	
 	avtp_create(tx_maap, 0x7E, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -134,6 +155,27 @@ void sDefend(struct maaphdr *rx_maap) {
 	memcpy(tx_maap->conflict_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
 	tx_maap->conflict_count = rx_maap->requested_count;
 
+	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
+	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	printk(KERN_INFO "[avtp]2. subtype [%x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",tx_maap->maap_data_length);
+	printk(KERN_INFO "[avtp]8. stream_id [%lu]\n",tx_maap->stream_id);
+	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
+	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
+	       tx_maap->requested_start_address[4], tx_maap->requested_start_address[5]);
+	printk(KERN_INFO "[avtp]10. req count [%lu]\n",tx_maap->requested_count);
+	printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->conflict_start_address[0], tx_maap->conflict_start_address[1],
+	       tx_maap->conflict_start_address[2], tx_maap->conflict_start_address[3],
+	       tx_maap->conflict_start_address[4], tx_maap->conflict_start_address[5]);
+	printk(KERN_INFO "[avtp]12. conflict_count [%lu]\n", tx_maap->conflict_count);
+	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
+	
 	avtp_create(tx_maap, 0x7E, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 //	free(tx_maap);
@@ -155,6 +197,28 @@ void sAnnounce() {
 	tx_maap->conflict_start_address[5] = 0x00;
 	tx_maap->conflict_count = 0;
 
+
+	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
+	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	printk(KERN_INFO "[avtp]2. subtype [%x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",tx_maap->maap_data_length);
+	printk(KERN_INFO "[avtp]8. stream_id [%lu]\n",tx_maap->stream_id);
+	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
+	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
+	       tx_maap->requested_start_address[4], tx_maap->requested_start_address[5]);
+	printk(KERN_INFO "[avtp]10. req count [%lu]\n",tx_maap->requested_count);
+	printk(KERN_INFO "[avtp]11. conflict_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
+	       tx_maap->conflict_start_address[0], tx_maap->conflict_start_address[1],
+	       tx_maap->conflict_start_address[2], tx_maap->conflict_start_address[3],
+	       tx_maap->conflict_start_address[4], tx_maap->conflict_start_address[5]);
+	printk(KERN_INFO "[avtp]12. conflict_count [%lu]\n", tx_maap->conflict_count);
+	printk(KERN_INFO "======before send=======MAAP heaader====in maap.c======\n");
+	
 	avtp_create(tx_maap, 0x7E, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 //	free(tx_maap);
@@ -301,9 +365,9 @@ void maap_init() {
 	tx_maap->cd = 1;
 	tx_maap->subtype = 0x7E;
   	printk(KERN_INFO "maap_init data cd:[%u]|subtype : [%x]\n", __func__, tx_maap->cd, tx_maap->subtype);
-
+  	tx_maap->version = 0x00;
   	tx_maap->message_type = 0x00;
-  	tx_maap->version = 0x01;
+  	tx_maap->maap_version = 0x01;
   	tx_maap->maap_data_length = 0x10;
   	tx_maap->stream_id = 0x00;
   	tx_maap->requested_start_address[0] = 0x00;

@@ -261,7 +261,7 @@ do_confirm:
 void ethtsyn_xmit(struct sk_buff *skb)
 {
   /* Send it off, maybe filter it using firewalling first.  */
-  NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
+  //  NF_HOOK(NFPROTO_ARP, NF_ARP_OUT, skb, NULL, skb->dev, dev_queue_xmit);
 //  printk(KERN_INFO "ethtsyn_xmit finish\n");
 }
 EXPORT_SYMBOL(ethtsyn_xmit);
