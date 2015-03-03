@@ -36,7 +36,6 @@ void avtp_xmit(struct sk_buff* skb){
   	dev_queue_xmit(skb);
 }
 
-
 struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 			    struct net_device *dev,
 			    const unsigned char* src_hw,
@@ -51,6 +50,7 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 
 	//	uint8_t* tmp = (uint8_t*)temp_hdr;
 	//printk(KERN_INFO "func: %s,tmp[0] :  %x\n", __func__, tmp[0]);
+	//	tmp[0] = htons(0xFE);
 
 
 	if(dev == NULL) {
@@ -60,14 +60,30 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 	int hlen = LL_RESERVED_SPACE(dev);	// ???????
 	int tlen = dev->needed_tailroom;	// ???????
 
-	uint8_t m_type = 0;
-	m_type = temp_hdr->subtype;	
-	printk(KERN_INFO "========in avtp_create subtype(m_type) : [%u]=======\n", m_type);
+
+	//For checking header's func(getting hdr len)
+	printk(KERN_INFO "::::::sizeof(temp_hdr):[%d] in func:[%s]::::::\n", sizeof(temp_hdr), __func__); 
+	printk(KERN_INFO "::::::sizeof(avtp_common_hdr):[%d] in func:[%s]::::::\n", sizeof(struct avtp_common_hdr), __func__); 
+
+	printk(KERN_INFO "::::::dev->addr_len: [%d] in func:[%s]::::::\n", dev->addr_len, __func__); 
+
+	printk(KERN_INFO "::::::sizeof(u32): [%d] in func:[%s]::::::\n", sizeof(u32), __func__); 
+
+	printk(KERN_INFO "::::::sizeof(avtp_ctr_hdr): [%d] in func:[%s]::::::\n", sizeof(struct avtp_ctr_hdr), __func__); 
+	printk(KERN_INFO "::::::sizeof(avtp_ctr): [%d] in func:[%s]::::::\n", sizeof(avtp_ctr), __func__); 
+	printk(KERN_INFO "::::::avtp_ctr_hdr_len : [%d] in func:[%s]::::::\n", avtp_ctr_hdr_len(dev), __func__);
+
+	printk(KERN_INFO "::::::sizeof(avtp_str_hdr): [%d] in func:[%s]::::::\n", sizeof(struct avtp_str_hdr), __func__);  
+	printk(KERN_INFO "::::::sizeof(avtp_str): [%d] in func:[%s]::::::\n", sizeof(avtp_str), __func__);  
+	printk(KERN_INFO "::::::avtp_str_hdr_len : [%d] in func:[%s]::::::\n", avtp_str_hdr_len(dev), __func__); 
+
+	printk(KERN_INFO "::::::sizeof(avtp_maap_hdr): [%d] in func:[%s]::::::\n", sizeof(struct avtp_maap_hdr), __func__);  
+	printk(KERN_INFO "::::::sizeof(avtp_maap): [%d] in func:[%s]::::::\n", sizeof(avtp_maap), __func__);  
+	printk(KERN_INFO "::::::avtp_maap_hdr_len : [%d] in func:[%s]::::::\n", avtp_maap_hdr_len(dev), __func__); 
 
 	if(is_ctr_avtp_packet(temp_hdr)){	//contol data
 
-
-  		switch(temp_hdr->subtype){
+	  	switch(identify_avtp_packet(temp_hdr)){
 
 		case IIDC_66883_SUBTYPE :
 
@@ -86,23 +102,16 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
   		skb_reserve(skb, hlen);
   		skb_reset_network_header(skb);
 
+		//		char *frm = (char *)temp_hdr;
+		//frm[0] |= htons(0xFE);
+		//		avtp_maap[0] = htons(0xFE);
+
   		avtp_maap = (struct avtp_maap_hdr *)skb_put(skb, avtp_maap_hdr_len(dev));
 		memcpy(avtp_maap, temp_hdr, sizeof(struct avtp_maap_hdr));
 
 		skb->dev = dev;
 		skb->protocol = htons(ETH_P_AVTP);
-
-		/*		
-		// case of MAAP probe, defend, announce -> send 91:E0:F0:00:FF:00
-		unsigned char maap_mc_addr[6];
-		maap_mc_addr[0]=0x91;
-		maap_mc_addr[1]=0xE0;
-		maap_mc_addr[2]=0xF0;
-		maap_mc_addr[3]=0x00;
-		maap_mc_addr[4]=0xFF;
-		maap_mc_addr[5]=0x00;
-		dest_hw = maap_mc_addr;
-		*/
+		
 		if(src_hw == NULL) 
 		  src_hw = dev->dev_addr;
 		if(dest_hw == NULL)
@@ -112,8 +121,9 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 		  goto out;
 
 
-		//char *frm = (char *)avtp_maap;
-		//frm[0] = 1 << 7 | 0x7E;
+		//		char *frm = (char *)avtp_maap;
+		//frm[0] |= htons(0xFE);
+		//		avtp_maap[0] = htons(0xFE);
 
 		printk(KERN_INFO "=========Before sending,  Dest,Source HW addr=======\n");
 		printk(KERN_INFO "[avtp]func:%s, src_hw: %02x:%02x:%02x:%02x:%02x:%02x\n", __func__,
@@ -123,10 +133,10 @@ struct sk_buff* avtp_create(struct avtp_common_hdr *temp_hdr,
 		       dest_hw[0], dest_hw[1], dest_hw[2],
 		       dest_hw[3], dest_hw[4], dest_hw[5]);
 
-
 		printk(KERN_INFO "=============MAAP heaader==========\n");
-		printk(KERN_INFO "[avtp]1. cd [%u]\n", 			avtp_maap->cd);
-		printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
+		//printk(KERN_INFO "[avtp]1. cd [%u]\n", 			avtp_maap->cd);
+		//printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
+		printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->d_type);
 		printk(KERN_INFO "[avtp]3. sv [%u]\n", 			avtp_maap->sv);
 		printk(KERN_INFO "[avtp]4. version [%u]\n", 		avtp_maap->version);
 		printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
@@ -176,11 +186,11 @@ static int avtp_rcv(struct sk_buff* skb,
 		       struct net_device* orig_dev){
 
   	printk(KERN_INFO "[avtp]avtp_rcv function called\n");
-	printk(KERN_INFO "Receive AVTP!!\n");
+
 	//	const struct avtp_ctr_hdr* avtp_ctr;
 	//	const struct avtp_str_hdr* avtp_str;
 	const struct avtp_common_hdr* avtp_common;
-	const struct maaphdr* avtp_maap;
+	const struct avtp_maap_hdr* avtp_maap;
 
 	avtp_common = avtp_common_hdr(skb);
 
@@ -189,25 +199,25 @@ static int avtp_rcv(struct sk_buff* skb,
 	if(!skb)
 	  goto out_of_mem;
 
-	printk(KERN_INFO "========Received packet's ->cd : [%u]=======\n", avtp_common->cd);
-	printk(KERN_INFO "========Received packet's avtp_common->subtype : [%x]=======\n", avtp_common->subtype);
+	/* will be deleted soon
+	//	unsigned m_type = 0;
+	//m_type = ntohs(avtp_common->subtype);
 
-	uint8_t m_type = 0;
-	m_type = avtp_common->subtype;	
-	
-	printk(KERN_INFO "========Received packet's m_type : [%x]=======\n", m_type);
-
-
+	//printk(KERN_INFO "========Received packet's ->cd : [%u]=======\n", avtp_common->cd);
+	//printk(KERN_INFO "========Received packet's avtp_common->subtype : [%x]=======\n", avtp_common->subtype);
+	printk(KERN_INFO "========Received packet's avtp_common->subtype : [%x]=======\n", avtp_common->d_type);
+	*/
 	if(is_ctr_avtp_packet(avtp_common)){	//contol data
 
-  		switch(avtp_common->subtype){
+	  	switch(identify_avtp_packet(avtp_common)){
 
 		case MAAP :
 		        avtp_maap = avtp_maap_hdr(skb);
 
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
-			printk(KERN_INFO "[avtp]1. cd [%u]\n", 			avtp_maap->cd);
-			printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
+			//printk(KERN_INFO "[avtp]1. cd [%u]\n", 			avtp_maap->cd);
+			//printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->subtype);
+			printk(KERN_INFO "[avtp]2. subtype [%02x]\n", 		avtp_maap->d_type);
 			printk(KERN_INFO "[avtp]3. sv [%u]\n", 			avtp_maap->sv);
 			printk(KERN_INFO "[avtp]4. version [%u]\n", 		avtp_maap->version);
 			printk(KERN_INFO "[avtp]5. message_type [%u]\n", 	avtp_maap->message_type);
@@ -226,7 +236,7 @@ static int avtp_rcv(struct sk_buff* skb,
 			printk(KERN_INFO "[avtp]12. conflict_count [%u]\n", 	avtp_maap->conflict_count);
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
 
-			// maap_rcv(avtp_maap);
+			//maap_rcv(avtp_maap);
 		  
 		  break;
 
@@ -239,7 +249,7 @@ static int avtp_rcv(struct sk_buff* skb,
 	}
 	else {	// stream data AVTPDU
 
-  		switch(avtp_common->subtype){
+  		switch(avtp_common->d_type){
 
 		case IIDC_66883_SUBTYPE :
 
@@ -261,7 +271,8 @@ static int avtp_rcv(struct sk_buff* skb,
 static int avtp_netdev_event(struct notifier_block* this, 
 				unsigned long event, 
 				void* ptr) {
-  printk(KERN_INFO "[avtp]avtp_netdev_event function called\n");
+  printk(KERN_INFO "[avtp] <<<<avtp_netdev_event>>>> function called\n");
+
   struct net_device* dev = netdev_notifier_info_to_dev(ptr);
   struct netdev_notifier_change_info* change_info;
 
@@ -341,6 +352,10 @@ void avtp_timer_callback(unsigned long arg) {
 }
 
 int avtp_timer_init_module(void) {
+
+	/* For Debugging */
+	printk(KERN_INFO "func:<<<< %s >>>> \n", __func__);
+
   	int ret;
 
 	avtp_dev = NULL;
@@ -355,6 +370,10 @@ int avtp_timer_init_module(void) {
 }
 
 void avtp_timer_cleanup_module(void) {
+
+	/* For Debugging */
+	printk(KERN_INFO "func:<<<< %s >>>> \n", __func__);
+
   	int ret;
 
 	ret = del_timer(&avtp_timer);

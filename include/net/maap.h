@@ -19,8 +19,8 @@
 #define DEFEND		3
 
 struct maaphdr {
-  	unsigned	cd			:	1;
-  	unsigned	subtype			:	7;
+  	uint8_t		d_type;
+  //  	unsigned	subtype			: 	7;
   	unsigned	sv			:	1;
   	unsigned	version			:	3;
   	unsigned	message_type		:	4;

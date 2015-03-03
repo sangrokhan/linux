@@ -17,8 +17,10 @@
 #define EXPERIMENTAL_SUBTYPE	0x7F
 
 struct avtp_common_hdr{
-	unsigned	cd		:	1;
-  	unsigned	subtype		: 	7;
+
+  	uint8_t		d_type;
+  //	unsigned	cd		:	1;
+  //	unsigned	subtype		: 	7;
   	unsigned	sv		: 	1;
 	unsigned	version		: 	3;
   	unsigned 	type_speci_data	:	20;
@@ -39,8 +41,9 @@ struct avtp_ctr_hdr{
 };
 
 struct avtp_maap_hdr{
-	unsigned	cd		:	1;
-	unsigned 	subtype		:	7;
+  	uint8_t		d_type;
+  //unsigned	cd		:	1;
+  //unsigned 	subtype		:	7;
 	unsigned	sv		:	1;
 	unsigned	version		:	3;
 	unsigned	message_type	:	4;
@@ -244,5 +247,8 @@ static inline bool is_ctr_avtp_packet(const u8* addr){
   	return 0x80 & addr[0];
 }
 
+static inline unsigned char identify_avtp_packet(const u8* addr){
+  	return 0x7F & addr[0];
+}
 
 #endif

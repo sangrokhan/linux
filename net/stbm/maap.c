@@ -117,11 +117,17 @@ void sProbe() {
   	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
 
 	tx_maap->message_type = MAAP_PROBE;
-
+	
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
+	//unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+	//tx_maap->m_type = htons(0xFE);
+	
 	//for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
 	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
 	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
 	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
@@ -147,17 +153,22 @@ void sProbe() {
 void sDefend(struct maaphdr *rx_maap) {
   	/* For Debugging */
   	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
-
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
 	tx_maap->message_type = MAAP_DEFEND;
 	memcpy(tx_maap->requested_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
 	tx_maap->requested_count = rx_maap->requested_count;
 	memcpy(tx_maap->conflict_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
 	tx_maap->conflict_count = rx_maap->requested_count;
 
+	//unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+	//tx_maap->m_type = htons(0xFE);
+
 	//for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
 	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
 	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
 	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
@@ -183,22 +194,27 @@ void sDefend(struct maaphdr *rx_maap) {
 void sAnnounce() {
   	/* For Debugging */
   	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
-
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
  	tx_maap->message_type = MAAP_ANNOUNCE;
 	memcpy(tx_maap->requested_start_address, generated_address, MAC_ADDR_LEN);
-    	tx_maap->requested_count = 0x00;
+    	tx_maap->requested_count = 0xcc;
 	tx_maap->conflict_start_address[0] = 0x00;
 	tx_maap->conflict_start_address[1] = 0x00;
 	tx_maap->conflict_start_address[2] = 0x00;
 	tx_maap->conflict_start_address[3] = 0x00;
 	tx_maap->conflict_start_address[4] = 0x00;
 	tx_maap->conflict_start_address[5] = 0x00;
-	tx_maap->conflict_count = 0;
+	tx_maap->conflict_count = 0xdd;
+
+	//	unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+
 
 	// for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
 	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
 	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
 	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
@@ -373,26 +389,26 @@ void maap_init() {
 		return;
 	}
 
-	tx_maap->cd = 1;
-	tx_maap->subtype = 0x7E;
+	tx_maap->d_type = 0xFE;
+ 	//tx_maap->subtype = 0x7E;
 	tx_maap->sv = 0;
-	tx_maap->version = 0;
+	tx_maap->version = 0x0;
   	tx_maap->message_type = 0;
   	tx_maap->maap_version = 1;
   	tx_maap->maap_data_length = 0x10;
-  	tx_maap->stream_id = 0x00;
+  	tx_maap->stream_id = 0x0000000000000000;
   	tx_maap->requested_start_address[0] = 0x00;
 	tx_maap->requested_start_address[1] = 0x00;
 	tx_maap->requested_start_address[2] = 0x00;
 	tx_maap->requested_start_address[3] = 0x00;
 	tx_maap->requested_start_address[4] = 0x00;
 	tx_maap->requested_start_address[5] = 0x00;
-	tx_maap->requested_count = 0x00;
+	tx_maap->requested_count = 0xaa;
 	tx_maap->conflict_start_address[0] = 0x00;
 	tx_maap->conflict_start_address[1] = 0x00;
 	tx_maap->conflict_start_address[2] = 0x00;
 	tx_maap->conflict_start_address[3] = 0x00;
 	tx_maap->conflict_start_address[4] = 0x00;
 	tx_maap->conflict_start_address[5] = 0x00;
-	tx_maap->conflict_count = 0x00;
+	tx_maap->conflict_count = 0xbb;
 }
