@@ -3,6 +3,7 @@
 #include <linux/module.h>
 #include <linux/timer.h>
 #include <linux/random.h>
+#include <linux/slab.h>
 #include <net/maap.h>
 #include <net/avtp.h>
 
@@ -21,7 +22,9 @@ int maap_probe_count;
 int announce_mode;
 int probe_mode;
 
-unsigned char generated_address[6];
+int probe_count = 0;	/* For Debugging */
+
+unsigned char *generated_address;
 unsigned char multicast_address[6];
 
 static struct timer_list announce_timer;
@@ -38,6 +41,12 @@ void generate_address(unsigned char* requestor_address) {
 
   	unsigned int rand;
 
+	if(generated_address == NULL) {
+		generated_address = kmalloc(6 * sizeof(unsigned char), GFP_KERNEL);
+
+		if(!generated_address) return;
+	}
+
 	generated_address[0] = 0x91;
 	generated_address[1] = 0xE0;
 	generated_address[2] = 0xF0;
@@ -47,7 +56,7 @@ void generate_address(unsigned char* requestor_address) {
         get_random_bytes(&rand, sizeof(rand));
 	rand = rand % 254;
 
-	generated_address[4] = 0x28; //rand;	// Need to debug
+	generated_address[4] = rand;	// Need to debug
 
 	/* For Debugging */
 	printk("func: [MAAP]%s,	rand1: %02x\n", __func__, rand);
@@ -55,7 +64,7 @@ void generate_address(unsigned char* requestor_address) {
 	get_random_bytes(&rand, sizeof(rand));
 	rand = rand % 256;
 
-	generated_address[5] = 0x28; //rand;	// Need to debug
+	generated_address[5] = rand;	// Need to debug
 
 	/* For Debugging */
 	printk("func: [MAAP]%s,	rand2: %02x\n", __func__, rand);
@@ -115,8 +124,10 @@ int compare_MAC(unsigned char* current_mac_address, unsigned char* received_mac_
 
 /* Send a MAAP_PROBE PDU */
 void sProbe() {
+  	probe_count ++;
+
   	/* For Debugging */
-  	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
+  	printk(KERN_INFO "func: [MAAP]%s(%d)\n", __func__, probe_count);
 
 	tx_maap->message_type = MAAP_PROBE;
 
@@ -224,7 +235,11 @@ void sAnnounce() {
 
 int maap_rcv(struct maaphdr *rx_maap) {
   	/* For Debugging */
-  	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
+	printk(KERN_INFO "func: [MAAP]%s,	message_type: %d\n", __func__, rx_maap->message_type);
+
+	if(generated_address == NULL || probe_timer.function == NULL || announce_timer.function == NULL) {
+		return 0;
+	}
 
   	int ret;
 
@@ -234,6 +249,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
 		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 	  		
 			probe_mode = 0;
+
 			maap_cleanup_timer(&probe_timer);
 			maap_state = INITIAL;
 			generate_address(rx_maap->requested_start_address);
@@ -248,6 +264,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
 	case MAAP_DEFEND:
 	  	if(maap_state == PROBE) {
 		  	probe_mode = 0;
+
 		  	maap_cleanup_timer(&probe_timer);
 	  	}
 
@@ -255,6 +272,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
 		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 
 			announce_mode = 0;
+
 		        maap_cleanup_timer(&announce_timer);
 		}
 
@@ -266,6 +284,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
  	case MAAP_ANNOUNCE:
 	  	if(maap_state == PROBE) {
 		  	probe_mode = 0;
+
 		  	maap_cleanup_timer(&probe_timer);
 		}
 
@@ -273,6 +292,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
 		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
 
 			announce_mode = 0;
+
 		  	maap_cleanup_timer(&announce_timer);
 		}
 
@@ -280,7 +300,11 @@ int maap_rcv(struct maaphdr *rx_maap) {
 		generate_address(rx_maap->requested_start_address);
 
 		break;
+
+	default:
+	  	break;
 	}
+
 	return 0;
 }
 
@@ -367,12 +391,11 @@ void maap_init() {
 	multicast_address[5] = 0x00;
 
   	maap_state = INITIAL;
-	tx_maap = kmalloc(sizeof(struct maaphdr), GFP_KERNEL);
 
-	if(!tx_maap)  {
-	  	printk(KERN_INFO "[Error] maap_init(): Couldn't initialize.\n");
+	if(tx_maap == NULL) {
+		tx_maap = kmalloc(sizeof(struct maaphdr), GFP_KERNEL);
 
-		return;
+		if(!tx_maap) return;
 	}
 
 	tx_maap->cd = 1;

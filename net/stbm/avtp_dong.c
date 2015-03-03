@@ -226,7 +226,7 @@ static int avtp_rcv(struct sk_buff* skb,
 			printk(KERN_INFO "[avtp]12. conflict_count [%u]\n", 	avtp_maap->conflict_count);
 			printk(KERN_INFO "=============Received MAAP heaader==========\n");
 
-			// maap_rcv(avtp_maap);
+			maap_rcv(avtp_maap);
 		  
 		  break;
 
