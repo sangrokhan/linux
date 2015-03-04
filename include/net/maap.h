@@ -19,18 +19,23 @@
 #define DEFEND		3
 
 struct maaphdr {
-  	unsigned	cd			:	1;
-  	unsigned	subtype			:	7;
-  	unsigned	sv			:	1;
-  	unsigned	version			:	3;
-  	unsigned	message_type		:	4;
-  	unsigned	maap_version		:	5;
-  	unsigned	maap_data_length	:	11;
-  	u64		stream_id;
+  	uint8_t		d_type;
+  //  	unsigned	subtype			: 	7;
+  	uint8_t		sv_ver_m_type;
+   //  	unsigned	sv			:	1;
+  //	unsigned	version			:	3;
+  // 	unsigned	message_type		:	4;
+ 
+  	uint16_t	mver_mlen;
+  //	unsigned	maap_version		:	5;
+  // 	unsigned	maap_data_length	:	11;
+  
+  	uint8_t		stream_id[8];
+//u64		stream_id;
   	uint8_t		requested_start_address[6];
-  	u16		requested_count;
+  	uint16_t	requested_count;
   	uint8_t		conflict_start_address[6];
-  	u16		conflict_count;
+  	uint16_t	conflict_count;
 };
 
 void generate_address(unsigned char* requestor_address);

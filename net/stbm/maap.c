@@ -68,11 +68,14 @@ void generate_address(unsigned char* requestor_address) {
 
 	/* For Debugging */
 	printk("func: [MAAP]%s,	rand2: %02x\n", __func__, rand);
+        
+	printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);
 
 	if(maap_state == INITIAL) {
 	  	init_maap_probe_count();
 		memcpy(tx_maap->requested_start_address, generated_address, MAC_ADDR_LEN);		// tx_maap = maap;
 
+        	printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
 		probe_mode = 1;
 	  	maap_init_timer(&probe_timer, probe_timer_callback, 0, MAAP_PROBE_INTERVAL_BASE);
 	}
@@ -129,18 +132,37 @@ void sProbe() {
   	/* For Debugging */
   	printk(KERN_INFO "func: [MAAP]%s(%d)\n", __func__, probe_count);
 
-	tx_maap->message_type = MAAP_PROBE;
+	//tx_maap->message_type = MAAP_PROBE;
+	tx_maap->sv_ver_m_type = MAAP_PROBE;
 
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
+
+	/*
+	printk(KERN_INFO "<<<data size<<<<< u8 : [%d]>>>>>>>>\n", sizeof(u8));
+	printk(KERN_INFO "<<<data size<<<<< u16 : [%d]>>>>>>>>\n", sizeof(u16));
+	printk(KERN_INFO "<<<data size<<<<< u32 : [%d]>>>>>>>>\n", sizeof(u32));
+	printk(KERN_INFO "<<<data size<<<<< u64 : [%d]>>>>>>>>\n", sizeof(u64));
+	printk(KERN_INFO "<<<data size<<<<< uint8_t : [%d]>>>>>>>>\n", sizeof(uint8_t));
+	printk(KERN_INFO "<<<data size<<<<< uint16_t : [%d]>>>>>>>>\n", sizeof(uint16_t));
+	printk(KERN_INFO "<<<data size<<<<< uint32_t : [%d]>>>>>>>>\n", sizeof(uint32_t));
+	printk(KERN_INFO "<<<data size<<<<< uint64_t : [%d]>>>>>>>>\n", sizeof(uint64_t));
+	*/
+
+	//unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+	//tx_maap->m_type = htons(0xFE);
+	
 	//for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
-	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
-	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
-	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
-	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
-	printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",tx_maap->maap_data_length);
-	printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
+	//printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	//printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	//printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	//printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	//	printk(KERN_INFO "[avtp]7. maap_data_length [%lu]\n",tx_maap->maap_data_length);
+	//printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
 	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
 	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
 	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
@@ -160,23 +182,30 @@ void sProbe() {
 void sDefend(struct maaphdr *rx_maap) {
   	/* For Debugging */
   	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
+	//tx_maap->message_type = MAAP_DEFEND;
+	tx_maap->sv_ver_m_type = MAAP_DEFEND;
 
-	tx_maap->message_type = MAAP_DEFEND;
 	memcpy(tx_maap->requested_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
 	tx_maap->requested_count = rx_maap->requested_count;
 	memcpy(tx_maap->conflict_start_address, rx_maap->requested_start_address, MAC_ADDR_LEN);
 	tx_maap->conflict_count = rx_maap->requested_count;
 
+	//unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+	//tx_maap->m_type = htons(0xFE);
+
 	//for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
-	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
-	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
-	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
-	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
-	printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",tx_maap->maap_data_length);
-	printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
+	//	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	//printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	//printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	//printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	//printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",tx_maap->maap_data_length);
+	//printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
 	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
 	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
 	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
@@ -196,28 +225,35 @@ void sDefend(struct maaphdr *rx_maap) {
 void sAnnounce() {
   	/* For Debugging */
   	printk(KERN_INFO "func: [MAAP]%s\n", __func__);
+        printk(KERN_INFO "::::::sizeof(maaphdr):[%d] in func:[%s]::::::\n", sizeof(struct maaphdr), __func__);     	
+ 	//tx_maap->message_type = MAAP_ANNOUNCE;
+	tx_maap->sv_ver_m_type = MAAP_ANNOUNCE;
 
- 	tx_maap->message_type = MAAP_ANNOUNCE;
 	memcpy(tx_maap->requested_start_address, generated_address, MAC_ADDR_LEN);
-    	tx_maap->requested_count = 0x00;
+    	//tx_maap->requested_count = 0xcc;
 	tx_maap->conflict_start_address[0] = 0x00;
 	tx_maap->conflict_start_address[1] = 0x00;
 	tx_maap->conflict_start_address[2] = 0x00;
 	tx_maap->conflict_start_address[3] = 0x00;
 	tx_maap->conflict_start_address[4] = 0x00;
 	tx_maap->conflict_start_address[5] = 0x00;
-	tx_maap->conflict_count = 0;
+	//	tx_maap->conflict_count = 0xdd;
+
+	//	unsigned char *frm = (unsigned char *)tx_maap;
+	//frm[0] |= htons(0xFE);
+
 
 	// for debug
 	printk(KERN_INFO "====MAAP heaader====[ %s ]in maap.c======\n", __func__);
-	printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
-	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
-	printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
-	printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
-	printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
-	printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
-	printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",tx_maap->maap_data_length);
-	printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
+	//printk(KERN_INFO "[avtp]1. cd [%u]\n",          tx_maap->cd);
+	//printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->subtype);
+	printk(KERN_INFO "[avtp]2. subtype [%02x]\n",             tx_maap->d_type);
+	//printk(KERN_INFO "[avtp]3. sv [%u]\n",          tx_maap->sv);
+	//printk(KERN_INFO "[avtp]4. version [%u]\n",             tx_maap->version);
+	//printk(KERN_INFO "[avtp]5. message_type [%u]\n",        tx_maap->message_type);
+	//printk(KERN_INFO "[avtp]6. maap_version [%u]\n",        tx_maap->maap_version);
+	//printk(KERN_INFO "[avtp]7. maap_data_length [%u]\n",tx_maap->maap_data_length);
+	//printk(KERN_INFO "[avtp]8. stream_id [%u]\n",tx_maap->stream_id);
 	printk(KERN_INFO "[avtp]9. req_start_addr : [%02x:%02x:%02x:%02x:%02x:%02x]\n",
 	       tx_maap->requested_start_address[0], tx_maap->requested_start_address[1],
 	       tx_maap->requested_start_address[2], tx_maap->requested_start_address[3],
@@ -243,7 +279,7 @@ int maap_rcv(struct maaphdr *rx_maap) {
 
   	int ret;
 
-	switch(rx_maap->message_type) {
+	switch(rx_maap->sv_ver_m_type) {
 	case MAAP_PROBE:
   		if(maap_state == PROBE) {
 		  	if(!(ret = compare_MAC(generated_address, rx_maap->requested_start_address))) break;
@@ -398,14 +434,25 @@ void maap_init() {
 		if(!tx_maap) return;
 	}
 
-	tx_maap->cd = 1;
-	tx_maap->subtype = 0x7E;
-	tx_maap->sv = 0;
-	tx_maap->version = 0;
-  	tx_maap->message_type = 0;
-  	tx_maap->maap_version = 1;
-  	tx_maap->maap_data_length = 0x10;
-  	tx_maap->stream_id = 0x00;
+	tx_maap->d_type = 0xFE;
+ 	//tx_maap->subtype = 0x7E;
+	//tx_maap->sv = 0;
+	//tx_maap->version = 0x0;
+  	//tx_maap->message_type = 0;
+	tx_maap->sv_ver_m_type = 0x01;
+  	
+	tx_maap->mver_mlen = htons(((1 << 11) | 0x10));
+	//tx_maap->maap_version = 1;
+  	//tx_maap->maap_data_length = 0x10;
+  	tx_maap->stream_id[0] = 0x00;
+  	tx_maap->stream_id[1] = 0x00;
+  	tx_maap->stream_id[2] = 0x00;
+  	tx_maap->stream_id[3] = 0x00;
+  	tx_maap->stream_id[4] = 0x00;
+  	tx_maap->stream_id[5] = 0x00;
+  	tx_maap->stream_id[6] = 0x00;
+  	tx_maap->stream_id[7] = 0x00;
+
   	tx_maap->requested_start_address[0] = 0x00;
 	tx_maap->requested_start_address[1] = 0x00;
 	tx_maap->requested_start_address[2] = 0x00;

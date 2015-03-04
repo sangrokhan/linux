@@ -16,15 +16,19 @@
 #define MAAP			0x7E
 #define EXPERIMENTAL_SUBTYPE	0x7F
 
+/*
 struct avtp_common_hdr{
-	unsigned	cd		:	1;
-  	unsigned	subtype		: 	7;
+
+  	uint8_t		d_type;
+  //	unsigned	cd		:	1;
+  //	unsigned	subtype		: 	7;
   	unsigned	sv		: 	1;
 	unsigned	version		: 	3;
   	unsigned 	type_speci_data	:	20;
 	u64		stream_id;
 	unsigned char	*ctr_data_payload;    
 };
+*/
 
 struct avtp_ctr_hdr{
 	unsigned	cd		:	1;
@@ -39,14 +43,21 @@ struct avtp_ctr_hdr{
 };
 
 struct avtp_maap_hdr{
-	unsigned	cd		:	1;
-	unsigned 	subtype		:	7;
-	unsigned	sv		:	1;
-	unsigned	version		:	3;
-	unsigned	message_type	:	4;
-	unsigned	maap_version	:	5;
-	unsigned	maap_data_length:	11;
-  	u64		stream_id;
+  	uint8_t		d_type;
+  //unsigned	cd		:	1;
+  //unsigned 	subtype		:	7;
+
+  	uint8_t		sv_ver_m_type;
+  //unsigned	sv		:	1;
+  //unsigned	version		:	3;
+  //unsigned	message_type	:	4;
+
+  	uint16_t	mver_mlen;
+  //unsigned	maap_version	:	5;
+  //unsigned	maap_data_length:	11;
+
+  	uint8_t		stream_id[8];
+  //  	u64		stream_id;
 	uint8_t		requested_start_address[6];
   	uint16_t	requested_count;
   	uint8_t		conflict_start_address[6];
@@ -190,9 +201,12 @@ struct avtp_iec_str_hdr_sph{
 
 // need to check if this is used or not
 // later, these may be united
+
+/*
 static inline struct avtp_common_hdr *avtp_common_hdr(const struct sk_buff *skb) {
   	return (struct avtp_common_hdr *)skb_network_header(skb); 
 }
+*/
 static inline struct avtp_ctr_hdr *avtp_ctr_hdr(const struct sk_buff *skb) {
   	return (struct avtp_ctr_hdr *)skb_network_header(skb); 
 }
@@ -204,34 +218,29 @@ static inline struct avtp_maap_hdr *avtp_maap_hdr(const struct sk_buff *skb) {
 }
 
 
-/*
- * need to check if this is used or not
- * what is dev-> addr_len ?
- * later, this two may be united
- * why dev->addr_len and sizeof(u32) need to be multiplied 2 times
- */
+// need to check if this is used or not
 static inline int avtp_ctr_hdr_len(struct net_device *dev) {
   	switch(dev->type) {
 	default:
-	  return sizeof(struct avtp_ctr_hdr) + (dev->addr_len + sizeof(u32)) * 2;
+	  return sizeof(struct avtp_ctr_hdr);
 	}
 }
 static inline int avtp_str_hdr_len(struct net_device *dev) {
   	switch(dev->type) {
 	default:
-	  return sizeof(struct avtp_str_hdr) + (dev->addr_len + sizeof(u32)) * 2;
+	  return sizeof(struct avtp_str_hdr);
 	}
 }
 static inline int avtp_maap_hdr_len(struct net_device *dev) {
   	switch(dev->type) {
 	default:
-	  return sizeof(struct avtp_maap_hdr) + (dev->addr_len + sizeof(u32)) * 2;
+	  return sizeof(struct avtp_maap_hdr);
 	}
 }
 
 extern void avtp_init(void);
 
-extern struct sk_buff* avtp_create(struct avtp_common_hdr *avtp_maap,
+extern struct sk_buff* avtp_create(struct avtp_maap_hdr *avtp_maap,
 			    	struct net_device *dev,
 			    	const unsigned char* src_hw,
 				const unsigned char* dest_hw);
@@ -244,5 +253,8 @@ static inline bool is_ctr_avtp_packet(const u8* addr){
   	return 0x80 & addr[0];
 }
 
+static inline unsigned char identify_avtp_packet(const u8* addr){
+  	return 0x7F & addr[0];
+}
 
 #endif
