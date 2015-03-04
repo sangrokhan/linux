@@ -271,7 +271,7 @@ void sAnnounce() {
 
 int maap_rcv(struct maaphdr *rx_maap) {
   	/* For Debugging */
-	printk(KERN_INFO "func: [MAAP]%s,	message_type: %d\n", __func__, rx_maap->message_type);
+	printk(KERN_INFO "func: [MAAP]%s \n", __func__);
 
 	if(generated_address == NULL || probe_timer.function == NULL || announce_timer.function == NULL) {
 		return 0;
