@@ -45,6 +45,7 @@ modules.builtin
 /System.map
 /Module.markers
 /Module.symvers
+/make_modules
 
 #
 # Debian directory (make deb-pkg)
