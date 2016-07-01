@@ -336,6 +336,7 @@ static const struct bin_table bin_net_ipv4_table[] = {
 	/* NET_IPV4_FIB_HASH unused */
 	{ CTL_DIR,	NET_IPV4_NETFILTER,	"netfilter",	bin_net_ipv4_netfilter_table },
 
+	{ CTL_INT,	NET_IPV4_TCP_ADAPTIVE_ACK,		"tcp_adaptive_ack"},
 	{ CTL_INT,	NET_IPV4_TCP_TIMESTAMPS,		"tcp_timestamps" },
 	{ CTL_INT,	NET_IPV4_TCP_WINDOW_SCALING,		"tcp_window_scaling" },
 	{ CTL_INT,	NET_IPV4_TCP_SACK,			"tcp_sack" },

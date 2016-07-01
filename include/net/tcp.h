@@ -176,6 +176,7 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define TCPOPT_SACK             5       /* SACK Block */
 #define TCPOPT_TIMESTAMP	8	/* Better RTT estimations/PAWS */
 #define TCPOPT_MD5SIG		19	/* MD5 Signature (RFC2385) */
+#define TCPOPT_A_ACK		28	/* Use User Timeout Option (RFC5482) */
 #define TCPOPT_EXP		254	/* Experimental */
 /* Magic number to be after the option value for sharing TCP
  * experimental options. See draft-ietf-tcpm-experimental-options-00.txt
@@ -191,6 +192,7 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define TCPOLEN_SACK_PERM      2
 #define TCPOLEN_TIMESTAMP      10
 #define TCPOLEN_MD5SIG         18
+#define TCPOLEN_A_ACK		4
 #define TCPOLEN_EXP_FASTOPEN_BASE  4
 
 /* But this is what stacks really send out. */
@@ -240,6 +242,7 @@ extern struct inet_timewait_death_row tcp_death_row;
 extern int sysctl_tcp_timestamps;
 extern int sysctl_tcp_window_scaling;
 extern int sysctl_tcp_sack;
+extern int sysctl_tcp_adaptive_ack;	/* Adaptive ACK */
 extern int sysctl_tcp_fin_timeout;
 extern int sysctl_tcp_keepalive_time;
 extern int sysctl_tcp_keepalive_probes;

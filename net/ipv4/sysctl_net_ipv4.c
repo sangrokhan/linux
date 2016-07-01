@@ -280,6 +280,13 @@ bad_key:
 
 static struct ctl_table ipv4_table[] = {
 	{
+	  	.procname	= "tcp_adaptive_ack",
+		.data		= &sysctl_tcp_adaptive_ack,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec
+	},
+	{
 		.procname	= "tcp_timestamps",
 		.data		= &sysctl_tcp_timestamps,
 		.maxlen		= sizeof(int),
