@@ -85,7 +85,8 @@ struct inet_request_sock {
 				wscale_ok  : 1,
 				ecn_ok	   : 1,
 				acked	   : 1,
-				no_srccheck: 1;
+				no_srccheck: 1,
+				aa_ok	   : 1;
 	kmemcheck_bitfield_end(flags);
 	struct ip_options_rcu	*opt;
 };

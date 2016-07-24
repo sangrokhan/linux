@@ -1116,6 +1116,7 @@ static inline void tcp_openreq_init(struct request_sock *req,
 	ireq->sack_ok = rx_opt->sack_ok;
 	ireq->snd_wscale = rx_opt->snd_wscale;
 	ireq->wscale_ok = rx_opt->wscale_ok;
+	ireq->aa_ok = rx_opt->aa_ok;
 	ireq->acked = 0;
 	ireq->ecn_ok = 0;
 	ireq->rmt_port = tcp_hdr(skb)->source;

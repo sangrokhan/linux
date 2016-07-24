@@ -443,6 +443,7 @@ struct sock *tcp_create_openreq_child(struct sock *sk, struct request_sock *req,
 						       keepalive_time_when(newtp));
 
 		newtp->rx_opt.tstamp_ok = ireq->tstamp_ok;
+		newtp->rx_opt.aa_ok = ireq->aa_ok;
 		if ((newtp->rx_opt.sack_ok = ireq->sack_ok) != 0) {
 			if (sysctl_tcp_fack)
 				tcp_enable_fack(newtp);
@@ -462,14 +463,29 @@ struct sock *tcp_create_openreq_child(struct sock *sk, struct request_sock *req,
 				  newtp->rx_opt.snd_wscale);
 		newtp->max_window = newtp->snd_wnd;
 
+		/* if (newtp->rx_opt.tstamp_ok) { */
+		/* 	newtp->rx_opt.ts_recent = req->ts_recent; */
+		/* 	newtp->rx_opt.ts_recent_stamp = get_seconds(); */
+		/* 	newtp->tcp_header_len = sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED; */
+		/* } else { */
+		/* 	newtp->rx_opt.ts_recent_stamp = 0; */
+		/* 	newtp->tcp_header_len = sizeof(struct tcphdr); */
+		/* } */
+
+		newtp->tcp_header_len = sizeof(struct tcphdr);
+
 		if (newtp->rx_opt.tstamp_ok) {
 			newtp->rx_opt.ts_recent = req->ts_recent;
 			newtp->rx_opt.ts_recent_stamp = get_seconds();
-			newtp->tcp_header_len = sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED;
+			newtp->tcp_header_len += TCPOLEN_TSTAMP_ALIGNED;
 		} else {
 			newtp->rx_opt.ts_recent_stamp = 0;
-			newtp->tcp_header_len = sizeof(struct tcphdr);
 		}
+		
+		if (newtp->rx_opt.aa_ok) {
+			newtp->tcp_header_len += TCPOLEN_A_ACK;
+		}
+		
 		newtp->tsoffset = 0;
 #ifdef CONFIG_TCP_MD5SIG
 		newtp->md5sig_info = NULL;	/*XXX*/

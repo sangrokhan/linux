@@ -388,6 +388,7 @@ static inline bool tcp_urg_mode(const struct tcp_sock *tp)
 #define OPTION_TS		(1 << 1)
 #define OPTION_MD5		(1 << 2)
 #define OPTION_WSCALE		(1 << 3)
+#define OPTION_A_ACK		(1 << 4)
 #define OPTION_FAST_OPEN_COOKIE	(1 << 8)
 
 struct tcp_out_options {
@@ -398,6 +399,7 @@ struct tcp_out_options {
 	u8 hash_size;		/* bytes in hash_location */
 	__u8 *hash_location;	/* temporary pointer, overloaded */
 	__u32 tsval, tsecr;	/* need to include OPTION_TS */
+	u16 rto_rtt;		/* adaptive ack tx value */
 	struct tcp_fastopen_cookie *fastopen_cookie;	/* Fast open cookie */
 };
 
@@ -462,6 +464,13 @@ static void tcp_options_write(__be32 *ptr, struct tcp_sock *tp,
 			       (TCPOPT_WINDOW << 16) |
 			       (TCPOLEN_WINDOW << 8) |
 			       opts->ws);
+	}
+
+	/* Adaptive Ack Option Append routine */
+	if (likely(OPTION_A_ACK & options)) {
+		*ptr++ = htonl((TCPOPT_A_ACK << 24) |
+			       (TCPOLEN_A_ACK << 16) |
+			       opts->rto_rtt);
 	}
 
 	if (unlikely(opts->num_sack_blocks)) {
@@ -549,6 +558,12 @@ static unsigned int tcp_syn_options(struct sock *sk, struct sk_buff *skb,
 		if (unlikely(!(OPTION_TS & opts->options)))
 			remaining -= TCPOLEN_SACKPERM_ALIGNED;
 	}
+	//Add to support Adaptive ACK
+	if (likely(sysctl_tcp_adaptive_ack)) {
+		opts->options |= OPTION_A_ACK;
+		opts->rto_rtt = 0;
+		remaining -= TCPOLEN_A_ACK;
+	}
 
 	if (fastopen && fastopen->cookie.len >= 0) {
 		u32 need = TCPOLEN_EXP_FASTOPEN_BASE + fastopen->cookie.len;
@@ -612,6 +627,12 @@ static unsigned int tcp_synack_options(struct sock *sk,
 		if (unlikely(!ireq->tstamp_ok))
 			remaining -= TCPOLEN_SACKPERM_ALIGNED;
 	}
+	if (likely(ireq->aa_ok)) {
+		opts->options |= OPTION_A_ACK;
+		opts->rto_rtt = 0;
+		remaining -= TCPOLEN_A_ACK;
+	}
+
 	if (foc != NULL) {
 		u32 need = TCPOLEN_EXP_FASTOPEN_BASE + foc->len;
 		need = (need + 3) & ~3U;  /* Align to 32 bits */
@@ -656,6 +677,15 @@ static unsigned int tcp_established_options(struct sock *sk, struct sk_buff *skb
 		size += TCPOLEN_TSTAMP_ALIGNED;
 	}
 
+	if (likely(tp->rx_opt.aa_ok)) {
+		opts->options |= OPTION_A_ACK;
+		opts->rto_rtt = (u16)inet_csk(sk)->icsk_last_rto * (MSEC_PER_SEC / HZ);
+		size += TCPOLEN_A_ACK;
+	}
+
+	/* printk(KERN_INFO "%s jiffies %lu, tsval %u, tsecr %u, size %u, rto %u\n", */
+	/*        __func__, jiffies, opts->tsval, opts->tsecr, size, opts->rto_rtt); */
+	
 	eff_sacks = tp->rx_opt.num_sacks + tp->rx_opt.dsack;
 	if (unlikely(eff_sacks)) {
 		const unsigned int remaining = MAX_TCP_OPTION_SPACE - size;
@@ -895,7 +925,7 @@ static int tcp_transmit_skb(struct sock *sk, struct sk_buff *skb, int clone_it,
 		tcp_options_size = tcp_established_options(sk, skb, &opts,
 							   &md5);
 	tcp_header_size = tcp_options_size + sizeof(struct tcphdr);
-
+	
 	if (tcp_packets_in_flight(tp) == 0)
 		tcp_ca_event(sk, CA_EVENT_TX_START);
 
@@ -2801,7 +2831,8 @@ void tcp_connect_init(struct sock *sk)
 	 * See tcp_input.c:tcp_rcv_state_process case TCP_SYN_SENT.
 	 */
 	tp->tcp_header_len = sizeof(struct tcphdr) +
-		(sysctl_tcp_timestamps ? TCPOLEN_TSTAMP_ALIGNED : 0);
+		(sysctl_tcp_timestamps ? TCPOLEN_TSTAMP_ALIGNED : 0) +
+		(sysctl_tcp_adaptive_ack ? TCPOLEN_A_ACK : 0);
 
 #ifdef CONFIG_TCP_MD5SIG
 	if (tp->af_specific->md5_lookup(sk, sk) != NULL)
@@ -3058,6 +3089,7 @@ void tcp_send_delayed_ack(struct sock *sk)
 		 */
 		if (icsk->icsk_ack.blocked ||
 		    time_before_eq(icsk->icsk_ack.timeout, jiffies + (ato >> 2))) {
+			printk(KERN_INFO "%s call tcp_send_ack\n",__func__);
 			tcp_send_ack(sk);
 			return;
 		}

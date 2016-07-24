@@ -93,7 +93,9 @@ struct inet_connection_sock {
 	unsigned long		  icsk_timeout;
  	struct timer_list	  icsk_retransmit_timer;
  	struct timer_list	  icsk_delack_timer;
+	struct timer_list	  icsk_adapack_timer;
 	__u32			  icsk_rto;
+	__u32			  icsk_last_rto;
 	__u32			  icsk_pmtu_cookie;
 	const struct tcp_congestion_ops *icsk_ca_ops;
 	const struct inet_connection_sock_af_ops *icsk_af_ops;
@@ -158,10 +160,15 @@ enum inet_csk_ack_state_t {
 	ICSK_ACK_PUSHED2 = 8
 };
 
+/* extern void inet_csk_init_xmit_timers(struct sock *sk, */
+/* 				      void (*retransmit_handler)(unsigned long), */
+/* 				      void (*delack_handler)(unsigned long), */
+/* 				      void (*keepalive_handler)(unsigned long)); */
 extern void inet_csk_init_xmit_timers(struct sock *sk,
 				      void (*retransmit_handler)(unsigned long),
 				      void (*delack_handler)(unsigned long),
-				      void (*keepalive_handler)(unsigned long));
+				      void (*keepalive_handler)(unsigned long),
+				      void (*adapack_handler)(unsigned long));
 extern void inet_csk_clear_xmit_timers(struct sock *sk);
 
 static inline void inet_csk_schedule_ack(struct sock *sk)
@@ -229,6 +236,7 @@ static inline void inet_csk_reset_xmit_timer(struct sock *sk, const int what,
 	    what == ICSK_TIME_EARLY_RETRANS || what ==  ICSK_TIME_LOSS_PROBE) {
 		icsk->icsk_pending = what;
 		icsk->icsk_timeout = jiffies + when;
+		icsk->icsk_last_rto = when;
 		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
 	} else if (what == ICSK_TIME_DACK) {
 		icsk->icsk_ack.pending |= ICSK_ACK_TIMER;

@@ -1388,8 +1388,10 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 				time_to_ack = true;
 		}
 	}
-	if (time_to_ack)
+	if (time_to_ack) {
+		//printk(KERN_INFO "%s call tcp_send_ack\n",__func__);
 		tcp_send_ack(sk);
+	}
 }
 
 static void tcp_prequeue_process(struct sock *sk)
@@ -1715,7 +1717,7 @@ int tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 				break;
 			}
 		}
-
+		//printk(KERN_INFO "%s call tcp_cleanup_rbuf 1\n",__func__);
 		tcp_cleanup_rbuf(sk, copied);
 
 		if (!sysctl_tcp_low_latency && tp->ucopy.task == user_recv) {
@@ -1768,6 +1770,7 @@ int tcp_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 			if (tp->rcv_wnd == 0 &&
 			    !skb_queue_empty(&sk->sk_async_wait_queue)) {
 				tcp_service_net_dma(sk, true);
+				printk(KERN_INFO "%s call cleanup_rbuf 2\n",__func__);
 				tcp_cleanup_rbuf(sk, copied);
 			} else
 				dma_async_issue_pending(tp->ucopy.dma_chan);
@@ -1948,6 +1951,7 @@ skip_copy:
 	 */
 
 	/* Clean up data we have read: This will do ACK frames. */
+	//printk(KERN_INFO "%s call tcp_cleanup_rbuf\n",__func__);
 	tcp_cleanup_rbuf(sk, copied);
 
 	release_sock(sk);
@@ -2614,6 +2618,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 			    (TCPF_ESTABLISHED | TCPF_CLOSE_WAIT) &&
 			    inet_csk_ack_scheduled(sk)) {
 				icsk->icsk_ack.pending |= ICSK_ACK_PUSHED;
+				printk(KERN_INFO "%s call tcp_cleanup_rbuf\n",__func__);
 				tcp_cleanup_rbuf(sk, 1);
 				if (!(val & 1))
 					icsk->icsk_ack.pingpong = 1;

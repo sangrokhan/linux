@@ -1809,6 +1809,7 @@ int tcp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 
 	if (sk->sk_state == TCP_LISTEN) {
 		struct sock *nsk = tcp_v4_hnd_req(sk, skb);
+
 		if (!nsk)
 			goto discard;
 
@@ -1827,6 +1828,7 @@ int tcp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
 		rsk = sk;
 		goto reset;
 	}
+
 	return 0;
 
 reset:
@@ -1974,6 +1976,8 @@ int tcp_v4_rcv(struct sk_buff *skb)
 	TCP_SKB_CB(skb)->ip_dsfield = ipv4_get_dsfield(iph);
 	TCP_SKB_CB(skb)->sacked	 = 0;
 
+	//printk("%s doff %d\t",__func__, th->doff);
+
 	sk = __inet_lookup_skb(&tcp_hashinfo, skb, th->source, th->dest);
 	if (!sk)
 		goto no_tcp_socket;
@@ -2018,6 +2022,7 @@ process:
 		NET_INC_STATS_BH(net, LINUX_MIB_TCPBACKLOGDROP);
 		goto discard_and_relse;
 	}
+
 	bh_unlock_sock(sk);
 
 	sock_put(sk);

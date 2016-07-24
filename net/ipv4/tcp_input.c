@@ -480,6 +480,10 @@ static void tcp_rcv_rtt_update(struct tcp_sock *tp, u32 sample, int win_dep)
 
 	if (tp->rcv_rtt_est.rtt != new_sample)
 		tp->rcv_rtt_est.rtt = new_sample;
+
+	/* printk(KERN_INFO "%s jiffies %lu, rcv_tsval %u, rcv_tsecr %u, rtt val %u\n", */
+	/*        __func__, jiffies, tp->rx_opt.rcv_tsval, tp->rx_opt.rcv_tsecr,  */
+	/*        tp->rcv_rtt_est.rtt); */
 }
 
 static inline void tcp_rcv_rtt_measure(struct tcp_sock *tp)
@@ -2895,7 +2899,8 @@ static void tcp_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
  */
 void tcp_rearm_rto(struct sock *sk)
 {
-	const struct inet_connection_sock *icsk = inet_csk(sk);
+	/* const struct inet_connection_sock *icsk = inet_csk(sk); */
+	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct tcp_sock *tp = tcp_sk(sk);
 
 	/* If the retrans timer is currently being used by Fast Open
@@ -2920,6 +2925,8 @@ void tcp_rearm_rto(struct sock *sk)
 			if (delta > 0)
 				rto = delta;
 		}
+		/* printk(KERN_INFO "%s jiffies %lu, icsk_rto val %u, rto val %u\n",  */
+		/*        __func__, jiffies, inet_csk(sk)->icsk_rto, rto); */
 		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS, rto,
 					  TCP_RTO_MAX);
 	}
@@ -3476,6 +3483,7 @@ void tcp_parse_options(const struct sk_buff *skb,
 
 	ptr = (const unsigned char *)(th + 1);
 	opt_rx->saw_tstamp = 0;
+	opt_rx->aa_ok = 0;
 
 	while (length > 0) {
 		int opcode = *ptr++;
@@ -3517,6 +3525,13 @@ void tcp_parse_options(const struct sk_buff *skb,
 						snd_wscale = 14;
 					}
 					opt_rx->snd_wscale = snd_wscale;
+				}
+				break;
+			case TCPOPT_A_ACK:
+				if (opsize == TCPOLEN_A_ACK && sysctl_tcp_adaptive_ack) {
+					u16 timelimit = get_unaligned_be16(ptr);
+					opt_rx->aa_ok = 1;
+					opt_rx->aa_tlimit = timelimit;
 				}
 				break;
 			case TCPOPT_TIMESTAMP:
@@ -3657,6 +3672,69 @@ const u8 *tcp_parse_md5sig_option(const struct tcphdr *th)
 }
 EXPORT_SYMBOL(tcp_parse_md5sig_option);
 #endif
+
+// value check required (host to network or network to host)
+static bool tcp_established_parse_options(struct tcp_sock *tp, const struct tcphdr *th) 
+{
+	const unsigned char *ptr;
+	int length = (th->doff * 4) - sizeof(struct tcphdr);
+	
+	ptr = (const unsigned char *)(th + 1);
+
+	/* if( th->doff == 9 ) { */
+	/* 	printk(KERN_INFO "th->doff %02X, length %u, ptr val %02X\n",  */
+	/* 	       th->doff, length, *ptr); */
+	/* } else { */
+	/* 	printk(KERN_INFO "%02X %02X %02X %02X\t%02X %02X %02X %02X\t%02X %02X %02X %02X\t%02X %02X %02X %02X\n",ptr[0], ptr[1], ptr[2], ptr[3],  */
+	/* 	       ptr[4], ptr[5], ptr[6], ptr[7],  */
+	/* 	       ptr[8], ptr[9], ptr[10], ptr[11],  */
+	/* 	       ptr[12], ptr[13], ptr[14], ptr[15]); */
+	/* } */
+	while (length > 0) {
+		int opcode = *ptr++;
+		int opsize;
+		switch (opcode) {
+		case TCPOPT_EOL:
+			return true;
+		case TCPOPT_NOP:
+			length--;
+			continue;
+		default:
+			opsize = *ptr++;
+			if (opsize < 2)
+				return false;
+			if (opsize > length)
+				return false;
+			switch (opcode) {
+			case TCPOPT_TIMESTAMP:
+				if (opsize == TCPOLEN_TIMESTAMP) {
+					tp->rx_opt.saw_tstamp = 1;
+					tp->rx_opt.rcv_tsval = get_unaligned_be32(ptr);
+					tp->rx_opt.rcv_tsecr = get_unaligned_be32(ptr + 4);
+				} else { 
+					return false;
+				}
+				break;
+			case TCPOPT_A_ACK:
+				if (opsize == TCPOLEN_A_ACK) {
+					u16 timelimit = get_unaligned_be16(ptr);
+					tp->rx_opt.aa_ok = 1;
+					tp->rx_opt.aa_tlimit = timelimit;
+				} else {
+					return false;
+				}
+				break;
+			}
+			ptr += opsize-2;
+			length -= opsize;
+		}
+	}
+
+	/* printk(KERN_INFO "%s jiffies %lu, rcv_tsval %u, rcv_tsecr %u, rcv_rto %u\n", */
+	/*        __func__, jiffies, tp->rx_opt.rcv_tsval, tp->rx_opt.rcv_tsecr, tp->rx_opt.aa_tlimit); */
+	
+	return true;
+}
 
 /* Sorry, PAWS as specified is broken wrt. pure-ACKs -DaveM
  *
@@ -4763,10 +4841,14 @@ static void __tcp_ack_snd_check(struct sock *sk, int ofo_possible)
 	    tcp_in_quickack_mode(sk) ||
 	    /* We have out of order data. */
 	    (ofo_possible && skb_peek(&tp->out_of_order_queue))) {
+		/* if (tcp_sk(sk)->tcp_header_len == 36)  */
+		/* 	printk(KERN_INFO "%s call tcp_send_ack\n",__func__); */
 		/* Then ack it now */
 		tcp_send_ack(sk);
 	} else {
 		/* Else, send delayed ack. */
+		/* if (tcp_sk(sk)->tcp_header_len == 36)  */
+		/* 	printk(KERN_INFO "%s call tcp_send_delayed_ack\n",__func__); */
 		tcp_send_delayed_ack(sk);
 	}
 }
@@ -5111,20 +5193,32 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 		 */
 
 		/* Check timestamp */
-		if (tcp_header_len == sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED) {
-			/* No? Slow path! */
-			if (!tcp_parse_aligned_timestamp(tp, th))
-				goto slow_path;
+		/* if (tcp_header_len == sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED) { */
+		/* 	/\* No? Slow path! *\/ */
+		/* 	if (!tcp_parse_aligned_timestamp(tp, th)) */
+		/* 		goto slow_path; */
 
-			/* If PAWS failed, check it more carefully in slow path */
+		/* 	/\* If PAWS failed, check it more carefully in slow path *\/ */
+		/* 	if ((s32)(tp->rx_opt.rcv_tsval - tp->rx_opt.ts_recent) < 0) */
+		/* 		goto slow_path; */
+
+		/* 	/\* DO NOT update ts_recent here, if checksum fails */
+		/* 	 * and timestamp was corrupted part, it will result */
+		/* 	 * in a hung connection since we will drop all */
+		/* 	 * future packets due to the PAWS test. */
+		/* 	 *\/ */
+		/* } */
+		/* Check options */
+		if (tcp_header_len >= sizeof(struct tcphdr)) {
+			if (!tcp_established_parse_options(tp, th))
+				goto slow_path;
+			
 			if ((s32)(tp->rx_opt.rcv_tsval - tp->rx_opt.ts_recent) < 0)
 				goto slow_path;
 
-			/* DO NOT update ts_recent here, if checksum fails
-			 * and timestamp was corrupted part, it will result
-			 * in a hung connection since we will drop all
-			 * future packets due to the PAWS test.
-			 */
+			if (tp->tcp_header_len == 36) {
+				printk("%s rcv_rto %d\t",__func__,tp->rx_opt.aa_tlimit);
+			}
 		}
 
 		if (len <= tcp_header_len) {
@@ -5189,8 +5283,12 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 					tp->rcv_nxt = TCP_SKB_CB(skb)->end_seq;
 					NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_TCPHPHITSTOUSER);
 				}
-				if (copied_early)
+				if (copied_early) {
+					if (tp->tcp_header_len == 36) {
+						printk(KERN_INFO "%s call tcp_clean_rbuf\n",__func__);
+					}
 					tcp_cleanup_rbuf(sk, skb->len);
+				}
 			}
 			if (!eaten) {
 				if (tcp_checksum_complete_user(sk, skb))
@@ -5203,7 +5301,10 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 				 * seq == rcv_nxt and rcv_wup <= rcv_nxt.
 				 * Hence, check seq<=rcv_wup reduces to:
 				 */
-				if (tcp_header_len ==
+				/* if (tcp_header_len == */
+				/*     (sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED) && */
+				/*     tp->rcv_nxt == tp->rcv_wup) */
+				if (tcp_header_len >=
 				    (sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED) &&
 				    tp->rcv_nxt == tp->rcv_wup)
 					tcp_store_ts_recent(tp);
@@ -5227,8 +5328,9 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 					goto no_ack;
 			}
 
-			if (!copied_early || tp->rcv_nxt != tp->rcv_wup)
+			if (!copied_early || tp->rcv_nxt != tp->rcv_wup) {
 				__tcp_ack_snd_check(sk, 0);
+			}
 no_ack:
 #ifdef CONFIG_NET_DMA
 			if (copied_early)
@@ -5269,6 +5371,7 @@ step5:
 	tcp_data_queue(sk, skb);
 
 	tcp_data_snd_check(sk);
+	//printk(KERN_INFO "%s call tcp_ack_snd_check\n",__func__);
 	tcp_ack_snd_check(sk);
 	return;
 
@@ -5446,14 +5549,28 @@ static int tcp_rcv_synsent_state_process(struct sock *sk, struct sk_buff *skb,
 			tp->window_clamp = min(tp->window_clamp, 65535U);
 		}
 
+		/* if (tp->rx_opt.saw_tstamp) { */
+		/* 	tp->rx_opt.tstamp_ok	   = 1; */
+		/* 	tp->tcp_header_len = */
+		/* 		sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED; */
+		/* 	tp->advmss	    -= TCPOLEN_TSTAMP_ALIGNED; */
+		/* 	tcp_store_ts_recent(tp); */
+		/* } else { */
+		/* 	tp->tcp_header_len = sizeof(struct tcphdr); */
+		/* } */
+
+		tp->tcp_header_len = sizeof(struct tcphdr);
+
 		if (tp->rx_opt.saw_tstamp) {
 			tp->rx_opt.tstamp_ok	   = 1;
-			tp->tcp_header_len =
-				sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED;
-			tp->advmss	    -= TCPOLEN_TSTAMP_ALIGNED;
+			tp->tcp_header_len += TCPOLEN_TSTAMP_ALIGNED;
+			tp->advmss	   -= TCPOLEN_TSTAMP_ALIGNED;
 			tcp_store_ts_recent(tp);
-		} else {
-			tp->tcp_header_len = sizeof(struct tcphdr);
+		}
+		
+		if (tp->rx_opt.aa_ok) {
+			tp->tcp_header_len += TCPOLEN_A_ACK;
+			tp->advmss 	   -= TCPOLEN_A_ACK;
 		}
 
 		if (tcp_is_sack(tp) && sysctl_tcp_fack)
@@ -5525,14 +5642,31 @@ discard:
 		 */
 		tcp_set_state(sk, TCP_SYN_RECV);
 
+		/* if (tp->rx_opt.saw_tstamp) { */
+		/* 	tp->rx_opt.tstamp_ok = 1; */
+		/* 	tcp_store_ts_recent(tp); */
+		/* 	tp->tcp_header_len = */
+		/* 		sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED; */
+		/* } else { */
+		/* 	tp->tcp_header_len = sizeof(struct tcphdr); */
+		/* } */
+
+		tp->tcp_header_len = sizeof(struct tcphdr);
+
 		if (tp->rx_opt.saw_tstamp) {
-			tp->rx_opt.tstamp_ok = 1;
+			tp->rx_opt.tstamp_ok	   = 1;
+			tp->tcp_header_len += TCPOLEN_TSTAMP_ALIGNED;
+			tp->advmss	   -= TCPOLEN_TSTAMP_ALIGNED;
 			tcp_store_ts_recent(tp);
-			tp->tcp_header_len =
-				sizeof(struct tcphdr) + TCPOLEN_TSTAMP_ALIGNED;
-		} else {
-			tp->tcp_header_len = sizeof(struct tcphdr);
 		}
+		
+		if (tp->rx_opt.aa_ok) {
+			tp->tcp_header_len += TCPOLEN_A_ACK;
+			tp->advmss 	   -= TCPOLEN_A_ACK;
+		}
+
+		printk(KERN_INFO "%s th->syn header_len %d advmss %d\n",
+		       __func__,tp->tcp_header_len,tp->advmss);
 
 		tp->rcv_nxt = TCP_SKB_CB(skb)->seq + 1;
 		tp->rcv_wup = TCP_SKB_CB(skb)->seq + 1;

@@ -640,9 +640,24 @@ out:
 	sock_put(sk);
 }
 
+static void tcp_adapack_timer(unsigned long data)
+{
+	struct sock *sk = (struct sock *) data;
+	bh_lock_sock(sk);
+	if (!sock_owned_by_user(sk)) {
+		
+	} else {
+	
+	}
+	bh_unlock_sock(sk);
+	sock_put(sk);
+}
+
 void tcp_init_xmit_timers(struct sock *sk)
 {
+	/* inet_csk_init_xmit_timers(sk, &tcp_write_timer, &tcp_delack_timer, */
+	/* 			  &tcp_keepalive_timer); */
 	inet_csk_init_xmit_timers(sk, &tcp_write_timer, &tcp_delack_timer,
-				  &tcp_keepalive_timer);
+				  &tcp_keepalive_timer, &tcp_adapack_timer);
 }
 EXPORT_SYMBOL(tcp_init_xmit_timers);
