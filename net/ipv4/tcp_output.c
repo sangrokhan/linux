@@ -679,12 +679,9 @@ static unsigned int tcp_established_options(struct sock *sk, struct sk_buff *skb
 
 	if (likely(tp->rx_opt.aa_ok)) {
 		opts->options |= OPTION_A_ACK;
-		opts->rto_rtt = (u16)inet_csk(sk)->icsk_last_rto * (MSEC_PER_SEC / HZ);
+		opts->rto_rtt = (u16)(tp->snd_cwnd - tcp_packets_in_flight(tp));
 		size += TCPOLEN_A_ACK;
 	}
-
-	/* printk(KERN_INFO "%s jiffies %lu, tsval %u, tsecr %u, size %u, rto %u\n", */
-	/*        __func__, jiffies, opts->tsval, opts->tsecr, size, opts->rto_rtt); */
 	
 	eff_sacks = tp->rx_opt.num_sacks + tp->rx_opt.dsack;
 	if (unlikely(eff_sacks)) {
@@ -3089,7 +3086,7 @@ void tcp_send_delayed_ack(struct sock *sk)
 		 */
 		if (icsk->icsk_ack.blocked ||
 		    time_before_eq(icsk->icsk_ack.timeout, jiffies + (ato >> 2))) {
-			printk(KERN_INFO "%s call tcp_send_ack\n",__func__);
+			/* printk(KERN_INFO "%s call tcp_send_ack\n",__func__); */
 			tcp_send_ack(sk);
 			return;
 		}
@@ -3106,6 +3103,10 @@ void tcp_send_delayed_ack(struct sock *sk)
 void tcp_send_ack(struct sock *sk)
 {
 	struct sk_buff *buff;
+
+	/* if (tcp_sk(sk)->tcp_header_len == 36) { */
+	/* 	printk(KERN_INFO "%s 36 headlen\n",__func__); */
+	/* } */
 
 	/* If we have been reset, we may not send again. */
 	if (sk->sk_state == TCP_CLOSE)

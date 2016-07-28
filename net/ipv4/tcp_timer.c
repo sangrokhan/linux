@@ -232,6 +232,7 @@ void tcp_delack_timer_handler(struct sock *sk)
 			icsk->icsk_ack.pingpong = 0;
 			icsk->icsk_ack.ato      = TCP_ATO_MIN;
 		}
+		/* printk(KERN_INFO "%s tcp_send_ack\n",__func__); */
 		tcp_send_ack(sk);
 		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_DELAYEDACKS);
 	}
@@ -640,14 +641,24 @@ out:
 	sock_put(sk);
 }
 
+void tcp_adapack_timer_handler(struct sock *sk) 
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+
+	if (sk->sk_state == TCP_CLOSE) 
+		sk_stop_timer(sk, &icsk->icsk_adapack_timer);
+	else 
+		tcp_send_ack(sk);
+}
+
 static void tcp_adapack_timer(unsigned long data)
 {
 	struct sock *sk = (struct sock *) data;
 	bh_lock_sock(sk);
 	if (!sock_owned_by_user(sk)) {
-		
+		tcp_adapack_timer_handler(sk);
 	} else {
-	
+		//What to do?
 	}
 	bh_unlock_sock(sk);
 	sock_put(sk);

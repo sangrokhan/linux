@@ -1351,7 +1351,8 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 		    * receive. */
 		if (icsk->icsk_ack.blocked ||
 		    /* Once-per-two-segments ACK was not sent by tcp_input.c */
-		    tp->rcv_nxt - tp->rcv_wup > icsk->icsk_ack.rcv_mss ||
+		    (tp->rcv_wnd - (tp->rcv_nxt - tp->rcv_wup)) < icsk->icsk_ack.rcv_mss || 
+		    /* tp->rcv_nxt - tp->rcv_wup > icsk->icsk_ack.rcv_mss || */
 		    /*
 		     * If this read emptied read buffer, we send ACK, if
 		     * connection is not bidirectional, user drained
@@ -1362,8 +1363,15 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 		     ((icsk->icsk_ack.pending & ICSK_ACK_PUSHED2) ||
 		      ((icsk->icsk_ack.pending & ICSK_ACK_PUSHED) &&
 		       !icsk->icsk_ack.pingpong)) &&
-		      !atomic_read(&sk->sk_rmem_alloc)))
+		     !atomic_read(&sk->sk_rmem_alloc))) {
+			/* printk("%s case 1 %d",__func__,  */
+			/*        (copied > 0 && */
+			/* 	((icsk->icsk_ack.pending & ICSK_ACK_PUSHED2) || */
+			/* 	 ((icsk->icsk_ack.pending & ICSK_ACK_PUSHED) && */
+			/* 	  !icsk->icsk_ack.pingpong)) && */
+			/* 	!atomic_read(&sk->sk_rmem_alloc))); //Value Log Required */
 			time_to_ack = true;
+		}
 	}
 
 	/* We send an ACK if we can now advertise a non-zero window
@@ -1384,12 +1392,17 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 			 * We can advertise it now, if it is not less than current one.
 			 * "Lots" means "at least twice" here.
 			 */
-			if (new_window && new_window >= 2 * rcv_window_now)
+			if (new_window && new_window >= 2 * rcv_window_now) {
+				/* printk("%s case 2",__func__); */
 				time_to_ack = true;
+			}
 		}
 	}
+
 	if (time_to_ack) {
-		//printk(KERN_INFO "%s call tcp_send_ack\n",__func__);
+		/* printk("selwin %u rcvwndf %u rcvwnd %u nxt %u wup %u val %u\n", */
+		/*        __tcp_select_window(sk), tcp_receive_window(tp), tp->rcv_wnd, */
+		/*        tp->rcv_nxt, tp->rcv_wup, (tp->rcv_nxt - tp->rcv_wup)); */
 		tcp_send_ack(sk);
 	}
 }

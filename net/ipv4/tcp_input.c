@@ -2210,7 +2210,6 @@ static void tcp_mark_head_lost(struct sock *sk, int packets, int mark_head)
 }
 
 /* Account newly detected lost packet(s) */
-
 static void tcp_update_scoreboard(struct sock *sk, int fast_rexmit)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
@@ -4831,8 +4830,14 @@ static void __tcp_ack_snd_check(struct sock *sk, int ofo_possible)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 
+	/* if (tp->tcp_header_len == 36) { */
+	/* 	printk("%s selwin %u rcvwnd %u nxt %u wup %u ", */
+	/* 	       __func__, __tcp_select_window(sk), tp->rcv_wnd,  */
+	/* 	       tp->rcv_nxt, tp->rcv_wup); */
+	/* } */
 	    /* More than one full frame received... */
-	if (((tp->rcv_nxt - tp->rcv_wup) > inet_csk(sk)->icsk_ack.rcv_mss &&
+	/* if (((tp->rcv_nxt - tp->rcv_wup) > inet_csk(sk)->icsk_ack.rcv_mss && */
+	if (((tp->rcv_wnd - (tp->rcv_nxt - tp->rcv_wup)) < inet_csk(sk)->icsk_ack.rcv_mss &&
 	     /* ... and right edge of window advances far enough.
 	      * (tcp_recvmsg() will send ACK otherwise). Or...
 	      */
@@ -4841,13 +4846,15 @@ static void __tcp_ack_snd_check(struct sock *sk, int ofo_possible)
 	    tcp_in_quickack_mode(sk) ||
 	    /* We have out of order data. */
 	    (ofo_possible && skb_peek(&tp->out_of_order_queue))) {
-		/* if (tcp_sk(sk)->tcp_header_len == 36)  */
+		/* if (tcp_sk(sk)->tcp_header_len == 36) */
+		/* printk(KERN_INFO "%s send_ack\n",__func__); */
 		/* 	printk(KERN_INFO "%s call tcp_send_ack\n",__func__); */
 		/* Then ack it now */
 		tcp_send_ack(sk);
 	} else {
 		/* Else, send delayed ack. */
-		/* if (tcp_sk(sk)->tcp_header_len == 36)  */
+		/* if (tcp_sk(sk)->tcp_header_len == 36) */
+		/* 	printk("send_delayed_ack\n"); */
 		/* 	printk(KERN_INFO "%s call tcp_send_delayed_ack\n",__func__); */
 		tcp_send_delayed_ack(sk);
 	}
@@ -5216,10 +5223,16 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 			if ((s32)(tp->rx_opt.rcv_tsval - tp->rx_opt.ts_recent) < 0)
 				goto slow_path;
 
-			if (tp->tcp_header_len == 36) {
-				printk("%s rcv_rto %d\t",__func__,tp->rx_opt.aa_tlimit);
-			}
+			/* if (tp->tcp_header_len == 36) { */
+			/* 	printk("%s rcv_rto %d\t",__func__,tp->rx_opt.aa_tlimit); */
+			/* } */
 		}
+
+		/* if (tp->tcp_header_len == 36) { */
+		/* 	printk("%s rcv nxt %u wup %u wnd %u snd nxt %u max_win %u cachemss %u\n", */
+		/* 	       __func__, tp->rcv_nxt, tp->rcv_wup, tp->rcv_wnd,  */
+		/* 	       tp->snd_nxt, tp->max_window, tp->mss_cache); */
+		/* } */
 
 		if (len <= tcp_header_len) {
 			/* Bulk data transfer: sender */
@@ -5664,9 +5677,6 @@ discard:
 			tp->tcp_header_len += TCPOLEN_A_ACK;
 			tp->advmss 	   -= TCPOLEN_A_ACK;
 		}
-
-		printk(KERN_INFO "%s th->syn header_len %d advmss %d\n",
-		       __func__,tp->tcp_header_len,tp->advmss);
 
 		tp->rcv_nxt = TCP_SKB_CB(skb)->seq + 1;
 		tp->rcv_wup = TCP_SKB_CB(skb)->seq + 1;

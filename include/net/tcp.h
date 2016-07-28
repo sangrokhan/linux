@@ -371,6 +371,7 @@ extern void tcp_release_cb(struct sock *sk);
 extern void tcp_wfree(struct sk_buff *skb);
 extern void tcp_write_timer_handler(struct sock *sk);
 extern void tcp_delack_timer_handler(struct sock *sk);
+extern void tcp_adapack_timer_handler(struct sock *sk);
 extern int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg);
 extern int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 				 const struct tcphdr *th, unsigned int len);
