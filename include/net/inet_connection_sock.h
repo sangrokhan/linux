@@ -95,7 +95,6 @@ struct inet_connection_sock {
  	struct timer_list	  icsk_delack_timer;
 	struct timer_list	  icsk_adapack_timer;
 	__u32			  icsk_rto;
-	__u32			  icsk_last_rto;
 	__u32			  icsk_pmtu_cookie;
 	const struct tcp_congestion_ops *icsk_ca_ops;
 	const struct inet_connection_sock_af_ops *icsk_af_ops;
@@ -236,7 +235,6 @@ static inline void inet_csk_reset_xmit_timer(struct sock *sk, const int what,
 	    what == ICSK_TIME_EARLY_RETRANS || what ==  ICSK_TIME_LOSS_PROBE) {
 		icsk->icsk_pending = what;
 		icsk->icsk_timeout = jiffies + when;
-		icsk->icsk_last_rto = when;
 		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
 	} else if (what == ICSK_TIME_DACK) {
 		icsk->icsk_ack.pending |= ICSK_ACK_TIMER;

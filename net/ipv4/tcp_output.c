@@ -399,7 +399,7 @@ struct tcp_out_options {
 	u8 hash_size;		/* bytes in hash_location */
 	__u8 *hash_location;	/* temporary pointer, overloaded */
 	__u32 tsval, tsecr;	/* need to include OPTION_TS */
-	u16 rto_rtt;		/* adaptive ack tx value */
+	u16 left_cwnd;		/* left cwnd value */
 	struct tcp_fastopen_cookie *fastopen_cookie;	/* Fast open cookie */
 };
 
@@ -470,7 +470,7 @@ static void tcp_options_write(__be32 *ptr, struct tcp_sock *tp,
 	if (likely(OPTION_A_ACK & options)) {
 		*ptr++ = htonl((TCPOPT_A_ACK << 24) |
 			       (TCPOLEN_A_ACK << 16) |
-			       opts->rto_rtt);
+			       opts->left_cwnd);
 	}
 
 	if (unlikely(opts->num_sack_blocks)) {
@@ -561,7 +561,7 @@ static unsigned int tcp_syn_options(struct sock *sk, struct sk_buff *skb,
 	//Add to support Adaptive ACK
 	if (likely(sysctl_tcp_adaptive_ack)) {
 		opts->options |= OPTION_A_ACK;
-		opts->rto_rtt = 0;
+		opts->left_cwnd = tp->snd_cwnd;
 		remaining -= TCPOLEN_A_ACK;
 	}
 
@@ -629,7 +629,7 @@ static unsigned int tcp_synack_options(struct sock *sk,
 	}
 	if (likely(ireq->aa_ok)) {
 		opts->options |= OPTION_A_ACK;
-		opts->rto_rtt = 0;
+		opts->left_cwnd = tcp_sk(sk)->snd_cwnd;
 		remaining -= TCPOLEN_A_ACK;
 	}
 
@@ -679,10 +679,10 @@ static unsigned int tcp_established_options(struct sock *sk, struct sk_buff *skb
 
 	if (likely(tp->rx_opt.aa_ok)) {
 		opts->options |= OPTION_A_ACK;
-		opts->rto_rtt = (u16)(tp->snd_cwnd - tcp_packets_in_flight(tp));
+		opts->left_cwnd = (u16)(tp->snd_cwnd - tcp_packets_in_flight(tp));
 		size += TCPOLEN_A_ACK;
 	}
-	
+
 	eff_sacks = tp->rx_opt.num_sacks + tp->rx_opt.dsack;
 	if (unlikely(eff_sacks)) {
 		const unsigned int remaining = MAX_TCP_OPTION_SPACE - size;
@@ -922,7 +922,7 @@ static int tcp_transmit_skb(struct sock *sk, struct sk_buff *skb, int clone_it,
 		tcp_options_size = tcp_established_options(sk, skb, &opts,
 							   &md5);
 	tcp_header_size = tcp_options_size + sizeof(struct tcphdr);
-	
+
 	if (tcp_packets_in_flight(tp) == 0)
 		tcp_ca_event(sk, CA_EVENT_TX_START);
 

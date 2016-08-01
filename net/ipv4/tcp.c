@@ -1352,6 +1352,7 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 		if (icsk->icsk_ack.blocked ||
 		    /* Once-per-two-segments ACK was not sent by tcp_input.c */
 		    (tp->rcv_wnd - (tp->rcv_nxt - tp->rcv_wup)) < icsk->icsk_ack.rcv_mss || 
+		    ((tp->snd_max_cwnd / 2) >= tp->rx_opt.snd_cwnd) ||
 		    /* tp->rcv_nxt - tp->rcv_wup > icsk->icsk_ack.rcv_mss || */
 		    /*
 		     * If this read emptied read buffer, we send ACK, if
@@ -1364,13 +1365,8 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 		      ((icsk->icsk_ack.pending & ICSK_ACK_PUSHED) &&
 		       !icsk->icsk_ack.pingpong)) &&
 		     !atomic_read(&sk->sk_rmem_alloc))) {
-			/* printk("%s case 1 %d",__func__,  */
-			/*        (copied > 0 && */
-			/* 	((icsk->icsk_ack.pending & ICSK_ACK_PUSHED2) || */
-			/* 	 ((icsk->icsk_ack.pending & ICSK_ACK_PUSHED) && */
-			/* 	  !icsk->icsk_ack.pingpong)) && */
-			/* 	!atomic_read(&sk->sk_rmem_alloc))); //Value Log Required */
 			time_to_ack = true;
+			tp->snd_max_cwnd = tp->rx_opt.snd_cwnd;
 		}
 	}
 
@@ -1392,19 +1388,13 @@ void tcp_cleanup_rbuf(struct sock *sk, int copied)
 			 * We can advertise it now, if it is not less than current one.
 			 * "Lots" means "at least twice" here.
 			 */
-			if (new_window && new_window >= 2 * rcv_window_now) {
-				/* printk("%s case 2",__func__); */
+			if (new_window && new_window >= 2 * rcv_window_now)
 				time_to_ack = true;
-			}
 		}
 	}
 
-	if (time_to_ack) {
-		/* printk("selwin %u rcvwndf %u rcvwnd %u nxt %u wup %u val %u\n", */
-		/*        __tcp_select_window(sk), tcp_receive_window(tp), tp->rcv_wnd, */
-		/*        tp->rcv_nxt, tp->rcv_wup, (tp->rcv_nxt - tp->rcv_wup)); */
+	if (time_to_ack) 
 		tcp_send_ack(sk);
-	}
 }
 
 static void tcp_prequeue_process(struct sock *sk)

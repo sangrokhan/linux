@@ -94,7 +94,7 @@ struct tcp_options_received {
 	u8	num_sacks;	/* Number of SACK blocks		*/
 	u16	user_mss;	/* mss requested by user in ioctl	*/
 	u16	mss_clamp;	/* Maximal mss, negotiated at connection setup */
-	u16	aa_tlimit;	/* Adaptive Acknowledgment time limit	*/
+	u16	snd_cwnd;	/* Sender current congestion window	*/
 };
 
 static inline void tcp_clear_options(struct tcp_options_received *rx_opt)
@@ -246,6 +246,8 @@ struct tcp_sock {
 	u32	sacked_out;	/* SACK'd packets			*/
 	u32	fackets_out;	/* FACK'd packets			*/
 	u32	tso_deferred;
+
+	u32	snd_max_cwnd;	/* Sender maximum cwnd 			*/
 
 	/* from STCP, retrans queue hinting */
 	struct sk_buff* lost_skb_hint;
